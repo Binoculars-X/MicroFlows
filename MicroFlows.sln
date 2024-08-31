@@ -9,12 +9,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F32E7DA-49A
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroFlows.Domain", "src\MicroFlows.Domain\MicroFlows.Domain.csproj", "{229624DF-0E22-4CF5-B05D-544D4925ACEC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroFlows.Tests", "tests\MicroFlows.Tests\MicroFlows.Tests.csproj", "{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroFlows.Tests", "tests\MicroFlows.Tests\MicroFlows.Tests.csproj", "{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C426E69D-D3F4-4C19-8A6A-4987946D9397}"
 	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroFlows.Application", "src\MicroFlows.Application\MicroFlows.Application.csproj", "{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -30,6 +33,10 @@ Global
 		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -37,6 +44,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{229624DF-0E22-4CF5-B05D-544D4925ACEC} = {4F32E7DA-49AF-4095-863A-05482EF2310C}
 		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F} = {A6055C13-E45D-4F05-90E3-30D5661A1B6E}
+		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1} = {4F32E7DA-49AF-4095-863A-05482EF2310C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2B78B207-E55F-4F38-A130-92F4A5F4928C}

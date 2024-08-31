@@ -6,4 +6,8 @@
     <LangVersion>12.0</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MicroFlows.Domain\MicroFlows.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
