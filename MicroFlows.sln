@@ -1,0 +1,44 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35027.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{A6055C13-E45D-4F05-90E3-30D5661A1B6E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4F32E7DA-49AF-4095-863A-05482EF2310C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroFlows.Domain", "src\MicroFlows.Domain\MicroFlows.Domain.csproj", "{229624DF-0E22-4CF5-B05D-544D4925ACEC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroFlows.Tests", "tests\MicroFlows.Tests\MicroFlows.Tests.csproj", "{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C426E69D-D3F4-4C19-8A6A-4987946D9397}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{229624DF-0E22-4CF5-B05D-544D4925ACEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{229624DF-0E22-4CF5-B05D-544D4925ACEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{229624DF-0E22-4CF5-B05D-544D4925ACEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{229624DF-0E22-4CF5-B05D-544D4925ACEC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{229624DF-0E22-4CF5-B05D-544D4925ACEC} = {4F32E7DA-49AF-4095-863A-05482EF2310C}
+		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F} = {A6055C13-E45D-4F05-90E3-30D5661A1B6E}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2B78B207-E55F-4F38-A130-92F4A5F4928C}
+	EndGlobalSection
+EndGlobal
