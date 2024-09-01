@@ -8,17 +8,17 @@ using System.Threading.Tasks;
 using MicroFlows;
 
 namespace MicroFlows.Tests.TestFlows;
-public class SampleFlow : FlowBase
+public class SampleStoringFlow : FlowBase
 {
     private readonly ISampleTestStorage _storage;
 
-    // model
-    private int? _modelInt { get; set; }
-    private string? _modelString { get; set; }
-    private string? _id { get; set; }
+    // model consists of all public serializable properties
+    public int? ModelInt { get; set; }
+    public string? ModelString { get; set; }
+    public string? Id { get; set; }
 
     // ~ctor
-    public SampleFlow(ISampleTestStorage storage)
+    public SampleStoringFlow(ISampleTestStorage storage)
     {
         _storage = storage;
     }
@@ -27,22 +27,24 @@ public class SampleFlow : FlowBase
     {
         await Call(async() => await Load());
 
-        await Call(async () => await Store(_modelInt, _modelString));
+        await Call(async () => await Store(ModelInt, ModelString));
 
-        var json = await Call(async () => await Read(_id));
+        var json = await Call(async () => await Read(Id));
 
         var readRecord = JsonSerializer.Deserialize<(string id, int? key, string name)>(json);
 
-        if (readRecord.id != _id || readRecord.key != _modelInt || readRecord.name != _modelString)
+        if (readRecord.id != Id || readRecord.key != ModelInt || readRecord.name != ModelString)
         {
-            throw new Exception("Saved values are different with model");
+            throw new Exception("Saved values differ from model");
         }
     }
 
+    // ToDo: add Signals
+
     private async Task Load()
     {
-        _modelInt = 33;
-        _modelString = "test";
+        ModelInt = 33;
+        ModelString = "test";
     }
 
     private async Task Store(int? key, string? name)

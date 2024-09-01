@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroFlows.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,4 +17,9 @@ public abstract class FlowBase : IFlow
     {
         return await action();
     }
+
+    public virtual void SetModel(IFlow source)
+    { }
+    public virtual void SetParams(FlowParams flowParams)
+    { }
 }
