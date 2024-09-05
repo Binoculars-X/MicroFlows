@@ -4,8 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using MicroFlows.Domain.Interfaces;
-using BlazorForms.Proxyma;
 using MicroFlows.Application.Engines;
+using Castle.DynamicProxy;
+using MicroFlows.Application.Engines.Interceptors;
 
 namespace MicroFlows;
 
@@ -21,12 +22,14 @@ public static class MicroFlowsConfigurationServices
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
         _registeredFlows.Add(typeof(T));
+        services.AddTransient<T>();
         return services;
     }
 
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
-        services.AddSingleton<IProxymaProvider, PullProxyFactory>();
+        //services.AddSingleton<IProxymaProvider, PullProxyFactory>();
+        services.AddSingleton<IProxyGenerator, ProxyGenerator>();
         services.AddTransient<IFlowRunEngine, InterceptorFlowRunEngine>();
         return services;
     }

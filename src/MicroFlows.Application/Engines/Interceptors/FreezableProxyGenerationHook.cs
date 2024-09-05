@@ -3,10 +3,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
+using System.Linq;
 
-namespace MicroFlows.Application.Engines;
+namespace MicroFlows.Application.Engines.Interceptors;
 public class FreezableProxyGenerationHook : IProxyGenerationHook
 {
+    private readonly string[] _systemMethods = ["Call", "CallAsync", "ExecuteActivityAsync", "WaitForConditionAsync"];
     private IFlow _flow;
 
     public FreezableProxyGenerationHook(IFlow flow)
@@ -26,7 +28,18 @@ public class FreezableProxyGenerationHook : IProxyGenerationHook
 
     public bool ShouldInterceptMethod(Type type, MethodInfo memberInfo)
     {
-        return memberInfo.Name != "ExecuteFlow";
+        if (typeof(FlowBase).IsAssignableFrom(type) && _systemMethods.Contains(memberInfo.Name))
+        {
+            return true;
+        }
+
+        return false;
+        //if (memberInfo.Name == "Execute" && typeof(FlowBase).IsAssignableFrom(type))
+        //{
+        //    return false;
+        //}
+
+        //return true;
     }
 
     public void NonVirtualMemberNotification(Type type, MemberInfo memberInfo)

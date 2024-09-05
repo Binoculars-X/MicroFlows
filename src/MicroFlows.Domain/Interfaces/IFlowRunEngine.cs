@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroFlows.Domain.Models;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 namespace MicroFlows.Domain.Interfaces;
 public interface IFlowRunEngine
 {
-    Task ExecuteFlow(Type flowType);
-    Task ExecuteFlow(string flowTypeName);
-    Task ResumeFlow(string flowId);
+    Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null);
+    Task<FlowContext> ExecuteFlow(string flowTypeName, FlowParams? flowParams = null);
+    //Task<FlowContext> ResumeFlow(string flowId, FlowParams? flowParams = null);
 }

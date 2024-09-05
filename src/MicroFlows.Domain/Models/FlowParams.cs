@@ -5,12 +5,10 @@ using System.Text;
 namespace MicroFlows.Domain.Models;
 public class FlowParams : Interfaces.IFlowParams
 {
-    public Dictionary<string, string> DynamicInput { get; private set; } = [];
+    public Dictionary<string, string> DynamicInput { get; set; } = [];
 
-    public FlowParams()
-    {
-    }
-
+    public string RefId { get; set; }
+    public FlowOptions FlowOptions { get; private set; } = new();
     public string ItemId { get; set; }
 
     public bool ItemKeyAboveZero

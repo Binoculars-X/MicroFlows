@@ -6,15 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MicroFlows.Tests.TestSampleFlows;
-using MicroFlows.Tests.TestFlows;
 
-namespace MicroFlows.Tests.TestBase;
-public abstract class TastBase
+namespace MicroFlows.Package.Tests;
+public abstract class TestBase
 {
     protected IServiceProvider _services = null!;
 
-    public TastBase()
+    public TestBase()
     {
         IConfiguration configuration = null!;
 
@@ -23,7 +21,7 @@ public abstract class TastBase
             {
                 config.Sources.Clear();
                 config.AddConfiguration(hostingContext.Configuration);
-                config.AddJsonFile("appsettings.json");
+                config.AddJsonFile("appsettings.json", true);
                 config.AddJsonFile($"appsettings.Development.json", true, true);
                 //config.AddUserSecrets(typeof(ExceptionHandlingMiddleware).Assembly);
                 configuration = config.Build();
@@ -31,8 +29,8 @@ public abstract class TastBase
             .ConfigureServices(services =>
             {
                 services.AddMicroFlows(configuration)
-                    .RegisterFlow<SampleFlow>()
-                    .RegisterFlow<SampleStoringFlow>()
+                    //.RegisterFlow<SampleFlow>()
+                    //.RegisterFlow<SampleStoringFlow>()
                     ;
                 
             })

@@ -3,24 +3,74 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MicroFlows.Application.Exceptions;
 
 namespace MicroFlows.Tests.TestSampleFlows;
 public class SampleFlow : FlowBase
 {
     // model consists of all public serializable properties
+    public DateTime? ModelDate { get; set; }
     public int? ModelInt { get; set; }
     public string? ModelString { get; set; }
+    public string? Id { get; set; }
+
 
     // not model?
-    private string? _id { get; set; }
 
     public override async Task Execute()
     {
-        await Call(async () => await Init());
+        //await MyMethod();
+        //await Call(async () => await Init());
 
-        await Call(async () => await Update(ModelInt, ModelString));
+        //await Call(async () => await Update(ModelInt, ModelString));
 
-        var json = await Call(async () => await Read(_id));
+        //var json = await Call(async () => await Read(Id));
+
+        //if (FlowParams["flag"] == "stop")
+        //{
+        //    throw new FlowStopException();
+        //}
+    }
+
+    public async Task Flow()
+    {
+        // Inconsistent: So don't support virtual methods
+        // Virtual method executed on _flow
+        //await MyMethod();
+        
+        //if (ModelDate != null)
+        //{
+
+        //}
+
+        // Inconsistent:
+        // Func<> delegate Init executed on _flowProxy
+        await CallAsync(async () => await Init());
+
+
+        if (ModelInt == 33 && ModelString == "test")
+        {
+
+        }
+
+        await CallAsync(async () => await Update(ModelInt, ModelString));
+
+        if (Id != null)
+        {
+
+        }
+
+        //var json = await Call(async () => await Read(_id));
+
+        if (FlowParams["flag"] == "stop")
+        {
+            throw new FlowStopException();
+        }
+    }
+
+    public virtual async Task MyMethod()
+    {
+        ModelDate = new DateTime(1912,12,31);
     }
 
     private async Task Init()
@@ -33,6 +83,7 @@ public class SampleFlow : FlowBase
     {
         string id = Guid.NewGuid().ToString();
         var record = (id, key, name);
+        Id = id;
         //var json = JsonSerializer.Serialize(record);
         //await _storage.Save(id, json);
     }

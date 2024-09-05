@@ -8,16 +8,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using BlazorForms.Proxyma;
 using System.Reflection;
-using BlazorForms;
 using System.Linq;
 using MicroFlows.Domain.Models;
 using System.Runtime.CompilerServices;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
 
-namespace MicroFlows;
+namespace MicroFlows.Application.Engines.Interceptors;
 internal partial class InterceptorFlowRunEngine
 {
     private async Task ProcessCallTask(string taskName, Func<Task> action)
@@ -38,8 +36,8 @@ internal partial class InterceptorFlowRunEngine
         if (isSkipMode)
         {
             // execute skip task - supply model that was on this step
-            _flow.SetModel(currentTaskContext.Model);
-            _flow.SetParams(currentTaskContext.Params);
+            _flowProxy.SetModel(currentTaskContext.Model);
+            _flowProxy.SetParams(currentTaskContext.Params);
         }
         else
         {
@@ -47,8 +45,23 @@ internal partial class InterceptorFlowRunEngine
 
             // if flow changed model we should inherit this change
             // we make sure that model is a new instance
-            _context.Model = _flow;
+            _context.Model.ImportFrom(_flowProxy);
             var result = await ExecuteTask(action);
+
+            if (result.ResultState != ResultStateEnum.Fail)
+            {
+                // ToDo: we should copy model to context and sotre it 
+                if (taskName.Contains("<Flow>b__"))
+                {
+                    // delegate
+                    _context.Model.ImportFrom(_flowProxy);
+                }
+                else
+                {
+                    // virtual method
+                    _context.Model.ImportFrom(_flow);
+                }
+            }
 
             // After Task Events
             TriggerEvents(taskName);
@@ -72,32 +85,6 @@ internal partial class InterceptorFlowRunEngine
                 throw new FlowStopException();
             }
         }
-    }
-
-    private async Task AddContextToHistory(FlowContext context)
-    {
-        var copy = TypeHelper.CloneObject(context);
-        _contextHistory.Add(copy);
-    }
-
-    private void TriggerEvents(string taskName)
-    {
-        //if (_loading)
-        //{
-        //    OnLoad?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
-        //    _loading = false;
-        //}
-
-        //if (_saving)
-        //{
-        //    OnSave?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
-        //    _saving = false;
-        //}
-    }
-
-    private bool CanContinueExecution(TaskExecutionResult result)
-    {
-        return result.ResultState != ResultStateEnum.Fail && result.FlowState == FlowStateEnum.Continue;
     }
 
     private async Task<TaskExecutionResult> ExecuteTask(Func<Task> action)
@@ -149,28 +136,28 @@ internal partial class InterceptorFlowRunEngine
         }
         catch (FlowStopException exc)
         {
-            result.ResultState = TaskExecutionResultStateEnum.Success;
-            result.FlowState = TaskExecutionFlowStateEnum.Stop;
+            result.ResultState = ResultStateEnum.Success;
+            result.FlowState = FlowStateEnum.Stop;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
-            _logStreamer.TrackException(exc);
+            _logger.LogInformation(exc, $"Flow '{_runningFlowType}' stopped");
         }
         catch (FlowFailedException exc)
         {
             LogException(exc);
-            result.ResultState = TaskExecutionResultStateEnum.Fail;
-            result.FlowState = TaskExecutionFlowStateEnum.Stop;
+            result.ResultState = ResultStateEnum.Fail;
+            result.FlowState = FlowStateEnum.Stop;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
-            _logStreamer.TrackException(exc);
+            LogException(exc);
         }
         catch (Exception exc)
         {
             LogException(exc);
-            result.ResultState = TaskExecutionResultStateEnum.Fail;
+            result.ResultState = ResultStateEnum.Fail;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
-            _logStreamer.TrackException(exc);
+            LogException(exc);
         }
         finally
         {
@@ -184,11 +171,32 @@ internal partial class InterceptorFlowRunEngine
             }
 
             // populate rule validations
-            result.TaskExecutionValidationIssues = _context.ExecutionResult.TaskExecutionValidationIssues;
+            //result.TaskExecutionValidationIssues = _context.ExecutionResult.TaskExecutionValidationIssues;
         }
 
         return result;
     }
+
+    private void TriggerEvents(string taskName)
+    {
+        //if (_loading)
+        //{
+        //    OnLoad?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
+        //    _loading = false;
+        //}
+
+        //if (_saving)
+        //{
+        //    OnSave?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
+        //    _saving = false;
+        //}
+    }
+
+    private bool CanContinueExecution(TaskExecutionResult result)
+    {
+        return result.ResultState != ResultStateEnum.Fail && result.FlowState == FlowStateEnum.Continue;
+    }
+
 
     private void LogException(Exception exc)
     {
@@ -230,33 +238,5 @@ internal partial class InterceptorFlowRunEngine
         return true;
     }
 
-    private FlowContext GetTaskExecutionContextFromHistory(string refId, string taskName, int callIndex)
-    {
-        var records = _contextHistory;
-
-        for (int i = 0; i < records.Count; i++)
-        {
-            //if (records[i].CurrentTask == taskName && callIndex >= i)
-            if (records[i].CurrentTask == taskName)
-            {
-                var startPosition = i;
-
-                // iterate to last task with the same name
-                while ((startPosition + 1) < records.Count)
-                {
-                    startPosition++;
-
-                    if (records[startPosition].CurrentTask != taskName)
-                    {
-                        startPosition--;
-                        break;
-                    }
-                }
-
-                return records[startPosition];
-            }
-        }
-
-        return null;
-    }
+    
 }

@@ -25,11 +25,11 @@ public class SampleStoringFlow : FlowBase
 
     public override async Task Execute()
     {
-        await Call(async() => await Load());
+        await CallAsync(async() => await Load());
 
-        await Call(async () => await Store(ModelInt, ModelString));
+        await CallAsync(async () => await Store(ModelInt, ModelString));
 
-        var json = await Call(async () => await Read(Id));
+        var json = await CallAsync(async () => await Read(Id));
 
         var readRecord = JsonSerializer.Deserialize<(string id, int? key, string name)>(json);
 
