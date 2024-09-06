@@ -27,7 +27,6 @@ public class SampleFlow : FlowBase
 
         // Inconsistent:
         // Func<> delegate Init executed on _flowProxy
-        await CallAsync(async () => await Init());
         await CallAsync(Init);
 
         if (ModelInt == 33 && ModelString == "test")
@@ -42,12 +41,13 @@ public class SampleFlow : FlowBase
 
         }
 
-        //var json = await Call(async () => await Read(_id));
-
-        if (FlowParams["flag"] == "stop")
-        {
-            throw new FlowStopException();
-        }
+        Call(() => 
+        { 
+            if (FlowParams["flag"] == "stop")
+            {
+                throw new FlowStopException();
+            }
+        });
     }
 
     public virtual async Task MyMethod()

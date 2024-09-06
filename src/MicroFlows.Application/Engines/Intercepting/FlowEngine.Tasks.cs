@@ -116,6 +116,7 @@ internal partial class FlowEngine
                 result.ResultState = ResultStateEnum.Fail;
                 result.ExceptionMessage = exc.Message;
                 result.ExceptionStackTrace = exc.StackTrace;
+                result.ExceptionType = exc.GetType().Name;
             }
         }
         catch (TargetInvocationException exc)
@@ -128,7 +129,8 @@ internal partial class FlowEngine
                 result.ResultState = ResultStateEnum.Success;
                 result.FlowState = FlowStateEnum.Stop;
                 result.ExceptionMessage = innerExc.Message;
-                result.ExceptionStackTrace = exc.StackTrace;
+                result.ExceptionStackTrace = innerExc.StackTrace;
+                result.ExceptionType = innerExc.GetType().Name;
             }
             else
             {
@@ -141,6 +143,7 @@ internal partial class FlowEngine
             result.FlowState = FlowStateEnum.Stop;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
+            result.ExceptionType = exc.GetType().Name;
             _logger.LogInformation(exc, $"Flow '{_runningFlowType}' stopped");
         }
         catch (FlowFailedException exc)
@@ -150,6 +153,7 @@ internal partial class FlowEngine
             result.FlowState = FlowStateEnum.Stop;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
+            result.ExceptionType = exc.GetType().Name;
             LogException(exc);
         }
         catch (Exception exc)
@@ -158,6 +162,7 @@ internal partial class FlowEngine
             result.ResultState = ResultStateEnum.Fail;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
+            result.ExceptionType = exc.GetType().Name;
             LogException(exc);
         }
         finally

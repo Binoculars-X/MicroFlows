@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace MicroFlows.Application.Exceptions;
-public class FlowStopException : Exception
+
+internal class FlowStopException : Exception
 {
     public FlowStopException() : base()
     {

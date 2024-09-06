@@ -18,6 +18,12 @@ public abstract class FlowBase : IFlow
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
+
+    public virtual void Call(Action action)
+    {
+        action();
+    }
+
     public virtual async Task CallAsync(Func<Task> action)
     {
         await action();
