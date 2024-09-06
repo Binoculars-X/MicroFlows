@@ -9,5 +9,6 @@ public interface IFlowRepository
 {
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
     Task<List<FlowContext>> GetFlowHistory(string refId);
+    Task<FlowStoreModel> GetFlowModel(string refId);
     Task SaveContextHistory(List<FlowContext> contextHistory);
 }

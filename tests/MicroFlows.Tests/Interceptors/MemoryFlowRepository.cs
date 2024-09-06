@@ -10,7 +10,7 @@ using MicroFlows.Application.Helpers;
 namespace MicroFlows.Tests.Interceptors;
 internal class MemoryFlowRepository : IFlowRepository
 {
-    Dictionary<string, List<FlowContext>> _contextDictHistory = [];
+    Dictionary<string, FlowStoreModel> _contextDictHistory = [];
 
     public async Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
     {
@@ -18,11 +18,23 @@ internal class MemoryFlowRepository : IFlowRepository
         ctx.Model.ImportFrom(flow);
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
-        _contextDictHistory[ctx.RefId] = [ctx];
+
+        var flowModel = new FlowStoreModel()
+        {
+            FlowTypeName = flow.GetType().Name,
+            ContextHistory = [ctx]
+        };
+
+        _contextDictHistory[ctx.RefId] = flowModel;
         return ctx;
     }
 
     public async Task<List<FlowContext>> GetFlowHistory(string refId)
+    {
+        return _contextDictHistory[refId].ContextHistory;
+    }
+
+    public async Task<FlowStoreModel> GetFlowModel(string refId)
     {
         return _contextDictHistory[refId];
     }
@@ -30,6 +42,6 @@ internal class MemoryFlowRepository : IFlowRepository
     public async Task SaveContextHistory(List<FlowContext> contextHistory)
     {
         var id = contextHistory.First().RefId;
-        _contextDictHistory[id] = contextHistory;
+        _contextDictHistory[id].ContextHistory = contextHistory;
     }
 }

@@ -56,6 +56,37 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
         return await ExecuteFlow(type, flowParams);
     }
 
+    /// <summary>
+    /// Flow execution steps:
+    /// 1. Create _targetFlow
+    /// 2. Create _flowProxy
+    /// 3. Create _context
+    /// 4. Invoke [Flow] method of _flowProxy using reflection
+    /// 5. All virtual Call methods are intercepted, but other calls proceeded to _targetFlow:
+    ///   - ProcessCallTaskProxy gets model snapshot from _context and sets to _targetFlow
+    ///   - then executes ProcessCallTask supplying a delegate that invokes the Call method on _targetFlow
+    ///     - ProcessCallTask checks if it is in Skip Mode:
+    ///       - In Skip Mode it reads corresponding to the current step Context and updates _flowProxy model from it
+    ///       - Returns without execution of the supplied delegate
+    ///     - In Normal Mode ProcessCallTask imports _flowProxy model to _context 
+    ///     - Executes ExecuteTask supplying the delegate
+    ///       - ExecuteTask invokes the supplied delegate (Call method implemented in FlowBase)
+    ///         - FlowBase Call method triggered with another delegate - an argument of the Call method
+    ///         - Call method invokes the argument delegate, which is invoked in _flowProxy, catches exceptions
+    ///           - _flowProxy methods change _flowProxy Model !!! 
+    ///           *** All Model changes always happen on _flowProxy, and never on _targetFlow ***
+    ///     - ProcessCallTask checks result
+    ///       - If no failure it imports _flowProxy Model to _context Model
+    ///     - Saves Context history and call stack
+    ///     - throws FlowStopException if the flow stopped
+    /// 6. Continues execution of [Flow] method, that can trigger interceptors by Call methods, then step 5. repeated
+    /// 7. Await [Flow] method finish and catch exceptions
+    /// 8. Updates flow _context state
+    /// 9. Saves flow _context
+    /// </summary>
+    /// <param name="flowType"></param>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
     {
         // construct flow
