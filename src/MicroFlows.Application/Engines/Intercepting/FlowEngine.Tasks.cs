@@ -16,7 +16,7 @@ using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.Application.Engines.Interceptors;
-internal partial class InterceptorFlowRunEngine
+internal partial class FlowEngine
 {
     private async Task ProcessCallTask(string taskName, Func<Task> action)
     {
@@ -50,21 +50,22 @@ internal partial class InterceptorFlowRunEngine
 
             if (result.ResultState != ResultStateEnum.Fail)
             {
-                // ToDo: we should copy model to context and sotre it 
-                if (taskName.Contains("<Flow>b__"))
-                {
-                    // delegate
-                    _context.Model.ImportFrom(_flowProxy);
-                }
-                else
-                {
-                    // virtual method
-                    _context.Model.ImportFrom(_flow);
-                }
+                // ToDo: we should copy model to context and sttre it 
+                _context.Model.ImportFrom(_flowProxy);
+                //if (taskName.Contains("_Anonymus"))
+                //{
+                //    // anonimous delegate
+                //}
+                //else
+                //{
+                //    // virtual method
+                //    _context.Model.ImportFrom(_targetFlow);
+                //    _context.Model.ImportFrom(_flowProxy);
+                //}
             }
 
             // After Task Events
-            TriggerEvents(taskName);
+            //TriggerEvents(taskName);
 
             var continueExecution = CanContinueExecution(result);
 

@@ -30,7 +30,7 @@ public static class MicroFlowsConfigurationServices
     {
         //services.AddSingleton<IProxymaProvider, PullProxyFactory>();
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddTransient<IFlowRunEngine, InterceptorFlowRunEngine>();
+        services.AddTransient<IFlowRunEngine, FlowEngine>();
         return services;
     }
 

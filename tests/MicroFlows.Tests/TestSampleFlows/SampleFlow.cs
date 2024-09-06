@@ -14,24 +14,6 @@ public class SampleFlow : FlowBase
     public string? ModelString { get; set; }
     public string? Id { get; set; }
 
-
-    // not model?
-
-    public override async Task Execute()
-    {
-        //await MyMethod();
-        //await Call(async () => await Init());
-
-        //await Call(async () => await Update(ModelInt, ModelString));
-
-        //var json = await Call(async () => await Read(Id));
-
-        //if (FlowParams["flag"] == "stop")
-        //{
-        //    throw new FlowStopException();
-        //}
-    }
-
     public async Task Flow()
     {
         // Inconsistent: So don't support virtual methods
@@ -46,7 +28,7 @@ public class SampleFlow : FlowBase
         // Inconsistent:
         // Func<> delegate Init executed on _flowProxy
         await CallAsync(async () => await Init());
-
+        await CallAsync(Init);
 
         if (ModelInt == 33 && ModelString == "test")
         {

@@ -23,21 +23,21 @@ public class SampleStoringFlow : FlowBase
         _storage = storage;
     }
 
-    public override async Task Execute()
-    {
-        await CallAsync(async() => await Load());
+    //public override async Task Execute()
+    //{
+    //    await CallAsync(async() => await Load());
 
-        await CallAsync(async () => await Store(ModelInt, ModelString));
+    //    await CallAsync(async () => await Store(ModelInt, ModelString));
 
-        var json = await CallAsync(async () => await Read(Id));
+    //    var json = await CallAsync(async () => await Read(Id));
 
-        var readRecord = JsonSerializer.Deserialize<(string id, int? key, string name)>(json);
+    //    var readRecord = JsonSerializer.Deserialize<(string id, int? key, string name)>(json);
 
-        if (readRecord.id != Id || readRecord.key != ModelInt || readRecord.name != ModelString)
-        {
-            throw new Exception("Saved values differ from model");
-        }
-    }
+    //    if (readRecord.id != Id || readRecord.key != ModelInt || readRecord.name != ModelString)
+    //    {
+    //        throw new Exception("Saved values differ from model");
+    //    }
+    //}
 
     // ToDo: add Signals
 

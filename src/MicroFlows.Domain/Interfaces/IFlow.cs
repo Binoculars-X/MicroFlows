@@ -6,5 +6,5 @@ using System.Threading.Tasks;
 namespace MicroFlows;
 public interface IFlow
 {
-    Task Execute();
+    //Task Execute();
 }

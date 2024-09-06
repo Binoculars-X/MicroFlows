@@ -33,6 +33,7 @@ public abstract class TestBase
                 services.AddMicroFlows(configuration)
                     .RegisterFlow<SampleFlow>()
                     .RegisterFlow<SampleStoringFlow>()
+                    .RegisterFlow<SampleWaitingFlow>()
                     ;
                 
             })

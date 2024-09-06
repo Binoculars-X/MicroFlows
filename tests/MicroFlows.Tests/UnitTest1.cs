@@ -8,11 +8,34 @@ using MicroFlows.Tests.TestSampleFlows;
 using Microsoft.Extensions.Options;
 using System.Reflection;
 using MicroFlows.Application.Engines.Interceptors;
+using Microsoft.CodeAnalysis;
 
 namespace MicroFlows.Tests;
 
 public class UnitTest1 : IAsyncInterceptor
 {
+    public virtual async Task CallAsync(Func<Task> action)
+    {
+        await action();
+    }
+
+    private async Task Update(int? key, string? name)
+    {
+    }
+
+    [Fact]
+    public async Task CallAsyncTest()
+    {
+        await CallAsync(async () => await Update(1, ""));
+    }
+
+
+    [Fact]
+    public void CodeAnalysisTest()
+    {
+        //Compilation c = Compilation.;
+    }
+
     public void InterceptAsynchronous(IInvocation invocation)
     {
         invocation.ReturnValue = InternalInterceptAsynchronous(invocation);

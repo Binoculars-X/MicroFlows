@@ -18,26 +18,28 @@ using MicroFlows.Domain.Enums;
 namespace MicroFlows.Application.Engines.Interceptors;
     
 // InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
-internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEngine
+internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
 {
-    private readonly ILogger<InterceptorFlowRunEngine> _logger;
+    private readonly ILogger<FlowEngine> _logger;
     private readonly IServiceProvider _services;
     //private readonly IProxymaProvider _proxyProvider;
     private readonly IProxyGenerator _proxyGenerator;
     private readonly IFlowRepository _flowRepository;
 
     // running flow state
-    private FlowBase? _flow;
+    private FlowBase? _targetFlow;
     private FlowBase? _flowProxy;
     private Type? _runningFlowType;
     private string[] _systemTasks = ["Begin", "BeginAsync", "EndAsync"];
     private FlowContext _context;
+    private string _callingContext;
     private int _callIndex;
     private List<string> _executionCallStack;
     private List<FlowContext> _contextHistory;
     private FlowParams? _flowParams;
 
-    public InterceptorFlowRunEngine(ILogger<InterceptorFlowRunEngine> logger, 
+    public const string FLOW_METHOD = "Flow";
+    public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
         //IProxymaProvider proxyProvider,
         IProxyGenerator proxyGenerator,
@@ -90,11 +92,17 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
     public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
     {
         // construct flow
-        _flow = _services.GetService(flowType) as FlowBase;
+        _targetFlow = _services.GetService(flowType) as FlowBase;
+
+        if (_targetFlow == null)
+        {
+            throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
+        }
+
         _runningFlowType = flowType;
         _flowParams = flowParams ?? new FlowParams();
 
-        var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_flow));
+        var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
         var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);
 
         try
@@ -105,7 +113,7 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
             
             _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType, 
                 constructorArguments: flowParameters,
-                target: _flow,
+                target: _targetFlow,
                 options: options,
                 interceptors: [this]) as FlowBase;
         }
@@ -120,7 +128,7 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
         if (_flowParams.RefId == null)
         {
             // prepare context
-            _context = await _flowRepository.CreateFlowContext(_flow, _flowParams);
+            _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
             //flowRunId = _context.FlowRunId;
             refId = _context.RefId;
         }
@@ -146,17 +154,13 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
 
         _executionCallStack = new List<string>();
         _callIndex = 0;
-        //_flowProxy.SetTaskExecutor(this);
 
         // execute flow
         try
         {
-            //await _flowProxy.Execute();
-            var method = _flowProxy.GetType().GetMethod("Flow");
+            var method = GetFlowActivationMethod();
             var task = (Task)method.Invoke(_flowProxy, null);
             await task;
-            //var task = (Task)method.Invoke(_flowProxy, null);
-            //task.Wait();
 
             // flow executed completely
             _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
@@ -174,7 +178,6 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
                 _context.ExecutionResult.ExceptionMessage = innerExc.Message;
                 _context.ExecutionResult.ExceptionStackTrace = innerExc.StackTrace;
                 _context.ExecutionResult.ExceptionType = innerExc.GetType().Name;
-                //_context.ExecutionResult.ExecutionException = exc;
             }
             else
             {
@@ -188,7 +191,6 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
-            //_context.ExecutionResult.ExecutionException = exc;
             LogException(exc);
         }
         catch (FlowFailedException exc)
@@ -198,7 +200,6 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
-            //_context.ExecutionResult.ExecutionException = exc;
             LogException(exc);
         }
         catch (Exception exc)
@@ -207,13 +208,13 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
-            //_context.ExecutionResult.ExecutionException = exc;
             LogException(exc);
         }
         finally
         {
-                // save flow if success, stop, failure
-            await AddContextToHistory(_context);
+            // save flow if success, stop, failure
+            // ToDo: check why we save it here if it is already saved in ProcessCallTask
+            //await AddContextToHistory(_context);
 
             if (_flowParams.FlowOptions.NoStorage == false)
             {
@@ -225,6 +226,12 @@ internal partial class InterceptorFlowRunEngine : IAsyncInterceptor, IFlowRunEng
         }
 
         return _context;
+    }
+
+    private MethodInfo GetFlowActivationMethod()
+    {
+        // ToDo: may be add another way to define Flow method, by attributes or expression
+        return _flowProxy.GetType().GetMethod(FLOW_METHOD);
     }
 
     public Task<FlowContext> ResumeFlow(string flowId)

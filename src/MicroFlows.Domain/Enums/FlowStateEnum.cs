@@ -9,7 +9,8 @@ public enum FlowStateEnum
 {
     Stop = 0,
     Continue,
-    Finished
+    Finished,
+    Start
 }
 
 public enum ResultStateEnum

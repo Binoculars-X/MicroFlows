@@ -17,7 +17,7 @@ using MicroFlows.Application.Exceptions;
 namespace MicroFlows.Application.Engines.Interceptors;
     
 // InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
-internal partial class InterceptorFlowRunEngine
+internal partial class FlowEngine
 {
     public async Task<FlowContext> PreloadContextHistory(string refId)
     {

@@ -8,7 +8,13 @@ using System.Linq;
 namespace MicroFlows.Application.Engines.Interceptors;
 public class FreezableProxyGenerationHook : IProxyGenerationHook
 {
-    private readonly string[] _systemMethods = ["Call", "CallAsync", "ExecuteActivityAsync", "WaitForConditionAsync"];
+    private readonly string[] _systemMethods = [
+        "Call", 
+        "CallAsync", 
+        "ExecuteActivity",
+        "ExecuteActivityAsync",
+        "WaitForCondition",
+        "WaitForConditionAsync"];
     private IFlow _flow;
 
     public FreezableProxyGenerationHook(IFlow flow)

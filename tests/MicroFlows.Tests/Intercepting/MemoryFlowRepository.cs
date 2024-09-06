@@ -18,6 +18,7 @@ internal class MemoryFlowRepository : IFlowRepository
         ctx.Model.ImportFrom(flow);
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
+        ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
 
         var flowModel = new FlowStoreModel()
         {

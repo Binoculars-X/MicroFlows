@@ -13,7 +13,7 @@ using System.Linq;
 using MicroFlows.Domain.Models;
 
 namespace MicroFlows.Application.Engines.Interceptors;
-internal partial class InterceptorFlowRunEngine
+internal partial class FlowEngine
 {
     public void InterceptAsynchronous(IInvocation invocation)
     {
@@ -28,15 +28,28 @@ internal partial class InterceptorFlowRunEngine
 
     public void InterceptSynchronous(IInvocation invocation)
     {
-        if (!_systemTasks.Contains(invocation.Method.Name) && (invocation.Method.DeclaringType != _runningFlowType
-            || !invocation.Method.IsPublic || !invocation.Method.IsVirtual))
+        if ((invocation.Method.DeclaringType == _runningFlowType || invocation.Method.DeclaringType == typeof(FlowBase))
+            && invocation.Method.IsPublic && invocation.Method.IsVirtual)
         {
-            invocation.Proceed();
+            //_loading = invocation.Method.GetCustomAttribute<LoadTaskAttribute>() != null;
+            //_saving = invocation.Method.GetCustomAttribute<SaveTaskAttribute>() != null;
+            _callingContext = invocation.Method.Name;
+            Task.Run(() => ProcessCallTaskProxy(invocation.Method, invocation.Arguments)).GetAwaiter().GetResult();
         }
         else
         {
-            Task.Run(() => ProcessCallTaskProxy(invocation.Method, invocation.Arguments)).GetAwaiter().GetResult();
+            invocation.Proceed();
         }
+
+        //if (!_systemTasks.Contains(invocation.Method.Name) && (invocation.Method.DeclaringType != _runningFlowType
+        //    || !invocation.Method.IsPublic || !invocation.Method.IsVirtual))
+        //{
+        //    invocation.Proceed();
+        //}
+        //else
+        //{
+        //    Task.Run(() => ProcessCallTaskProxy(invocation.Method, invocation.Arguments)).GetAwaiter().GetResult();
+        //}
     }
 
     private async Task InternalInterceptAsynchronous(IInvocation invocation)
@@ -46,6 +59,7 @@ internal partial class InterceptorFlowRunEngine
         {
             //_loading = invocation.Method.GetCustomAttribute<LoadTaskAttribute>() != null;
             //_saving = invocation.Method.GetCustomAttribute<SaveTaskAttribute>() != null;
+            _callingContext = invocation.Method.Name;
             await ProcessCallTaskProxy(invocation.Method, invocation.Arguments);
         }
         else
@@ -76,31 +90,39 @@ internal partial class InterceptorFlowRunEngine
 
     private async Task ProcessCallTaskProxy(MethodInfo method, object[] arguments)
     {
-        string suffix = "";
+        string taskName = method.Name;
 
         if (arguments != null && arguments.Any() && arguments[0] is Func<Task>)
-        { 
-            suffix = (arguments[0] as Func<Task>).Method.Name;
+        {
+            var parameterMethodName = (arguments[0] as Func<Task>).Method.Name;
+            
+            if (parameterMethodName.Contains(">b__"))
+            {
+                taskName += "_Anonymus";
+            }
+            else
+            {
+                taskName += $"_{parameterMethodName}";
+            }
         }
 
-        string taskName = method.Name + suffix;
         var model = _context.Model;
         var executionParams = _context.Params;
-        _flow.SetModel(model);
-        _flow.SetParams(executionParams);
+        _targetFlow.SetModel(model);
+        _targetFlow.SetParams(executionParams);
         //var method = _flow.GetType().GetMethod(taskName);
 
         await ProcessCallTask(taskName, async () =>
         {
             if (TypeHelper.IsAsyncMethod(method))
             {
-                var task = method.Invoke(_flow, arguments) as Task;
+                var task = method.Invoke(_targetFlow, arguments) as Task;
                 await task;
                 //task.Wait();
             }
             else
             {
-                method.Invoke(_flow, arguments);
+                method.Invoke(_targetFlow, arguments);
             }
         });
     }
