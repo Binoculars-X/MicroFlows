@@ -7,6 +7,7 @@ using MicroFlows.Domain.Interfaces;
 using MicroFlows.Application.Engines;
 using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
+using MicroFlows.Application;
 
 namespace MicroFlows;
 
@@ -30,7 +31,8 @@ public static class MicroFlowsConfigurationServices
     {
         //services.AddSingleton<IProxymaProvider, PullProxyFactory>();
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddTransient<IFlowRunEngine, FlowEngine>();
+        services.AddSingleton<IFlowsProvider, FlowsProvider>();
+        services.AddTransient<IFlowEngine, FlowEngine>();
         return services;
     }
 

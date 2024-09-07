@@ -18,7 +18,7 @@ using MicroFlows.Domain.Enums;
 namespace MicroFlows.Application.Engines.Interceptors;
     
 // InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
-internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
+internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
     private readonly ILogger<FlowEngine> _logger;
     private readonly IServiceProvider _services;

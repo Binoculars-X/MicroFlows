@@ -12,7 +12,7 @@ internal class MemoryFlowRepository : IFlowRepository
 {
     internal Dictionary<string, FlowStoreModel> _contextDictHistory = [];
 
-    public async Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
+    public Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
     {
         var ctx = new FlowContext();
         ctx.Model.ImportFrom(flow);
@@ -22,27 +22,30 @@ internal class MemoryFlowRepository : IFlowRepository
 
         var flowModel = new FlowStoreModel()
         {
-            FlowTypeName = flow.GetType().Name,
-            ContextHistory = [ctx]
+            RefId = ctx.RefId,
+            ExternalId = flowParams.ExternalId,
+            FlowTypeName = flow.GetType().FullName!,
+            ContextHistory = [ctx],
         };
 
         _contextDictHistory[ctx.RefId] = flowModel;
-        return ctx;
+        return Task.FromResult(ctx);
     }
 
-    public async Task<List<FlowContext>> GetFlowHistory(string refId)
+    public Task<List<FlowContext>> GetFlowHistory(string refId)
     {
-        return _contextDictHistory[refId].ContextHistory;
+        return Task.FromResult(_contextDictHistory[refId].ContextHistory);
     }
 
-    public async Task<FlowStoreModel> GetFlowModel(string refId)
+    public Task<FlowStoreModel> GetFlowModel(string refId)
     {
-        return _contextDictHistory[refId];
+        return Task.FromResult(_contextDictHistory[refId]);
     }
 
-    public async Task SaveContextHistory(List<FlowContext> contextHistory)
+    public Task SaveContextHistory(List<FlowContext> contextHistory)
     {
         var id = contextHistory.First().RefId;
         _contextDictHistory[id].ContextHistory = contextHistory;
+        return Task.CompletedTask;
     }
 }

@@ -7,9 +7,12 @@ public class FlowParams : Interfaces.IFlowParams
 {
     public Dictionary<string, string> DynamicInput { get; set; } = [];
 
-    public string RefId { get; set; }
+    public string RefId { get; set; } = null!;
+    public string ExternalId { get; set; } = null!;
     public FlowOptions FlowOptions { get; private set; } = new();
-    public string ItemId { get; set; }
+
+    // ToDo: do we need all them Item id and key?
+    public string ItemId { get; set; } = null!;
 
     public bool ItemKeyAboveZero
     {
@@ -31,11 +34,11 @@ public class FlowParams : Interfaces.IFlowParams
         }
     }
 
-    public string ParentItemId { get; set; }
-    public string AssignedUser { get; set; }
-    public string AssignedTeam { get; set; }
+    public string ParentItemId { get; set; } = null!;
+    public string AssignedUser { get; set; } = null!;
+    public string AssignedTeam { get; set; } = null!;
     //public FlowReferenceOperation Operation { get; set; }
-    public string Tag { get; set; }
+    public string Tag { get; set; } = null!;
 
     public string this[string index]
     {
@@ -50,7 +53,7 @@ public class FlowParams : Interfaces.IFlowParams
         }
     }
 
-    public string GetParam(string key)
+    public string? GetParam(string key)
     {
         if (DynamicInput.ContainsKey(key))
         {
