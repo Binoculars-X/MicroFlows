@@ -164,5 +164,29 @@ public class FlowEngineTests : TestBase
         Assert.Null(flow.ContextHistory[3].CurrentTask);
         Assert.Equal("33", flow.ContextHistory[3].Model.Values["$.ModelInt"]);
         Assert.Equal("testtest", flow.ContextHistory[3].Model.Values["$.ModelString"]);
+
+        // resume
+        var ps = new FlowParams() { RefId = ctx.RefId };
+        await _engine.ExecuteFlow(typeof(SampleExceptionFlow), ps);
+        flow = await _repo.GetFlowModel(ctx.RefId);
+
+        // should save failed context again
+        Assert.Equal(5, flow.ContextHistory.Count);
+
+        var context = flow.ContextHistory[3];
+        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
+        Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
+        Assert.Null(context.CurrentTask);
+        Assert.Equal("33", context.Model.Values["$.ModelInt"]);
+        Assert.Equal("testtest", context.Model.Values["$.ModelString"]);
+
+        context = flow.ContextHistory[4];
+        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
+        Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
+        Assert.Null(context.CurrentTask);
+        Assert.Equal("33", context.Model.Values["$.ModelInt"]);
+        Assert.Equal("testtest", context.Model.Values["$.ModelString"]);
     }
 }

@@ -109,7 +109,9 @@ internal partial class FlowEngine
         var model = _context.Model;
         var executionParams = _context.Params;
         _targetFlow.SetModel(model);
-        _targetFlow.SetParams(executionParams);
+
+        // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
+        //_targetFlow.SetParams(executionParams);
         //var method = _flow.GetType().GetMethod(taskName);
 
         await ProcessCallTask(taskName, async () =>

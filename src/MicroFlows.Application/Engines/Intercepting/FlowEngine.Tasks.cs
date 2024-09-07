@@ -25,7 +25,6 @@ internal partial class FlowEngine
         _executionCallStack.Add(taskNameId);
 
         // check if we have context for that step in the storage
-        //
         FlowContext currentTaskContext = GetTaskExecutionContextFromHistory(_context.RefId, taskNameId, _callIndex) ?? _context;
         // source context must not be changed, because it is in the cache
         currentTaskContext = TypeHelper.CloneObject(currentTaskContext);
@@ -37,7 +36,9 @@ internal partial class FlowEngine
         {
             // execute skip task - supply model that was on this step
             _flowProxy.SetModel(currentTaskContext.Model);
-            _flowProxy.SetParams(currentTaskContext.Params);
+
+            // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
+            //_flowProxy.SetParams(currentTaskContext.Params);
         }
         else
         {

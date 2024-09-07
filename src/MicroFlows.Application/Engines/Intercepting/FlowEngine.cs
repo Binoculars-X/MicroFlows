@@ -138,6 +138,8 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
             _context = (await _flowRepository.GetFlowHistory(refId)).First();
         }
 
+        // ToDo: I guess it is enough to set parameters only once at the moment where we start flow, here
+        _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
         
 
