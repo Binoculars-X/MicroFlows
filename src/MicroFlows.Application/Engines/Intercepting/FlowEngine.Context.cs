@@ -37,7 +37,7 @@ internal partial class FlowEngine
         _contextHistory.Add(copy);
     }
 
-    private FlowContext GetTaskExecutionContextFromHistory(string refId, string taskName, int callIndex)
+    private FlowContext? TryGetTaskExecutionContextFromHistory(string refId, string taskName, int callIndex)
     {
         var records = _contextHistory;
 

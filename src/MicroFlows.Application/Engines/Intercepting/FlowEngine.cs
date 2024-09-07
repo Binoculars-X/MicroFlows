@@ -207,6 +207,12 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
             // if exception happened inside Flow method body we should save it
             await SaveFailedContext();
         }
+        catch (NonDeterministicFlowException exc)
+        {
+            // Fatal error should be bubled up
+            LogException(exc);
+            throw;
+        }
         catch (Exception exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;

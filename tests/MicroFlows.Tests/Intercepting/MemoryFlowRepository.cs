@@ -10,7 +10,7 @@ using MicroFlows.Application.Helpers;
 namespace MicroFlows.Tests.Interceptors;
 internal class MemoryFlowRepository : IFlowRepository
 {
-    Dictionary<string, FlowStoreModel> _contextDictHistory = [];
+    internal Dictionary<string, FlowStoreModel> _contextDictHistory = [];
 
     public async Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
     {

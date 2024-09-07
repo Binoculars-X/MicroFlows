@@ -108,6 +108,58 @@ public class FlowEngineTests : TestBase
     }
 
     [Fact]
+    public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode()
+    {
+        var ctx = await _engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
+        Assert.Equal(3, SampleLoggingFlow.Log.Count);
+
+        // let's corrupt flow history
+        var flow = _repo._contextDictHistory[ctx.RefId];
+
+        // we change CallAsync_GenerateOrderId to CallAsync_Anonymus
+        Assert.Equal("CallAsync_GenerateOrderId:1", flow.ContextHistory[1].CurrentTask);
+        flow.ContextHistory[1].CurrentTask = "CallAsync_Anonymus:1";
+        Assert.Equal("CallAsync_Anonymus:1", flow.ContextHistory[1].CurrentTask);
+
+        // resume and catch exception
+        SampleLoggingFlow.Log.Clear();
+        var ps = new FlowParams() { RefId = ctx.RefId };
+
+        var exc = await Assert.ThrowsAsync<NonDeterministicFlowException>(async () => 
+            await _engine.ExecuteFlow(typeof(SampleLoggingFlow), ps));
+
+        Assert.Contains(ctx.RefId, exc.Message);
+        Assert.Contains("CallAsync_GenerateOrderId:1", exc.Message);
+        Assert.Empty(SampleLoggingFlow.Log);
+    }
+
+    [Fact]
+    public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode_LastStep()
+    {
+        var ctx = await _engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
+        Assert.Equal(3, SampleLoggingFlow.Log.Count);
+
+        // let's corrupt flow history
+        var flow = _repo._contextDictHistory[ctx.RefId];
+
+        // we change CallAsync_GenerateOrderId to CallAsync_Anonymus
+        Assert.Equal("WaitForCondition:4", flow.ContextHistory[4].CurrentTask);
+        flow.ContextHistory[4].CurrentTask = "CallAsync_Anonymus:1";
+        Assert.Equal("CallAsync_Anonymus:1", flow.ContextHistory[4].CurrentTask);
+
+        // resume and catch exception
+        SampleLoggingFlow.Log.Clear();
+        var ps = new FlowParams() { RefId = ctx.RefId };
+
+        var exc = await Assert.ThrowsAsync<NonDeterministicFlowException>(async () =>
+            await _engine.ExecuteFlow(typeof(SampleLoggingFlow), ps));
+
+        Assert.Contains(ctx.RefId, exc.Message);
+        Assert.Contains("WaitForCondition:4", exc.Message);
+        Assert.Empty(SampleLoggingFlow.Log);
+    }
+
+    [Fact]
     public async Task SampleExceptionInActionFlow_Should_SaveFailedStep()
     {
         var ctx = await _engine.ExecuteFlow(typeof(SampleExceptionInActionFlow), null);

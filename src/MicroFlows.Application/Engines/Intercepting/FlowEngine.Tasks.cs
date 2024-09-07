@@ -20,22 +20,45 @@ internal partial class FlowEngine
 {
     private async Task ProcessCallTask(string taskName, Func<Task> action)
     {
+        bool isNotForSkipping = false;
         _callIndex++;
         string taskNameId = $"{taskName}:{_callIndex}";
         _executionCallStack.Add(taskNameId);
 
         // check if we have context for that step in the storage
-        FlowContext currentTaskContext = GetTaskExecutionContextFromHistory(_context.RefId, taskNameId, _callIndex) ?? _context;
-        // source context must not be changed, because it is in the cache
-        currentTaskContext = TypeHelper.CloneObject(currentTaskContext);
-        _context = currentTaskContext;
+        FlowContext historicTaskContext = TryGetTaskExecutionContextFromHistory(_context.RefId, taskNameId, _callIndex);
 
-        bool isSkipMode = CompareExecutionCallStacksIdentical();
+        if (historicTaskContext == null)
+        {
+            // if not the last in history and not found
+            if (_callIndex < _contextHistory.Count)
+            {
+                // ToDo: if task not found in not empty _contextHistory this is determinism error
+                throw new NonDeterministicFlowException(
+                    $"Flow '{_context.RefId}' execution history doesn't contain step '{taskNameId}'");
+            }
+
+            historicTaskContext = _context;
+            isNotForSkipping = true;
+        }
+
+        // source context must not be changed, because it is in the cache
+        historicTaskContext = TypeHelper.CloneObject(historicTaskContext);
+        _context = historicTaskContext;
+
+        bool isSkipMode = CompareExecutionCallStacksIdentical(taskNameId);
+
+        if (isNotForSkipping && isSkipMode)
+        {
+            // ToDo: if task not found this is determinism error
+            throw new NonDeterministicFlowException(
+                $"Flow '{_context.RefId}' execution history doesn't contain step '{taskNameId}'");
+        }
 
         if (isSkipMode)
         {
             // execute skip task - supply model that was on this step
-            _flowProxy.SetModel(currentTaskContext.Model);
+            _flowProxy.SetModel(historicTaskContext.Model);
 
             // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
             //_flowProxy.SetParams(currentTaskContext.Params);
@@ -230,10 +253,16 @@ internal partial class FlowEngine
         }
     }
 
-    private bool CompareExecutionCallStacksIdentical()
+    private bool CompareExecutionCallStacksIdentical(string taskNameId)
     {
         var left = _context.CallStack.Distinct().ToList();
         var right = _executionCallStack.Distinct().ToList();
+
+        //if (left.Count < right.Count)
+        //{
+        //    throw new NonDeterministicFlowException(
+        //        $"Flow '{_context.RefId}' execution history doesn't contain step '{taskNameId}'");
+        //}
 
         for (int i = 0; i < right.Count(); i++)
         {
