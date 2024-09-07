@@ -1,0 +1,29 @@
+﻿# MicroFlows
+Use MicroFlows to implement Stateful workflows for microservices
+
+**DI registration:**
+
+```
+// program
+...
+    services.AddMicroFlows(configuration)
+                .RegisterFlow<SampleFlow>()
+                .RegisterFlow<SampleStoringFlow>()
+                ;
+...
+
+// constructor
+public void MyService(IFlowsProvider flowsProvider)
+...
+```
+
+**Usage:**
+
+```
+// ToDo: add usage
+```
+
+**Release Notes**
+
+**0.1.7**
+- Initial import from ProCodersPtyLtd/BlazorForms
