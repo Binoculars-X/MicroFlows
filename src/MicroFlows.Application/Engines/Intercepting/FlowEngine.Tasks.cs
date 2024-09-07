@@ -160,6 +160,7 @@ internal partial class FlowEngine
         {
             LogException(exc);
             result.ResultState = ResultStateEnum.Fail;
+            result.FlowState = FlowStateEnum.Stop;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;

@@ -34,6 +34,9 @@ public abstract class TestBase
                     .RegisterFlow<SampleFlow>()
                     .RegisterFlow<SampleStoringFlow>()
                     .RegisterFlow<SampleWaitingFlow>()
+                    .RegisterFlow<SampleLoggingFlow>()
+                    .RegisterFlow<SampleExceptionFlow>()
+                    .RegisterFlow<SampleExceptionInActionFlow>()
                     ;
                 
             })

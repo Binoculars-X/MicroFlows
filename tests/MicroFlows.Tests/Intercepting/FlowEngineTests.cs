@@ -15,36 +15,36 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MicroFlows.Tests.Interceptors;
+
 public class FlowEngineTests : TestBase
 {
+    readonly FlowEngine _engine;
+    readonly MemoryFlowRepository _repo;
+
+    public FlowEngineTests()
+    {
+        _repo = new MemoryFlowRepository();
+
+        _engine = new FlowEngine(new NullLogger<FlowEngine>(),
+            _services,
+            new ProxyGenerator(),
+            _repo);
+    }
+
     [Fact]
     public async Task Engine_Should_ThrowException_ForNotRegisteredFlow()
     {
-        var repo = new MemoryFlowRepository();
-
-        var engine = new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            repo);
-
-        await Assert.ThrowsAsync<FlowValidationException>(async () => await engine.ExecuteFlow(this.GetType(), null));
+        await Assert.ThrowsAsync<FlowValidationException>(async () => await _engine.ExecuteFlow(this.GetType(), null));
     }
 
     [Fact]
     public async Task Test1()
     {
-        var repo = new MemoryFlowRepository();
-
-        var engine = new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            repo);
-
         var ps = new FlowParams();
         ps["flag"] = "stop";
-        var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);
+        var ctx = await _engine.ExecuteFlow(typeof(SampleFlow), ps);
 
-        var flow = await repo.GetFlowModel(ctx.RefId);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(4, flow.ContextHistory.Count);
         Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory.Last().ExecutionResult.FlowState);
         Assert.Equal("FlowStopException", flow.ContextHistory.Last().ExecutionResult.ExceptionType);
@@ -57,21 +57,14 @@ public class FlowEngineTests : TestBase
         // resume
         ps["flag"] = "don't stop";
         ps.RefId = ctx.RefId;
-        var ctx2 = await engine.ExecuteFlow(typeof(SampleFlow), ps);
+        var ctx2 = await _engine.ExecuteFlow(typeof(SampleFlow), ps);
     }
 
     [Fact]
     public async Task Flow_Stops_When_ConditionFalse()
     {
-        var repo = new MemoryFlowRepository();
-
-        var engine = new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            repo);
-
-        var ctx = await engine.ExecuteFlow(typeof(SampleWaitingFlow), null);
-        var flow = await repo.GetFlowModel(ctx.RefId);
+        var ctx = await _engine.ExecuteFlow(typeof(SampleWaitingFlow), null);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
 
         Assert.Equal(4, flow.ContextHistory.Count);
 
@@ -98,5 +91,78 @@ public class FlowEngineTests : TestBase
         Assert.NotNull(flow.ContextHistory[3].Model.Values["$.OrderId"]);
         Assert.Equal("False", flow.ContextHistory[3].Model.Values["$.InvoiceSent"]);
         Assert.NotNull(flow.ContextHistory[3].Model.Values["$.SentOrderId"]);
+    }
+
+    [Fact]
+    public async Task SampleLoggingFlow_Not_Logging_WhenResumed()
+    {         
+        var ctx = await _engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
+
+        Assert.Equal(3, SampleLoggingFlow.Log.Count);
+
+        // resume
+        SampleLoggingFlow.Log.Clear();
+        var ps = new FlowParams() { RefId = ctx.RefId };
+        await _engine.ExecuteFlow(typeof(SampleLoggingFlow), ps);
+        Assert.Empty(SampleLoggingFlow.Log);
+    }
+
+    [Fact]
+    public async Task SampleExceptionInActionFlow_Should_SaveFailedStep()
+    {
+        var ctx = await _engine.ExecuteFlow(typeof(SampleExceptionInActionFlow), null);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+
+        Assert.Equal(3, flow.ContextHistory.Count);
+
+        Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
+        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelInt"]);
+        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelString"]);
+
+        Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
+        Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("33", flow.ContextHistory[1].Model.Values["$.ModelInt"]);
+        Assert.Equal("test", flow.ContextHistory[1].Model.Values["$.ModelString"]);
+
+        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[2].ExecutionResult.ResultState);
+        Assert.Equal("Exception", flow.ContextHistory[2].ExecutionResult.ExceptionType);
+        Assert.Equal("CallAsync_Anonymus:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
+        Assert.Equal("test", flow.ContextHistory[2].Model.Values["$.ModelString"]);
+    }
+
+    [Fact]
+    public async Task SampleExceptionFlow_Should_SaveFailedStep()
+    {
+        var ctx = await _engine.ExecuteFlow(typeof(SampleExceptionFlow), null);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+
+        Assert.Equal(4, flow.ContextHistory.Count);
+
+        Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
+        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelInt"]);
+        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelString"]);
+
+        Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
+        Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("33", flow.ContextHistory[1].Model.Values["$.ModelInt"]);
+        Assert.Equal("test", flow.ContextHistory[1].Model.Values["$.ModelString"]);
+
+        Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[2].ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Success, flow.ContextHistory[2].ExecutionResult.ResultState);
+        Assert.Null(flow.ContextHistory[2].ExecutionResult.ExceptionType);
+        Assert.Equal("CallAsync_Anonymus:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
+        Assert.Equal("testtest", flow.ContextHistory[2].Model.Values["$.ModelString"]);
+
+        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[3].ExecutionResult.ResultState);
+        Assert.Equal("Exception", flow.ContextHistory[3].ExecutionResult.ExceptionType);
+        Assert.Null(flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("33", flow.ContextHistory[3].Model.Values["$.ModelInt"]);
+        Assert.Equal("testtest", flow.ContextHistory[3].Model.Values["$.ModelString"]);
     }
 }

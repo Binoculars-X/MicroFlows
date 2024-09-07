@@ -201,14 +201,21 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
+
+            // if exception happened inside Flow method body we should save it
+            await SaveFailedContext();
         }
         catch (Exception exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
+
+            // if exception happened inside Flow method body we should save it
+            await SaveFailedContext();
         }
         finally
         {
@@ -226,6 +233,12 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowRunEngine
         }
 
         return _context;
+    }
+
+    private async Task SaveFailedContext()
+    {
+        _context.CurrentTask = null;
+        await AddContextToHistory(_context);
     }
 
     private MethodInfo GetFlowActivationMethod()
