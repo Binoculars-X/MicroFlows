@@ -32,8 +32,8 @@ public partial class FlowEngineTests
         Assert.Equal(ctx.RefId, ctx2.RefId);
         flow = await _repo.GetFlowModel(ctx2.RefId);
         Assert.Equal(5, flow.ContextHistory.Count);
-        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
     }
 
     [Fact]

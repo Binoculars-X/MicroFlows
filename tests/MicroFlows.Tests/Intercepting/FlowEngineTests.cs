@@ -113,6 +113,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
         // resume
+        engine = GetEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleLoggingFlow), ps);
@@ -135,6 +136,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[1].CurrentTask);
 
         // resume and catch exception
+        engine = GetEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -162,6 +164,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[4].CurrentTask);
 
         // resume and catch exception
+        engine = GetEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -234,6 +237,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("testtest", flow.ContextHistory[3].Model.Values["$.ModelString"]);
 
         // resume
+        engine = GetEngine();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleExceptionFlow), ps);
         flow = await _repo.GetFlowModel(ctx.RefId);

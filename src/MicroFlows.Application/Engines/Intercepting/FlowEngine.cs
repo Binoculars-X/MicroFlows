@@ -120,8 +120,8 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             //_flowProxy = _proxyProvider.CreateClassProxy(flowType, flowParameters, _flow, options, [this]) as FlowBase;
             //_flowProxy = _proxyGenerator.CreateClassProxyWithTarget(flowType, _flow, options, [this]) as FlowBase;
             // classToProxy: classToProxy, constructorArguments: constructorArguments, target: target, options: options, interceptors: interceptors
-            
-            _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType, 
+
+            _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType,
                 constructorArguments: flowParameters,
                 target: _targetFlow,
                 options: options,
@@ -133,20 +133,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             throw;
         }
 
-        string refId;
-
-        if (_flowParams.RefId == null)
-        {
-            // prepare context
-            _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
-            //flowRunId = _context.FlowRunId;
-            refId = _context.RefId;
-        }
-        else
-        {
-            refId = _flowParams.RefId;
-            _context = (await _flowRepository.GetFlowHistory(refId)).First();
-        }
+        var refId = await FindOrCreateContext();
 
         // ToDo: I guess it is enough to set parameters only once at the moment where we start flow, here
         _targetFlow.SetParams(_flowParams);
@@ -254,6 +241,35 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
 
         return _context;
+    }
+
+    private async Task<string> FindOrCreateContext()
+    {
+        string refId;
+
+        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+
+        if (model == null)
+        {
+            _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
+        }
+        else
+        {
+            _context = model.First();
+        }
+
+        //if (_flowParams.RefId == null && _flowParams.ExternalId == null)
+        //{
+        //    // prepare context
+        //    _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
+        //}
+        //else
+        //{
+        //    _context = (await _flowRepository.FindFlowHistory(
+        //        new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId))).First();
+        //}
+
+        return _context.RefId;
     }
 
     private async Task SaveFailedContext()
