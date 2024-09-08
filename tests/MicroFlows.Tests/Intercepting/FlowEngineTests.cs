@@ -47,7 +47,7 @@ public partial class FlowEngineTests : TestBase
     }
 
     [Fact]
-    public async Task Test1()
+    public async Task SampleFlow_Run_And_Stopped()
     {
         var engine = GetEngine();
         var ps = new FlowParams();

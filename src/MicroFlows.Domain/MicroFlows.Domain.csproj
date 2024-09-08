@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Nullable>enable</Nullable>
     <LangVersion>12.0</LangVersion>
+    <AssemblyVersion>0.2.0.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,8 +13,13 @@
 
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
-      <_Parameter1>MicroFlows.Tests</_Parameter1>
       <_Parameter1>MicroFlows.Application</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>MicroFlows.Tests</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>MicroFlows.Package.Tests</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

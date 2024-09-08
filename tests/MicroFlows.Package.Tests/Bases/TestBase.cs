@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MicroFlows.Tests.TestSampleFlows;
 
 namespace MicroFlows.Package.Tests;
 public abstract class TestBase
@@ -29,7 +30,7 @@ public abstract class TestBase
             .ConfigureServices(services =>
             {
                 services.AddMicroFlows(configuration)
-                    //.RegisterFlow<SampleFlow>()
+                    .RegisterFlow<SampleLoggingFlow>()
                     //.RegisterFlow<SampleStoringFlow>()
                     ;
                 
