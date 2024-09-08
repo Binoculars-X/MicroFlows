@@ -92,18 +92,26 @@ internal partial class FlowEngine
     {
         string taskName = method.Name;
 
-        if (arguments != null && arguments.Any() && arguments[0] is Func<Task>)
+        if (arguments != null && arguments.Any())
         {
-            var parameterMethodName = (arguments[0] as Func<Task>).Method.Name;
-            
-            if (parameterMethodName.Contains(">b__"))
+            if (arguments[0] is Func<Task>)
             {
-                taskName += "_Anonymus";
+                var parameterMethodName = (arguments[0] as Func<Task>).Method.Name;
+
+                if (parameterMethodName.Contains(">b__"))
+                {
+                    taskName += "_Anonymous";
+                }
+                else
+                {
+                    taskName += $"_{parameterMethodName}";
+                }
             }
-            else
+            else if (arguments[0] is Action)
             {
-                taskName += $"_{parameterMethodName}";
+                taskName += $"_{(arguments[0] as Action).Method.Name}";
             }
+
         }
 
         var model = _context.Model;

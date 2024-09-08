@@ -36,7 +36,18 @@ public abstract class FlowBase : IFlow
     {
         return await action();
     }
+    public virtual Task WaitForSignalAsync(string signalName)
+    {
+        //await WaitForSignalAsync<object>(signalName);
+        if (_flowEngine.Signals.ContainsKey(signalName))
+        {
+            return Task.CompletedTask;
+        }
 
+        throw new FlowStopException("WaitForSignal");
+    }
+
+    // ToDo: will not work until InterceptAsynchronous<TResult> is not implemented
     public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
     {
         if (_flowEngine.Signals.ContainsKey(signalName))

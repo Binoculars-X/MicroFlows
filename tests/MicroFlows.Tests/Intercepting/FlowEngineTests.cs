@@ -92,7 +92,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Null(flow.ContextHistory[1].Model.Values["$.SentOrderId"]);
 
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[2].ExecutionResult.FlowState);
-        Assert.Equal("CallAsync_Anonymus:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
         Assert.NotNull(flow.ContextHistory[2].Model.Values["$.OrderId"]);
         Assert.Equal("False", flow.ContextHistory[2].Model.Values["$.InvoiceSent"]);
         Assert.NotNull(flow.ContextHistory[2].Model.Values["$.SentOrderId"]);
@@ -129,10 +129,10 @@ public partial class FlowEngineTests : TestBase
         // let's corrupt flow history
         var flow = _repo._contextDictHistory[ctx.RefId];
 
-        // we change CallAsync_GenerateOrderId to CallAsync_Anonymus
+        // we change CallAsync_GenerateOrderId to CallAsync_Anonymous
         Assert.Equal("CallAsync_GenerateOrderId:1", flow.ContextHistory[1].CurrentTask);
-        flow.ContextHistory[1].CurrentTask = "CallAsync_Anonymus:1";
-        Assert.Equal("CallAsync_Anonymus:1", flow.ContextHistory[1].CurrentTask);
+        flow.ContextHistory[1].CurrentTask = "CallAsync_Anonymous:1";
+        Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[1].CurrentTask);
 
         // resume and catch exception
         SampleLoggingFlow.Log.Clear();
@@ -156,10 +156,10 @@ public partial class FlowEngineTests : TestBase
         // let's corrupt flow history
         var flow = _repo._contextDictHistory[ctx.RefId];
 
-        // we change CallAsync_GenerateOrderId to CallAsync_Anonymus
+        // we change CallAsync_GenerateOrderId to CallAsync_Anonymous
         Assert.Equal("WaitForCondition:4", flow.ContextHistory[4].CurrentTask);
-        flow.ContextHistory[4].CurrentTask = "CallAsync_Anonymus:1";
-        Assert.Equal("CallAsync_Anonymus:1", flow.ContextHistory[4].CurrentTask);
+        flow.ContextHistory[4].CurrentTask = "CallAsync_Anonymous:1";
+        Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[4].CurrentTask);
 
         // resume and catch exception
         SampleLoggingFlow.Log.Clear();
@@ -195,7 +195,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[2].ExecutionResult.ExceptionType);
-        Assert.Equal("CallAsync_Anonymus:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
         Assert.Equal("test", flow.ContextHistory[2].Model.Values["$.ModelString"]);
     }
@@ -222,7 +222,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Success, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Null(flow.ContextHistory[2].ExecutionResult.ExceptionType);
-        Assert.Equal("CallAsync_Anonymus:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
         Assert.Equal("testtest", flow.ContextHistory[2].Model.Values["$.ModelString"]);
 

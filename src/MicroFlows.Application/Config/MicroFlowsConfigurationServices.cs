@@ -22,14 +22,19 @@ public static class MicroFlowsConfigurationServices
 
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
+        ValidateFlow(typeof(T));
         _registeredFlows.Add(typeof(T));
         services.AddTransient<T>();
         return services;
     }
 
+    private static void ValidateFlow(Type type)
+    {
+        // Add flow validation logic
+    }
+
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
-        //services.AddSingleton<IProxymaProvider, PullProxyFactory>();
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
         services.AddSingleton<IFlowsProvider, FlowsProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();
