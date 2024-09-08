@@ -1,31 +1,60 @@
 ﻿using MicroFlows.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using MicroFlows.Domain.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using MicroFlows.Application.Helpers;
+using MicroFlows.Application.Exceptions;
 
 namespace MicroFlows.Application;
 
 public class FlowsProvider : IFlowsProvider
 {
     private readonly Logger<FlowsProvider> _logger;
-    private readonly IFlowEngine _interceptEngine;
+    private readonly IServiceProvider _services;
 
-    public FlowsProvider(Logger<FlowsProvider> logger, IFlowEngine interceptEngine)
+    public FlowsProvider(Logger<FlowsProvider> logger, IServiceProvider services)
     {
         _logger = logger;
-        _interceptEngine = interceptEngine;
+        _services = services;
     }
 
-    public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
+    public async Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null)
     {
-        return await _interceptEngine.ExecuteFlow(flowType, flowParams);
+        var interceptEngine = PrepareFlowEngine(flowParams);
+        return await interceptEngine.SendSignal(flowParams.FlowType!, signal, flowParams, payload);
     }
 
-    public async Task<FlowContext> ExecuteFlow(string flowTypeName, FlowParams? flowParams = null)
+    public async Task<FlowContext> ExecuteFlow(FlowParams flowParams)
     {
-        return await _interceptEngine.ExecuteFlow(flowTypeName, flowParams);
+        var interceptEngine = PrepareFlowEngine(flowParams);
+        return await interceptEngine.ExecuteFlow(flowParams.FlowType!, flowParams);
+    }
+
+    private IFlowEngine PrepareFlowEngine(FlowParams flowParams)
+    {
+        var interceptEngine = _services.GetService<IFlowEngine>();
+
+        if (interceptEngine == null)
+        {
+            throw new InvalidDependencyException("IFlowEngine is not registered");
+        }
+
+        if (flowParams.FlowType == null)
+        {
+            var type = TypeHelper.ResolveType(flowParams.FlowName);
+
+            if (type == null)
+            {
+                throw new InvalidDependencyException($"Flow '{flowParams.FlowName}' is not registered");
+            }
+
+            flowParams.FlowType = type;
+        }
+
+        return interceptEngine;
     }
 }

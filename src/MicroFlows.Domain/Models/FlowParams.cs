@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Text.Json.Serialization;
 
 namespace MicroFlows.Domain.Models;
 public class FlowParams : Interfaces.IFlowParams
@@ -9,6 +9,14 @@ public class FlowParams : Interfaces.IFlowParams
 
     public string RefId { get; set; } = null!;
     public string ExternalId { get; set; } = null!;
+    public string FlowName { get; set; } = null!;
+    
+    /// <summary>
+    /// Used internaly but should not be serizlied
+    /// </summary>
+    //[JsonIgnore]
+    internal Type? FlowType { get; set; } = null!;
+    
     public FlowOptions FlowOptions { get; private set; } = new();
 
     // ToDo: do we need all them Item id and key?

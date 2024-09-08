@@ -17,7 +17,9 @@ using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.Application.Engines.Interceptors;
     
-// InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
+/// <summary>
+/// InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
+/// </summary>
 internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
     private readonly ILogger<FlowEngine> _logger;
@@ -37,25 +39,26 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     private List<string> _executionCallStack;
     private List<FlowContext> _contextHistory;
     private FlowParams? _flowParams;
+    private string? _signal;
+    private object? _signalPayload;
 
     public const string FLOW_METHOD = "Flow";
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
-        //IProxymaProvider proxyProvider,
         IProxyGenerator proxyGenerator,
         IFlowRepository flowRepository)
     {
         _logger = logger;
         _services = serviceProvider;
-        //_proxyProvider = proxyProvider;
         _proxyGenerator = proxyGenerator;
         _flowRepository = flowRepository;
     }
 
-    public async Task<FlowContext> ExecuteFlow(string flowTypeName, FlowParams? flowParams = null)
-    {
-        var type = TypeHelper.ResolveType(flowTypeName);
-        return await ExecuteFlow(type, flowParams);
+    public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
+    { 
+        _signal = signal;
+        _signalPayload = payload;
+        return await ExecuteFlow(flowType, flowParams);
     }
 
     /// <summary>
