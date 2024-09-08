@@ -39,9 +39,9 @@ public abstract class FlowBase : IFlow
 
     public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
     {
-        if (_flowEngine.Signal == signalName)
+        if (_flowEngine.Signals.ContainsKey(signalName))
         {
-            return Task.FromResult((T?)_flowEngine.SignalPayload);
+            return Task.FromResult((T?)_flowEngine.Signals[signalName]);
         }
 
         throw new FlowStopException("WaitForSignal");

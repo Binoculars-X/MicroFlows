@@ -39,13 +39,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     private List<string> _executionCallStack;
     private List<FlowContext> _contextHistory;
     private FlowParams? _flowParams;
-    private string? _signal;
-    private object? _signalPayload;
+    private Dictionary<string, object?> _signals = [];
 
     public const string FLOW_METHOD = "Flow";
 
-    public string? Signal { get { return _signal; } }
-    public object? SignalPayload { get { return _signalPayload; } }
+    public Dictionary<string, object?> Signals { get { return _signals; } }
 
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
@@ -59,9 +57,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     }
 
     public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
-    { 
-        _signal = signal;
-        _signalPayload = payload;
+    {
+        _signals[signal] = payload;
+        return await ExecuteFlow(flowType, flowParams);
+    }
+
+    public async Task<FlowContext> SendSignals(Type flowType, IDictionary<string, object?> signals, FlowParams? flowParams = null)
+    {
+        _signals = new Dictionary<string, object?>(signals);
         return await ExecuteFlow(flowType, flowParams);
     }
 

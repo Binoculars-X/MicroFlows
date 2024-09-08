@@ -10,4 +10,5 @@ public interface IFlowsProvider
 {
     Task<FlowContext> ExecuteFlow(FlowParams flowParams);
     Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null);
+    Task<FlowContext> SendSignals(FlowParams flowParams, IDictionary<string, object?> signals);
 }

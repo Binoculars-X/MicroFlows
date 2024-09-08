@@ -13,8 +13,9 @@ public partial class FlowEngineTests
 	[Fact]
 	public async Task SampleSignalWaitingFlow_ShouldStop_and_RerunOnSignal()
 	{
+		var engine = GetEngine();
 		var date = new DateTime(1974,10,15);
-		var ctx = await _engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), null);
+		var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), null);
 		var flow = await _repo.GetFlowModel(ctx.RefId);
 
 		Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
@@ -23,7 +24,7 @@ public partial class FlowEngineTests
 
 		// resume and catch exception
 		var ps = new FlowParams() { RefId = ctx.RefId };
-		ctx = await _engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps, date);
+		ctx = await engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps, date);
 		Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
 		Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
 	}

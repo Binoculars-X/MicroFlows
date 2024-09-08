@@ -28,6 +28,12 @@ public class FlowsProvider : IFlowsProvider
         return await interceptEngine.SendSignal(flowParams.FlowType!, signal, flowParams, payload);
     }
 
+    public async Task<FlowContext> SendSignals(FlowParams flowParams, IDictionary<string, object?> signals)
+    {
+        var interceptEngine = PrepareFlowEngine(flowParams);
+        return await interceptEngine.SendSignals(flowParams.FlowType!, signals, flowParams);
+    }
+
     public async Task<FlowContext> ExecuteFlow(FlowParams flowParams)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
