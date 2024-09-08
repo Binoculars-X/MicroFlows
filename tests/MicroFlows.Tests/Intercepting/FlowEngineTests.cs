@@ -14,9 +14,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MicroFlows.Tests.Interceptors;
+namespace MicroFlows.Tests.Intercepting;
 
-public class FlowEngineTests : TestBase
+public partial class FlowEngineTests : TestBase
 {
     readonly FlowEngine _engine;
     readonly MemoryFlowRepository _repo;

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using MicroFlows.Domain.Interfaces;
 
-namespace MicroFlows.Domain.Models;
-public class FlowParams : Interfaces.IFlowParams
+namespace MicroFlows;
+public class FlowParams : IFlowParams
 {
     public Dictionary<string, string> DynamicInput { get; set; } = [];
 

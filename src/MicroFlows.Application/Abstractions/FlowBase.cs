@@ -7,12 +7,15 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
+using MicroFlows.Domain.Interfaces;
 
 namespace MicroFlows;
 public abstract class FlowBase : IFlow
 {
     [JsonIgnore]
     public FlowParams FlowParams { get; private set; }
+
+    internal IFlowEngine _flowEngine;
 
     //public abstract Task Execute();
 
@@ -34,6 +37,16 @@ public abstract class FlowBase : IFlow
         return await action();
     }
 
+    public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
+    {
+        if (_flowEngine.Signal == signalName)
+        {
+            return Task.FromResult((T?)_flowEngine.SignalPayload);
+        }
+
+        throw new FlowStopException("WaitForSignal");
+    }
+
     public virtual void WaitForCondition(Func<bool> action)
     {
         if (action())
@@ -41,7 +54,7 @@ public abstract class FlowBase : IFlow
             return;
         }
 
-        throw new FlowStopException();
+        throw new FlowStopException("WaitForCondition");
     }
 
     // ToDo:

@@ -43,6 +43,10 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     private object? _signalPayload;
 
     public const string FLOW_METHOD = "Flow";
+
+    public string? Signal { get { return _signal; } }
+    public object? SignalPayload { get { return _signalPayload; } }
+
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
         IProxyGenerator proxyGenerator,
@@ -144,7 +148,10 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         // ToDo: I guess it is enough to set parameters only once at the moment where we start flow, here
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
-        
+        _targetFlow._flowEngine = this;
+        _flowProxy._flowEngine = this;
+
+
 
         if (_flowParams.FlowOptions.NoStorage)
         {

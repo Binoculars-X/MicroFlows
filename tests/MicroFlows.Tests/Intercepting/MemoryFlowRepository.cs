@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 
-namespace MicroFlows.Tests.Interceptors;
+namespace MicroFlows.Tests.Intercepting;
 internal class MemoryFlowRepository : IFlowRepository
 {
     internal Dictionary<string, FlowStoreModel> _contextDictHistory = [];
