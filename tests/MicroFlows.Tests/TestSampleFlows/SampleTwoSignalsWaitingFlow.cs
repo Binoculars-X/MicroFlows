@@ -20,9 +20,10 @@ public class SampleTwoSignalsWaitingFlow : FlowBase
     {
         Call(Init);
 
-        var payload = await WaitForSignalAsync<DateTime?>(Signal1);
+        //var payload = await WaitForSignalAsync<DateTime?>(Signal1);
+        await WaitForSignalAsync(Signal1);
 
-        await CallAsync(async() => await Update(payload));
+        await CallAsync(async() => await Update(null));
 
         await WaitForSignalAsync(Signal2);
     }
