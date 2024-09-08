@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MicroFlows.Tests.Intercepting;
 
@@ -12,7 +13,28 @@ public partial class FlowEngineTests
 {
     [Fact]
     public async Task SampleSignalWaitingFlow_CanBeCreated_AndResumed_ByExternalId()
-	{ }
+	{
+        var engine = GetEngine();
+        var ps = new FlowParams() { ExternalId = "ORDER-123" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
+
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+
+        engine = GetEngine();
+        ps = new FlowParams() { ExternalId = "ORDER-123" };
+        var ctx2 = await engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps);
+
+        Assert.Equal(ctx.RefId, ctx2.RefId);
+        flow = await _repo.GetFlowModel(ctx2.RefId);
+        Assert.Equal(5, flow.ContextHistory.Count);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
+    }
 
     [Fact]
 	public async Task SampleSignalWaitingFlow_ShouldStop_and_RerunOnSignal()
