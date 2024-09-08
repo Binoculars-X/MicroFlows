@@ -8,6 +8,7 @@ namespace MicroFlows;
 
 public interface IFlowsProvider
 {
-    Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null);
-    Task<FlowContext> ExecuteFlow(string flowTypeName, FlowParams? flowParams = null);
+    Task<FlowContext> ExecuteFlow(FlowParams flowParams);
+    Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null);
+    Task<FlowContext> SendSignals(FlowParams flowParams, IDictionary<string, object?> signals);
 }

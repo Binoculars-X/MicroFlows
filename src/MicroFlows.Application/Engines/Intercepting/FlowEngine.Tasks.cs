@@ -31,7 +31,7 @@ internal partial class FlowEngine
         if (historicTaskContext == null)
         {
             // if not the last in history and not found
-            if (_callIndex < _contextHistory.Count)
+            if (_callIndex < _contextHistory.Select(h => h.CurrentTask).Distinct().Count())
             {
                 // ToDo: if task not found in not empty _contextHistory this is determinism error
                 throw new NonDeterministicFlowException(
@@ -76,7 +76,7 @@ internal partial class FlowEngine
             {
                 // ToDo: we should copy model to context and sttre it 
                 _context.Model.ImportFrom(_flowProxy);
-                //if (taskName.Contains("_Anonymus"))
+                //if (taskName.Contains("_Anonymous"))
                 //{
                 //    // anonimous delegate
                 //}

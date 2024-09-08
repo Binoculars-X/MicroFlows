@@ -7,12 +7,15 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
+using MicroFlows.Domain.Interfaces;
 
 namespace MicroFlows;
 public abstract class FlowBase : IFlow
 {
     [JsonIgnore]
     public FlowParams FlowParams { get; private set; }
+
+    internal IFlowEngine _flowEngine;
 
     //public abstract Task Execute();
 
@@ -33,6 +36,27 @@ public abstract class FlowBase : IFlow
     {
         return await action();
     }
+    public virtual Task WaitForSignalAsync(string signalName)
+    {
+        //await WaitForSignalAsync<object>(signalName);
+        if (_flowEngine.Signals.ContainsKey(signalName))
+        {
+            return Task.CompletedTask;
+        }
+
+        throw new FlowStopException("WaitForSignal");
+    }
+
+    // ToDo: will not work until InterceptAsynchronous<TResult> is not implemented
+    public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
+    {
+        if (_flowEngine.Signals.ContainsKey(signalName))
+        {
+            return Task.FromResult((T?)_flowEngine.Signals[signalName]);
+        }
+
+        throw new FlowStopException("WaitForSignal");
+    }
 
     public virtual void WaitForCondition(Func<bool> action)
     {
@@ -41,7 +65,7 @@ public abstract class FlowBase : IFlow
             return;
         }
 
-        throw new FlowStopException();
+        throw new FlowStopException("WaitForCondition");
     }
 
     // ToDo:

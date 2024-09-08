@@ -6,8 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
+using FluentResults;
 
-namespace MicroFlows.Tests.Interceptors;
+namespace MicroFlows.Tests.Intercepting;
 internal class MemoryFlowRepository : IFlowRepository
 {
     internal Dictionary<string, FlowStoreModel> _contextDictHistory = [];
@@ -30,6 +31,22 @@ internal class MemoryFlowRepository : IFlowRepository
 
         _contextDictHistory[ctx.RefId] = flowModel;
         return Task.FromResult(ctx);
+    }
+
+    public async Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query)
+    {
+        if (query.RefId != null)
+        {
+            return await GetFlowHistory(query.RefId);
+        }
+
+        if (query.ExternalId != null)
+        {
+            var record = _contextDictHistory.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
+            return record?.ContextHistory;
+        }
+
+        return null;
     }
 
     public Task<List<FlowContext>> GetFlowHistory(string refId)

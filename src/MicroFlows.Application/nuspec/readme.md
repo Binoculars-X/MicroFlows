@@ -25,5 +25,9 @@ public void MyService(IFlowsProvider flowsProvider)
 
 **Release Notes**
 
-**0.1.7**
+**0.2.0-0.2.***
+- Added Flow Signals
+- bug fixing
+
+**0.1.***
 - Initial import from ProCodersPtyLtd/BlazorForms

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MicroFlows.Domain.Models;
+namespace MicroFlows;
 public class FlowOptions
 {
     public bool NoStorage { get; set; }

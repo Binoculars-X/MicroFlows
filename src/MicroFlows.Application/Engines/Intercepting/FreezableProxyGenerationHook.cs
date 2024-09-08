@@ -14,7 +14,10 @@ public class FreezableProxyGenerationHook : IProxyGenerationHook
         "ExecuteActivity",
         "ExecuteActivityAsync",
         "WaitForCondition",
-        "WaitForConditionAsync"];
+        "WaitForConditionAsync",
+        "WaitForSignalAsync",
+        ];
+
     private IFlow _flow;
 
     public FreezableProxyGenerationHook(IFlow flow)
