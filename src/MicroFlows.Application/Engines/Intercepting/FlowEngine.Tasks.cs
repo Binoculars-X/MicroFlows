@@ -26,7 +26,7 @@ internal partial class FlowEngine
         _executionCallStack.Add(taskNameId);
 
         // check if we have context for that step in the storage
-        FlowContext historicTaskContext = TryGetTaskExecutionContextFromHistory(_context.RefId, taskNameId, _callIndex);
+        FlowContext? historicTaskContext = TryGetTaskExecutionContextFromHistory(_context.RefId, taskNameId, _callIndex);
 
         if (historicTaskContext == null)
         {
@@ -76,16 +76,6 @@ internal partial class FlowEngine
             {
                 // ToDo: we should copy model to context and sttre it 
                 _context.Model.ImportFrom(_flowProxy);
-                //if (taskName.Contains("_Anonymous"))
-                //{
-                //    // anonimous delegate
-                //}
-                //else
-                //{
-                //    // virtual method
-                //    _context.Model.ImportFrom(_targetFlow);
-                //    _context.Model.ImportFrom(_flowProxy);
-                //}
             }
 
             // After Task Events
@@ -208,20 +198,20 @@ internal partial class FlowEngine
         return result;
     }
 
-    private void TriggerEvents(string taskName)
-    {
-        //if (_loading)
-        //{
-        //    OnLoad?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
-        //    _loading = false;
-        //}
+    //private void TriggerEvents(string taskName)
+    //{
+    //    if (_loading)
+    //    {
+    //        OnLoad?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
+    //        _loading = false;
+    //    }
 
-        //if (_saving)
-        //{
-        //    OnSave?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
-        //    _saving = false;
-        //}
-    }
+    //    if (_saving)
+    //    {
+    //        OnSave?.Invoke(_flowBase, new FlowEventArgs { TaskName = taskName, Context = _context, Model = _context.Model });
+    //        _saving = false;
+    //    }
+    //}
 
     private bool CanContinueExecution(TaskExecutionResult result)
     {
@@ -235,7 +225,7 @@ internal partial class FlowEngine
 
         if (exc is AggregateException)
         {
-            foreach (var e in (exc as AggregateException).InnerExceptions)
+            foreach (var e in ((AggregateException)exc).InnerExceptions)
             {
                 LogException(e);
             }
@@ -258,12 +248,6 @@ internal partial class FlowEngine
         var left = _context.CallStack.Distinct().ToList();
         var right = _executionCallStack.Distinct().ToList();
 
-        //if (left.Count < right.Count)
-        //{
-        //    throw new NonDeterministicFlowException(
-        //        $"Flow '{_context.RefId}' execution history doesn't contain step '{taskNameId}'");
-        //}
-
         for (int i = 0; i < right.Count(); i++)
         {
             if (left.Count() <= i || right[i] != left[i])
@@ -274,6 +258,4 @@ internal partial class FlowEngine
 
         return true;
     }
-
-    
 }
