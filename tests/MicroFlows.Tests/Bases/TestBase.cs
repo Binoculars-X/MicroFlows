@@ -41,6 +41,7 @@ public abstract class TestBase
                     .RegisterFlow<SampleTwoSignalsWaitingFlow>()
                     .RegisterFlow<SampleSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleTwoSignalPayloadWaitingFlow>()
+                    .RegisterFlow<SampleCheckSignalFlow>()
                     ;
                 
             })

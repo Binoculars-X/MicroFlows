@@ -55,6 +55,35 @@ public abstract class FlowBase : IFlow
     //    return await action();
     //}
 
+    /// <summary>
+    /// Checks if signal received without blocking the flow execution
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <returns></returns>
+    public virtual async Task CheckSignalReceivedAsync(string signalName)
+    {
+        var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);
+
+        if (entry != null)
+        {
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                await _signalHandlers[signalName](payload);
+            }
+
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Stops flow until signal with signalName received
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <returns></returns>
+    /// <exception cref="FlowStopException"></exception>
     public virtual async Task WaitForSignalAsync(string signalName)
     {
         var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);

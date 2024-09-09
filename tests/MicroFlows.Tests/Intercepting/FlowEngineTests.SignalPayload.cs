@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace MicroFlows.Tests.Intercepting;
 
@@ -125,5 +126,40 @@ public partial class FlowEngineTests
         Assert.Equal(text, ctx3.Model.Records["$.Signal2PayloadText"].Deserialize());
         Assert.Equal(ResultStateEnum.Success, ctx3.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx3.ExecutionResult.FlowState);
+    }
+
+    [Fact]
+    public async Task SignalPayload_Should_TriggerSignalHandler_WhenCheckSignalReceived()
+    {
+        var engine = GetEngine();
+        var date = DateTime.UtcNow.Date;
+        var ps = new FlowParams() { ExternalId = "ORDER-123-67" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleCheckSignalFlow), ps);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(4, flow.ContextHistory.Count);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+
+        // send Cancel, flow should still be blocked by OrderAcceptedSignal 
+        engine = GetEngine();
+
+        var ctx2 = await engine.SendSignal(typeof(SampleCheckSignalFlow),
+            SampleCheckSignalFlow.OrderCancelledSignal, ps, date);
+
+        var flow2 = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(5, flow2.ContextHistory.Count);
+        Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
+
+        // send OrderAcceptedSignal, it should unblock flow and Cancel the order
+        engine = GetEngine();
+        var ctx3 = await engine.SendSignal(typeof(SampleCheckSignalFlow), SampleCheckSignalFlow.OrderAcceptedSignal, ps);
+
+        var flow3 = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(8, flow3.ContextHistory.Count);
+        Assert.Equal(ResultStateEnum.Success, ctx3.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Finished, ctx3.ExecutionResult.FlowState);
+        Assert.NotNull(flow3.ContextHistory.Last().Model.Records["$.CancelDate"].Deserialize());
+        Assert.Equal("Cancelled", flow3.ContextHistory.Last().Model.Records["$.OrderStatus"].Deserialize());
     }
 }
