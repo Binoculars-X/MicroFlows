@@ -8,6 +8,7 @@ namespace MicroFlows.Domain.Interfaces;
 public interface IFlowRepository
 {
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
+    Task<FlowStoreModel> UpdateFlow(IFlow flow);
     Task<List<FlowContext>> GetFlowHistory(string refId);
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
     Task<FlowStoreModel> GetFlowModel(string refId);

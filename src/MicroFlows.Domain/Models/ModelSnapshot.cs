@@ -6,5 +6,12 @@ namespace MicroFlows.Domain.Models;
 
 public class ModelSnapshot
 {
-    public Dictionary<string, string> Values { get; set; } = [];
+    public Dictionary<string, SnapshotRecord> Records { get; set; } = [];
+
+    public void Clear()
+    {
+        Records.Clear();
+    }
 }
+
+public record SnapshotRecord(string type, string Json);

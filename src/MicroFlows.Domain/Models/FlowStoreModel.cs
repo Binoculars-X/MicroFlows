@@ -25,4 +25,9 @@ public class FlowStoreModel
     /// List of context objects, one object per each flow step
     /// </summary>
     public List<FlowContext> ContextHistory { get; set; } = [];
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public List<SignalJournalEntry> SignalJournal { get; set; } = [];
 }

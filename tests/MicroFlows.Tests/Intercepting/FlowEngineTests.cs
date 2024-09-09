@@ -1,6 +1,7 @@
 ﻿using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
 using MicroFlows.Application.Exceptions;
+using MicroFlows.Application.Helpers;
 using MicroFlows.Domain.Enums;
 using MicroFlows.Domain.Interfaces;
 using MicroFlows.Domain.Models;
@@ -18,17 +19,11 @@ namespace MicroFlows.Tests.Intercepting;
 
 public partial class FlowEngineTests : TestBase
 {
-    //readonly FlowEngine _engine;
     readonly MemoryFlowRepository _repo;
 
     public FlowEngineTests()
     {
         _repo = new MemoryFlowRepository();
-
-        //_engine = new FlowEngine(new NullLogger<FlowEngine>(),
-        //    _services,
-        //    new ProxyGenerator(),
-        //    _repo);
     }
 
     private FlowEngine GetEngine()
@@ -81,27 +76,27 @@ public partial class FlowEngineTests : TestBase
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
         Assert.Null(flow.ContextHistory[0].CurrentTask);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.OrderId"]);
-        Assert.Equal("False", flow.ContextHistory[0].Model.Values["$.InvoiceSent"]);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.SentOrderId"]);
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.OrderId"].Deserialize());
+        Assert.Equal(false, flow.ContextHistory[0].Model.Records["$.InvoiceSent"].Deserialize());
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.SentOrderId"].Deserialize());
         
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
         Assert.Equal("CallAsync_GenerateOrderId:1", flow.ContextHistory[1].CurrentTask);
-        Assert.NotNull(flow.ContextHistory[1].Model.Values["$.OrderId"]);
-        Assert.Equal("False", flow.ContextHistory[1].Model.Values["$.InvoiceSent"]);
-        Assert.Null(flow.ContextHistory[1].Model.Values["$.SentOrderId"]);
+        Assert.NotNull(flow.ContextHistory[1].Model.Records["$.OrderId"].Deserialize());
+        Assert.Equal(false, flow.ContextHistory[1].Model.Records["$.InvoiceSent"].Deserialize());
+        Assert.Null(flow.ContextHistory[1].Model.Records["$.SentOrderId"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
-        Assert.NotNull(flow.ContextHistory[2].Model.Values["$.OrderId"]);
-        Assert.Equal("False", flow.ContextHistory[2].Model.Values["$.InvoiceSent"]);
-        Assert.NotNull(flow.ContextHistory[2].Model.Values["$.SentOrderId"]);
+        Assert.NotNull(flow.ContextHistory[2].Model.Records["$.OrderId"].Deserialize());
+        Assert.Equal(false, flow.ContextHistory[2].Model.Records["$.InvoiceSent"].Deserialize());
+        Assert.NotNull(flow.ContextHistory[2].Model.Records["$.SentOrderId"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal("WaitForCondition:3", flow.ContextHistory[3].CurrentTask);
-        Assert.NotNull(flow.ContextHistory[3].Model.Values["$.OrderId"]);
-        Assert.Equal("False", flow.ContextHistory[3].Model.Values["$.InvoiceSent"]);
-        Assert.NotNull(flow.ContextHistory[3].Model.Values["$.SentOrderId"]);
+        Assert.NotNull(flow.ContextHistory[3].Model.Records["$.OrderId"].Deserialize());
+        Assert.Equal(false, flow.ContextHistory[3].Model.Records["$.InvoiceSent"].Deserialize());
+        Assert.NotNull(flow.ContextHistory[3].Model.Records["$.SentOrderId"]);
     }
 
     [Fact]
@@ -128,7 +123,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
         // let's corrupt flow history
-        var flow = _repo._contextDictHistory[ctx.RefId];
+        var flow = _repo._flowModelDictionary[ctx.RefId];
 
         // we change CallAsync_GenerateOrderId to CallAsync_Anonymous
         Assert.Equal("CallAsync_GenerateOrderId:1", flow.ContextHistory[1].CurrentTask);
@@ -156,7 +151,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
         // let's corrupt flow history
-        var flow = _repo._contextDictHistory[ctx.RefId];
+        var flow = _repo._flowModelDictionary[ctx.RefId];
 
         // we change CallAsync_GenerateOrderId to CallAsync_Anonymous
         Assert.Equal("WaitForCondition:4", flow.ContextHistory[4].CurrentTask);
@@ -187,20 +182,20 @@ public partial class FlowEngineTests : TestBase
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
         Assert.Null(flow.ContextHistory[0].CurrentTask);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelInt"]);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelString"]);
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelString"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("33", flow.ContextHistory[1].Model.Values["$.ModelInt"]);
-        Assert.Equal("test", flow.ContextHistory[1].Model.Values["$.ModelString"]);
+        Assert.Equal(33, flow.ContextHistory[1].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("test", flow.ContextHistory[1].Model.Records["$.ModelString"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[2].ExecutionResult.ExceptionType);
         Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
-        Assert.Equal("test", flow.ContextHistory[2].Model.Values["$.ModelString"]);
+        Assert.Equal(33, flow.ContextHistory[2].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("test", flow.ContextHistory[2].Model.Records["$.ModelString"].Deserialize());
     }
 
     [Fact]
@@ -214,27 +209,27 @@ public partial class FlowEngineTests : TestBase
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
         Assert.Null(flow.ContextHistory[0].CurrentTask);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelInt"]);
-        Assert.Null(flow.ContextHistory[0].Model.Values["$.ModelString"]);
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelString"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("33", flow.ContextHistory[1].Model.Values["$.ModelInt"]);
-        Assert.Equal("test", flow.ContextHistory[1].Model.Values["$.ModelString"]);
+        Assert.Equal(33, flow.ContextHistory[1].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("test", flow.ContextHistory[1].Model.Records["$.ModelString"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Success, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Null(flow.ContextHistory[2].ExecutionResult.ExceptionType);
         Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("33", flow.ContextHistory[2].Model.Values["$.ModelInt"]);
-        Assert.Equal("testtest", flow.ContextHistory[2].Model.Values["$.ModelString"]);
+        Assert.Equal(33, flow.ContextHistory[2].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("testtest", flow.ContextHistory[2].Model.Records["$.ModelString"].Deserialize());
 
         Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[3].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[3].ExecutionResult.ExceptionType);
         Assert.Null(flow.ContextHistory[3].CurrentTask);
-        Assert.Equal("33", flow.ContextHistory[3].Model.Values["$.ModelInt"]);
-        Assert.Equal("testtest", flow.ContextHistory[3].Model.Values["$.ModelString"]);
+        Assert.Equal(33, flow.ContextHistory[3].Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("testtest", flow.ContextHistory[3].Model.Records["$.ModelString"].Deserialize());
 
         // resume
         engine = GetEngine();
@@ -250,15 +245,15 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);
-        Assert.Equal("33", context.Model.Values["$.ModelInt"]);
-        Assert.Equal("testtest", context.Model.Values["$.ModelString"]);
+        Assert.Equal(33, context.Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("testtest", context.Model.Records["$.ModelString"].Deserialize());
 
         context = flow.ContextHistory[4];
         Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);
-        Assert.Equal("33", context.Model.Values["$.ModelInt"]);
-        Assert.Equal("testtest", context.Model.Values["$.ModelString"]);
+        Assert.Equal(33, context.Model.Records["$.ModelInt"].Deserialize());
+        Assert.Equal("testtest", context.Model.Records["$.ModelString"].Deserialize());
     }
 }
