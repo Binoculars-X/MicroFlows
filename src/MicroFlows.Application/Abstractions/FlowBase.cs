@@ -8,19 +8,36 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Interfaces;
+using System.Linq;
 
 namespace MicroFlows;
 public abstract class FlowBase : IFlow
 {
     [JsonIgnore]
+    public string RefId { get; set; }
+
+    [JsonIgnore]
     public FlowParams FlowParams { get; private set; }
 
-    internal IFlowEngine _flowEngine;
+    [JsonIgnore]
+    protected Dictionary<string, Func<SignalPayload, Task>> _signalHandlers = [];
 
-    //public abstract Task Execute();
+    // it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
+    [JsonIgnore]
+    public List<SignalJournalEntry> SignalJournal { get; internal set; } = [];
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
+
+    /// <summary>
+    /// Saves SignalHandler delegate for trigerring when a signal comes
+    /// </summary>
+    /// <param name="signal"></param>
+    /// <param name="handler"></param>
+    public virtual void AddSignalHandler(string signal, Func<SignalPayload, Task> handler)
+    {
+        _signalHandlers[signal] = handler;
+    }
 
     public virtual void Call(Action action)
     {
@@ -32,27 +49,54 @@ public abstract class FlowBase : IFlow
         await action();
     }
 
-    public virtual async Task<T> CallAsync<T>(Func<Task<T>> action)
-    {
-        return await action();
-    }
-    public virtual Task WaitForSignalAsync(string signalName)
-    {
-        //await WaitForSignalAsync<object>(signalName);
-        if (_flowEngine.Signals.ContainsKey(signalName))
-        {
-            return Task.CompletedTask;
-        }
-
-        throw new FlowStopException("WaitForSignal");
-    }
-
     // ToDo: will not work until InterceptAsynchronous<TResult> is not implemented
-    public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
+    //public virtual async Task<T> CallAsync<T>(Func<Task<T>> action)
+    //{
+    //    return await action();
+    //}
+
+    /// <summary>
+    /// Checks if signal received without blocking the flow execution
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <returns></returns>
+    public virtual async Task CheckSignalReceivedAsync(string signalName)
     {
-        if (_flowEngine.Signals.ContainsKey(signalName))
+        var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);
+
+        if (entry != null)
         {
-            return Task.FromResult((T?)_flowEngine.Signals[signalName]);
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                await _signalHandlers[signalName](payload);
+            }
+
+            return;
+        }
+    }
+
+    /// <summary>
+    /// Stops flow until signal with signalName received
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <returns></returns>
+    /// <exception cref="FlowStopException"></exception>
+    public virtual async Task WaitForSignalAsync(string signalName)
+    {
+        var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);
+        
+        if (entry != null)
+        {
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                await _signalHandlers[signalName](payload);
+            }
+
+            return;
         }
 
         throw new FlowStopException("WaitForSignal");
@@ -73,7 +117,6 @@ public abstract class FlowBase : IFlow
     // T Call<T>()
     // ExecuteActivityAsync()
     // WaitForConditionAsync()
-    // Signals
 
     public void SetModel(ModelSnapshot source)
     {

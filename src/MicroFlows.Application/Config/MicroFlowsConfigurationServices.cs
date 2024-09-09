@@ -8,22 +8,24 @@ using MicroFlows.Application.Engines;
 using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
 using MicroFlows.Application;
+using System.Collections.Concurrent;
+using System.Linq;
 
 namespace MicroFlows;
 
 public static class MicroFlowsConfigurationServices
 {
-    internal static HashSet<Type> _registeredFlows = [];
+    internal static ConcurrentDictionary<Type, int> _registeredFlows = [];
 
     internal static HashSet<Type> GetRegisteredTypes()
     {
-        return _registeredFlows; 
+        return _registeredFlows.Keys.ToHashSet(); 
     }
 
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
         ValidateFlow(typeof(T));
-        _registeredFlows.Add(typeof(T));
+        _registeredFlows.TryAdd(typeof(T), 0);
         services.AddTransient<T>();
         return services;
     }

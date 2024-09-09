@@ -7,10 +7,13 @@ using System.Threading.Tasks;
 namespace MicroFlows.Domain.Interfaces;
 public interface IFlowRepository
 {
+    Task<FlowStoreModel> GetFlowModel(string refId);
+    Task<FlowStoreModel> UpdateFlow(IFlow flow);
+
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
     Task<List<FlowContext>> GetFlowHistory(string refId);
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
-    Task<FlowStoreModel> GetFlowModel(string refId);
+
     Task SaveContextHistory(List<FlowContext> contextHistory);
 }
 

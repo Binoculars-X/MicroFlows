@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MicroFlows.Tests.TestSampleFlows;
 
-public class SampleSignalWaitingFlow : FlowBase
+public class SampleSignalPayloadWaitingFlow : FlowBase
 {
     // signals
     public const string Signal1 = "signal1";
@@ -25,7 +25,7 @@ public class SampleSignalWaitingFlow : FlowBase
         //var payload = await WaitForSignalAsync<DateTime?>(Signal1);
         await WaitForSignalAsync(Signal1);
 
-        await CallAsync(async() => await Update(DateTime.Now));
+        await CallAsync(async() => await Compare(Signal1PayloadDate));
     }
 
     private Task Signal1Handler(SignalPayload payload)
@@ -34,9 +34,11 @@ public class SampleSignalWaitingFlow : FlowBase
         return Task.CompletedTask;
     }
 
-    private async Task Update(DateTime? date)
+    private async Task Compare(DateTime? date)
     {
-        ModelDate = date;
+        if (ModelDate == date)
+        {
+        }
     }
 
     private void Init()

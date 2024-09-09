@@ -7,11 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 using FluentResults;
+using System.Collections.Concurrent;
 
 namespace MicroFlows.Tests.Intercepting;
 internal class MemoryFlowRepository : IFlowRepository
 {
-    internal Dictionary<string, FlowStoreModel> _contextDictHistory = [];
+    internal ConcurrentDictionary<string, FlowStoreModel> _flowModelDictionary = [];
 
     public Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
     {
@@ -27,10 +28,20 @@ internal class MemoryFlowRepository : IFlowRepository
             ExternalId = flowParams.ExternalId,
             FlowTypeName = flow.GetType().FullName!,
             ContextHistory = [ctx],
+            SignalJournal = flow.SignalJournal!,
         };
 
-        _contextDictHistory[ctx.RefId] = flowModel;
+        _flowModelDictionary[ctx.RefId] = flowModel;
         return Task.FromResult(ctx);
+    }
+
+    public Task<FlowStoreModel> UpdateFlow(IFlow flow)
+    {
+        // merge Flow SignalJournal
+        _flowModelDictionary[flow.RefId].SignalJournal.AddRange(flow.SignalJournal);
+        var model = _flowModelDictionary[flow.RefId];
+        var clone = TypeHelper.CloneObject(model);
+        return Task.FromResult(clone);
     }
 
     public async Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query)
@@ -42,7 +53,7 @@ internal class MemoryFlowRepository : IFlowRepository
 
         if (query.ExternalId != null)
         {
-            var record = _contextDictHistory.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
+            var record = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
             return record?.ContextHistory;
         }
 
@@ -51,18 +62,21 @@ internal class MemoryFlowRepository : IFlowRepository
 
     public Task<List<FlowContext>> GetFlowHistory(string refId)
     {
-        return Task.FromResult(_contextDictHistory[refId].ContextHistory);
+        var history = _flowModelDictionary[refId].ContextHistory;
+        var clone = TypeHelper.CloneObject(history);
+        return Task.FromResult(clone);
+        //return Task.FromResult(_flowModelDictionary[refId].ContextHistory);
     }
 
     public Task<FlowStoreModel> GetFlowModel(string refId)
     {
-        return Task.FromResult(_contextDictHistory[refId]);
+        return Task.FromResult(_flowModelDictionary[refId]);
     }
 
     public Task SaveContextHistory(List<FlowContext> contextHistory)
     {
         var id = contextHistory.First().RefId;
-        _contextDictHistory[id].ContextHistory = contextHistory;
+        _flowModelDictionary[id].ContextHistory = contextHistory;
         return Task.CompletedTask;
     }
 }

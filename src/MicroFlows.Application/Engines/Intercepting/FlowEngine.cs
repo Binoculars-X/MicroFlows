@@ -24,7 +24,6 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
     private readonly ILogger<FlowEngine> _logger;
     private readonly IServiceProvider _services;
-    //private readonly IProxymaProvider _proxyProvider;
     private readonly IProxyGenerator _proxyGenerator;
     private readonly IFlowRepository _flowRepository;
 
@@ -37,13 +36,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     private string _callingContext;
     private int _callIndex;
     private List<string> _executionCallStack;
-    private List<FlowContext> _contextHistory;
+    private List<FlowContext>? _contextHistory;
     private FlowParams? _flowParams;
     private Dictionary<string, object?> _signals = [];
 
     public const string FLOW_METHOD = "Flow";
-
-    public Dictionary<string, object?> Signals { get { return _signals; } }
 
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
@@ -70,9 +67,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     /// <summary>
     /// Flow execution steps:
-    /// 1. Create _targetFlow
-    /// 2. Create _flowProxy
-    /// 3. Create _context
+    /// 1. Create _targetFlow, _flowProxy, _context
+    /// 2. Set RefId and SetParams
+    /// 3. Merge SignalJournal with new supplied signals
     /// 4. Invoke [Flow] method of _flowProxy using reflection
     /// 5. All virtual Call methods are intercepted, but other calls proceeded to _targetFlow:
     ///   - ProcessCallTaskProxy gets model snapshot from _context and sets to _targetFlow
@@ -117,15 +114,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
         try
         {
-            //_flowProxy = _proxyProvider.CreateClassProxy(flowType, flowParameters, _flow, options, [this]) as FlowBase;
-            //_flowProxy = _proxyGenerator.CreateClassProxyWithTarget(flowType, _flow, options, [this]) as FlowBase;
-            // classToProxy: classToProxy, constructorArguments: constructorArguments, target: target, options: options, interceptors: interceptors
-
             _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType,
                 constructorArguments: flowParameters,
                 target: _targetFlow,
                 options: options,
                 interceptors: [this]) as FlowBase;
+
+            if (_flowProxy == null)
+            {
+                throw new Exception($"Cannot create proxy from Flow '{flowType.FullName}'");
+            }
         }
         catch (Exception exc)
         {
@@ -134,14 +132,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
 
         var refId = await FindOrCreateContext();
+        _targetFlow.RefId = refId;
+        _flowProxy.RefId = refId;
 
-        // ToDo: I guess it is enough to set parameters only once at the moment where we start flow, here
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
-        _targetFlow._flowEngine = this;
-        _flowProxy._flowEngine = this;
 
-
+        // signals
+        await UpdateSignalJournal();
 
         if (_flowParams.FlowOptions.NoStorage)
         {
@@ -243,10 +241,20 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         return _context;
     }
 
+    private async Task UpdateSignalJournal()
+    {
+        foreach (var signal in _signals)
+        {
+            _flowProxy!.SignalJournal.Add(new SignalJournalEntry(signal.Key, signal.Value));
+        }
+
+        var flowStoreModel = await _flowRepository.UpdateFlow(_flowProxy!);
+        _flowProxy!.SignalJournal = flowStoreModel.SignalJournal;
+        _targetFlow!.SignalJournal = flowStoreModel.SignalJournal;
+    }
+
     private async Task<string> FindOrCreateContext()
     {
-        string refId;
-
         var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
 
         if (model == null)
@@ -257,17 +265,6 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         {
             _context = model.First();
         }
-
-        //if (_flowParams.RefId == null && _flowParams.ExternalId == null)
-        //{
-        //    // prepare context
-        //    _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
-        //}
-        //else
-        //{
-        //    _context = (await _flowRepository.FindFlowHistory(
-        //        new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId))).First();
-        //}
 
         return _context.RefId;
     }
@@ -283,11 +280,5 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         // ToDo: may be add another way to define Flow method, by attributes or expression
         return _flowProxy.GetType().GetMethod(FLOW_METHOD);
     }
-
-    public Task<FlowContext> ResumeFlow(string flowId)
-    {
-        throw new NotImplementedException();
-    }
-
-    
+   
 }
