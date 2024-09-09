@@ -31,25 +31,12 @@ internal partial class FlowEngine
         if ((invocation.Method.DeclaringType == _runningFlowType || invocation.Method.DeclaringType == typeof(FlowBase))
             && invocation.Method.IsPublic && invocation.Method.IsVirtual)
         {
-            //_loading = invocation.Method.GetCustomAttribute<LoadTaskAttribute>() != null;
-            //_saving = invocation.Method.GetCustomAttribute<SaveTaskAttribute>() != null;
-            _callingContext = invocation.Method.Name;
             Task.Run(() => ProcessCallTaskProxy(invocation.Method, invocation.Arguments)).GetAwaiter().GetResult();
         }
         else
         {
             invocation.Proceed();
         }
-
-        //if (!_systemTasks.Contains(invocation.Method.Name) && (invocation.Method.DeclaringType != _runningFlowType
-        //    || !invocation.Method.IsPublic || !invocation.Method.IsVirtual))
-        //{
-        //    invocation.Proceed();
-        //}
-        //else
-        //{
-        //    Task.Run(() => ProcessCallTaskProxy(invocation.Method, invocation.Arguments)).GetAwaiter().GetResult();
-        //}
     }
 
     private async Task InternalInterceptAsynchronous(IInvocation invocation)
@@ -57,9 +44,6 @@ internal partial class FlowEngine
         if ((invocation.Method.DeclaringType == _runningFlowType || invocation.Method.DeclaringType == typeof(FlowBase))
             && invocation.Method.IsPublic && invocation.Method.IsVirtual)
         {
-            //_loading = invocation.Method.GetCustomAttribute<LoadTaskAttribute>() != null;
-            //_saving = invocation.Method.GetCustomAttribute<SaveTaskAttribute>() != null;
-            _callingContext = invocation.Method.Name;
             await ProcessCallTaskProxy(invocation.Method, invocation.Arguments);
         }
         else
@@ -69,50 +53,11 @@ internal partial class FlowEngine
             await task;
             return;
         }
-
-        //if ( //(invocation.Method.Name == "Execute" && invocation.Method.DeclaringType == _runningFlowType) ||
-        //    (!_systemTasks.Contains(invocation.Method.Name) 
-        //    && ((invocation.Method.DeclaringType != _runningFlowType && invocation.Method.DeclaringType != typeof(FlowBase)) 
-        //    || !invocation.Method.IsPublic || !invocation.Method.IsVirtual)))
-        //{
-        //    invocation.Proceed();
-        //    var task = (Task)invocation.ReturnValue;
-        //    await task;
-        //    return;
-        //}
-        //else
-        //{
-        //    //_loading = invocation.Method.GetCustomAttribute<LoadTaskAttribute>() != null;
-        //    //_saving = invocation.Method.GetCustomAttribute<SaveTaskAttribute>() != null;
-        //    await ProcessCallTaskProxy(invocation.Method.Name, invocation.Arguments);
-        //}
     }
 
     private async Task ProcessCallTaskProxy(MethodInfo method, object[] arguments)
     {
-        string taskName = method.Name;
-
-        if (arguments != null && arguments.Any())
-        {
-            if (arguments[0] is Func<Task>)
-            {
-                var parameterMethodName = (arguments[0] as Func<Task>).Method.Name;
-
-                if (parameterMethodName.Contains(">b__"))
-                {
-                    taskName += "_Anonymous";
-                }
-                else
-                {
-                    taskName += $"_{parameterMethodName}";
-                }
-            }
-            else if (arguments[0] is Action)
-            {
-                taskName += $"_{(arguments[0] as Action).Method.Name}";
-            }
-
-        }
+        string taskName = GenerateTaskName(method, arguments);
 
         var model = _context.Model;
         var executionParams = _context.Params;
@@ -127,8 +72,7 @@ internal partial class FlowEngine
             if (TypeHelper.IsAsyncMethod(method))
             {
                 var task = method.Invoke(_targetFlow, arguments) as Task;
-                await task;
-                //task.Wait();
+                await task!;
             }
             else
             {
@@ -137,4 +81,32 @@ internal partial class FlowEngine
         });
     }
 
+    private static string GenerateTaskName(MethodInfo method, object[] arguments)
+    {
+        string taskName = method.Name;
+
+        if (arguments != null && arguments.Any())
+        {
+            if (arguments[0] is Func<Task>)
+            {
+                var parameterMethodName = ((Func<Task>)arguments[0]).Method.Name;
+
+                if (parameterMethodName.Contains(">b__"))
+                {
+                    taskName += "_Anonymous";
+                }
+                else
+                {
+                    taskName += $"_{parameterMethodName}";
+                }
+            }
+            else if (arguments[0] is Action)
+            {
+                taskName += $"_{((Action)arguments[0]).Method.Name}";
+            }
+
+        }
+
+        return taskName;
+    }
 }

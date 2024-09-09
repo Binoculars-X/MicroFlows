@@ -22,14 +22,9 @@ public abstract class FlowBase : IFlow
     [JsonIgnore]
     protected Dictionary<string, Func<SignalPayload, Task>> _signalHandlers = [];
 
-    //[JsonIgnore]
-    //internal IFlowEngine _flowEngine;
-
     // it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
     [JsonIgnore]
     public List<SignalJournalEntry> SignalJournal { get; internal set; } = [];
-
-    //public abstract Task Execute();
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
@@ -77,17 +72,6 @@ public abstract class FlowBase : IFlow
 
         throw new FlowStopException("WaitForSignal");
     }
-
-    // ToDo: will not work until InterceptAsynchronous<TResult> is not implemented
-    //public virtual Task<T?> WaitForSignalAsync<T>(string signalName)
-    //{
-    //    if (_flowEngine.Signals.ContainsKey(signalName))
-    //    {
-    //        return Task.FromResult((T?)_flowEngine.Signals[signalName]);
-    //    }
-
-    //    throw new FlowStopException("WaitForSignal");
-    //}
 
     public virtual void WaitForCondition(Func<bool> action)
     {
