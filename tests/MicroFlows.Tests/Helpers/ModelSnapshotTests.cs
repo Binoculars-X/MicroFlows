@@ -29,13 +29,13 @@ public class ModelSnapshotTests
         model.ImportFrom(flow);
 
         var idRecord = model.Records["$.Id"];
-        Assert.Equal(flow.Id, JsonSerializerEx.Deserialize(idRecord.Json, idRecord.type));
+        Assert.Equal(flow.Id, JsonSerializerEx.Deserialize(idRecord.Json, idRecord.Type));
         var modelIntRecord = model.Records["$.ModelInt"];
-        Assert.Equal(flow.ModelInt, JsonSerializerEx.Deserialize(modelIntRecord.Json, modelIntRecord.type));
+        Assert.Equal(flow.ModelInt, JsonSerializerEx.Deserialize(modelIntRecord.Json, modelIntRecord.Type));
         var modelDate = model.Records["$.ModelDate"];
-        Assert.Equal(flow.ModelDate, JsonSerializerEx.Deserialize(modelDate.Json, modelDate.type));
+        Assert.Equal(flow.ModelDate, JsonSerializerEx.Deserialize(modelDate.Json, modelDate.Type));
         var modelString = model.Records["$.ModelString"];
-        Assert.Equal(flow.ModelString, JsonSerializerEx.Deserialize(modelString.Json, modelString.type));
+        Assert.Equal(flow.ModelString, JsonSerializerEx.Deserialize(modelString.Json, modelString.Type));
     }
 
     [Fact]

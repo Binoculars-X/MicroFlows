@@ -67,9 +67,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     /// <summary>
     /// Flow execution steps:
-    /// 1. Create _targetFlow
-    /// 2. Create _flowProxy
-    /// 3. Create _context
+    /// 1. Create _targetFlow, _flowProxy, _context
+    /// 2. Set RefId and SetParams
+    /// 3. Merge SignalJournal with new supplied signals
     /// 4. Invoke [Flow] method of _flowProxy using reflection
     /// 5. All virtual Call methods are intercepted, but other calls proceeded to _targetFlow:
     ///   - ProcessCallTaskProxy gets model snapshot from _context and sets to _targetFlow
@@ -114,15 +114,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
         try
         {
-            //_flowProxy = _proxyProvider.CreateClassProxy(flowType, flowParameters, _flow, options, [this]) as FlowBase;
-            //_flowProxy = _proxyGenerator.CreateClassProxyWithTarget(flowType, _flow, options, [this]) as FlowBase;
-            // classToProxy: classToProxy, constructorArguments: constructorArguments, target: target, options: options, interceptors: interceptors
-
             _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType,
                 constructorArguments: flowParameters,
                 target: _targetFlow,
                 options: options,
                 interceptors: [this]) as FlowBase;
+
+            if (_flowProxy == null)
+            {
+                throw new Exception($"Cannot create proxy from Flow '{flowType.FullName}'");
+            }
         }
         catch (Exception exc)
         {
@@ -134,11 +135,8 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _targetFlow.RefId = refId;
         _flowProxy.RefId = refId;
 
-        // ToDo: I guess it is enough to set parameters only once at the moment where we start flow, here
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
-        //_targetFlow._flowEngine = this;
-        //_flowProxy._flowEngine = this;
 
         // signals
         await UpdateSignalJournal();

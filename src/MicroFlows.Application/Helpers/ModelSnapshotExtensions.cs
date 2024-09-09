@@ -19,7 +19,7 @@ public static class ModelSnapshotExtensions
             {
                 var mapping = item.Key;
                 var record = item.Value;
-                var value = JsonSerializerEx.Deserialize(record.Json, record.type);
+                var value = JsonSerializerEx.Deserialize(record.Json, record.Type);
 
                 _navi.SetValue(flow, mapping, value);
             }
@@ -47,33 +47,7 @@ public static class ModelSnapshotExtensions
 
     public static object? Deserialize(this SnapshotRecord record)
     {
-        var value = JsonSerializerEx.Deserialize(record.Json, record.type);
+        var value = JsonSerializerEx.Deserialize(record.Json, record.Type);
         return value;
     }
-
-    //public static void ExportTo(this ModelSnapshot model, IFlow flow)
-    //{
-    //    try
-    //    {
-    //        foreach (var keyValue in model.Values)
-    //        {
-    //            _navi.SetValue(flow, keyValue.Key, keyValue.Value);
-    //        }
-    //    }
-    //    catch (Exception exc)
-    //    {
-    //        throw;
-    //    }
-    //}
-
-    //public static void ImportFrom(this ModelSnapshot model, IFlow flow)
-    //{
-    //    model.Values.Clear();
-    //    var mappings = ReflectionHelper.GetTypeNestedPropertyJsonPaths(flow.GetType());
-
-    //    foreach (var mapping in mappings)
-    //    {
-    //        model.Values[mapping] = _navi.GetValue(flow, mapping)?.ToString();
-    //    }
-    //}
 }
