@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 namespace MicroFlows;
 public interface IFlow
 {
-    //Task Execute();
     List<SignalJournalEntry> SignalJournal { get; }
     string RefId { get; set; }
 }

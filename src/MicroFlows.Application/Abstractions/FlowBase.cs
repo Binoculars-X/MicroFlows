@@ -25,34 +25,14 @@ public abstract class FlowBase : IFlow
     //[JsonIgnore]
     //internal IFlowEngine _flowEngine;
 
-    // ToDo: remove [JsonIgnore] when ModelSnapshot refactored
-    // it should be stored in ModelSnapshot
+    // it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
     [JsonIgnore]
-    public List<SignalJournalEntry> SignalJournal { get; set; } = [];
+    public List<SignalJournalEntry> SignalJournal { get; internal set; } = [];
 
     //public abstract Task Execute();
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
-
-    //public void AddSignalHandler(string signal, Func<Task> handler)
-    //{ }
-
-    internal async Task Signal(string signal, object? payload)
-    {
-        // ToDo: store payload here?
-
-        if (payload != null)
-        {
-            SignalJournal.Add(new SignalJournalEntry(signal, payload));
-        }
-
-        // ToDo: should we trigger signal handler here or only when WaitForSignal executed?
-        if (_signalHandlers.ContainsKey(signal))
-        {
-            await _signalHandlers[signal](new SignalPayload() { Value = payload });
-        }
-    }
 
     /// <summary>
     /// Saves SignalHandler delegate for trigerring when a signal comes
@@ -82,8 +62,6 @@ public abstract class FlowBase : IFlow
 
     public virtual async Task WaitForSignalAsync(string signalName)
     {
-        //await WaitForSignalAsync<object>(signalName);
-        //if (_flowEngine.Signals.ContainsKey(signalName))
         var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);
         
         if (entry != null)
@@ -126,7 +104,6 @@ public abstract class FlowBase : IFlow
     // T Call<T>()
     // ExecuteActivityAsync()
     // WaitForConditionAsync()
-    // Signals
 
     public void SetModel(ModelSnapshot source)
     {
