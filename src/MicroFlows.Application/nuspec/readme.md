@@ -25,7 +25,12 @@ public void MyService(IFlowsProvider flowsProvider)
 
 **Release Notes**
 
-**0.2.0-0.2.***
+**0.5.0+**
+- Added Non Public Fields and Properties to model
+- Migrated to new JsonPathToModel
+- Added flow validations
+
+**0.2.0-0.4.3**
 - Added Flow Signals
 - bug fixing
 
