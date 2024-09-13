@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MicroFlows</id>
-    <version>0.4.2</version>
+    <version>0.5.0</version>
     <authors>Binoculars X</authors>
     <owners>Binoculars X</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -16,7 +16,7 @@
 		<group targetFramework="NETStandard2.1">
           <dependency id="Castle.Core" version="5.1.1" />
           <dependency id="Castle.Core.AsyncInterceptor" version="2.1.0" />
-          <dependency id="JsonPathToModel" version="1.4.0" />
+          <dependency id="JsonPathToModel" version="1.5.3" />
           <dependency id="Microsoft.Extensions.Configuration" version="8.0.0" />
           <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.1" />
           <dependency id="System.Net.Http" version="4.3.4" />

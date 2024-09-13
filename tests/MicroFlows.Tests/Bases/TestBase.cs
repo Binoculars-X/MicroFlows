@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Tests.TestSampleFlows;
 using MicroFlows.Tests.TestFlows;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace MicroFlows.Tests;
 public abstract class TestBase
@@ -19,17 +21,23 @@ public abstract class TestBase
         IConfiguration configuration = null!;
 
         var app = Host.CreateDefaultBuilder()
+            .ConfigureLogging(logging =>
+            {
+                logging.AddConsole();
+            })
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
                 config.Sources.Clear();
                 config.AddConfiguration(hostingContext.Configuration);
                 config.AddJsonFile("appsettings.json", true);
                 config.AddJsonFile($"appsettings.Development.json", true, true);
-                //config.AddUserSecrets(typeof(ExceptionHandlingMiddleware).Assembly);
                 configuration = config.Build();
             })
             .ConfigureServices(services =>
             {
+                //services.AddLogging(logging => logging.AddConsole());
+                services.AddLogging();
+
                 services.AddMicroFlows(configuration)
                     .RegisterFlow<SampleFlow>()
                     .RegisterFlow<SampleStoringFlow>()
@@ -42,6 +50,9 @@ public abstract class TestBase
                     .RegisterFlow<SampleSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleTwoSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleCheckSignalFlow>()
+                    .RegisterFlow<SampleNonPublicFieldsFlow>()
+                    .RegisterFlow<SampleWithDependenciesFlow>()
+                    .RegisterFlow<SampleWithNonReadonlyDependenciesFlow>()
                     ;
                 
             })

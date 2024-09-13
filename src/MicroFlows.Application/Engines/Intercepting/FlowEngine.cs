@@ -277,8 +277,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     private MethodInfo GetFlowActivationMethod()
     {
+        var methods = _flowProxy.GetType().GetMethods()
+            .Where(m => m.Name == FLOW_METHOD && m.GetParameters().Length == 0 && m.ReturnType == typeof(Task));
+        
         // ToDo: may be add another way to define Flow method, by attributes or expression
-        return _flowProxy.GetType().GetMethod(FLOW_METHOD);
+        return methods.FirstOrDefault();
     }
    
 }

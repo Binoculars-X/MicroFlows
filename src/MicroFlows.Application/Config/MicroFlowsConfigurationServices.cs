@@ -10,6 +10,10 @@ using MicroFlows.Application.Engines.Interceptors;
 using MicroFlows.Application;
 using System.Collections.Concurrent;
 using System.Linq;
+using JsonPathToModel;
+using MicroFlows.Application.Exceptions;
+using System.Data;
+using System.Threading.Tasks;
 
 namespace MicroFlows;
 
@@ -30,15 +34,10 @@ public static class MicroFlowsConfigurationServices
         return services;
     }
 
-    private static void ValidateFlow(Type type)
-    {
-        // Add flow validation logic
-    }
-
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddSingleton<IFlowsProvider, FlowsProvider>();
+        services.AddTransient<IFlowsProvider, FlowsProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();
         return services;
     }
@@ -47,5 +46,53 @@ public static class MicroFlowsConfigurationServices
     {
         AddMicroFlows(services);
         return services;
+    }
+
+    private static void ValidateFlow(Type type)
+    {
+        ShouldHaveCompatibleFlowMethod(type);
+        ShouldNotHavePrivatePropertiesAndFields(type);
+    }
+
+    private readonly static ModelStateExplorer _expl = new();
+
+    private static void ShouldNotHavePrivatePropertiesAndFields(Type type)
+    {
+        var ps = ModelSearchParams.FullModelState();
+        ps.ExcludeStartsWith = "__";
+        var stateResult = _expl.FindModelStateItems(type, ps);
+
+        var properties = stateResult.Items.Where(i => i.Property != null);
+
+        var privates = stateResult.Items.Where(i => i.Property != null
+            && (i.Property.GetMethod.IsPrivate || i.Property.SetMethod.IsPrivate));
+
+        if (privates.Any())
+        {
+            throw new FlowValidationException(
+                $"{type.Name}: Private properties not supported, please modify '{privates.First().Property!.Name}'");
+        }
+
+        var privateFields = stateResult.Items.Where(i => i.Field != null && i.Field.IsPrivate);
+
+        if (privateFields.Any())
+        {
+            throw new FlowValidationException(
+                $"{type.Name}: Private fields not supported, please modify '{privateFields.First().Field!.Name}'");
+        }
+    }
+
+    private static void ShouldHaveCompatibleFlowMethod(Type type)
+    {
+        var methods = type.GetMethods()
+            .Where(m => m.Name == FlowEngine.FLOW_METHOD && m.GetParameters().Length == 0 && m.ReturnType == typeof(Task));
+
+        var method = methods.FirstOrDefault();
+
+        if (method == null)
+        {
+            throw new FlowValidationException(
+                $"{type.Name}: Flow should have 'public async Task Flow()' method");
+        }
     }
 }
