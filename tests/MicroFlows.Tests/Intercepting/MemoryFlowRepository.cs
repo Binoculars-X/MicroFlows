@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 using FluentResults;
 using System.Collections.Concurrent;
+using JsonPathToModel;
 
 namespace MicroFlows.Tests.Intercepting;
 internal class MemoryFlowRepository : IFlowRepository
@@ -17,7 +18,7 @@ internal class MemoryFlowRepository : IFlowRepository
     public Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams)
     {
         var ctx = new FlowContext();
-        ctx.Model.ImportFrom(flow);
+        ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;

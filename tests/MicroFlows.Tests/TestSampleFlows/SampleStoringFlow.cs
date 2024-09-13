@@ -4,12 +4,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows;
 
 namespace MicroFlows.Tests.TestFlows;
+
 public class SampleStoringFlow : FlowBase
 {
+    //[JsonIgnore]
     private readonly ISampleTestStorage _storage;
 
     // model consists of all public serializable properties
@@ -23,23 +26,8 @@ public class SampleStoringFlow : FlowBase
         _storage = storage;
     }
 
-    //public override async Task Execute()
-    //{
-    //    await CallAsync(async() => await Load());
-
-    //    await CallAsync(async () => await Store(ModelInt, ModelString));
-
-    //    var json = await CallAsync(async () => await Read(Id));
-
-    //    var readRecord = JsonSerializer.Deserialize<(string id, int? key, string name)>(json);
-
-    //    if (readRecord.id != Id || readRecord.key != ModelInt || readRecord.name != ModelString)
-    //    {
-    //        throw new Exception("Saved values differ from model");
-    //    }
-    //}
-
-    // ToDo: add Signals
+    public async Task Flow()
+    { }
 
     private async Task Load()
     {

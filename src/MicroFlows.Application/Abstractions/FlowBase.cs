@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
-using MicroFlows.Domain.Interfaces;
+using JsonPathToModel;
 using System.Linq;
 
 namespace MicroFlows;
