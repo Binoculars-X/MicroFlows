@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
 using JsonPathToModel;
 using System.Linq;
+using MicroFlows.Application;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroFlows;
 
@@ -44,6 +46,42 @@ public abstract class FlowBase : IFlow
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
+
+    [JsonIgnore]
+    private IFlowsProvider _flowsProvider;
+
+    internal void SetServiceProvider(IServiceProvider services)
+    {
+        _flowsProvider = services.GetService<IFlowsProvider>()!;
+    }
+
+    /// <summary>
+    /// Execute another flow in a separate thread
+    /// </summary>
+    /// <param name="ps"></param>
+    /// <returns></returns>
+    public async Task ExecuteFlow(FlowParams ps)
+    {
+        await Task.Run(() =>
+        {
+            _flowsProvider.ExecuteFlow(ps);
+        });
+    }
+
+    /// <summary>
+    /// Send Signal to another flow in a separate thread
+    /// </summary>
+    /// <param name="ps"></param>
+    /// <param name="signal"></param>
+    /// <param name="payload"></param>
+    /// <returns></returns>
+    public async Task SendSignal(FlowParams ps, string signal, object? payload = null)
+    {
+        await Task.Run(() =>
+        {
+            _flowsProvider.SendSignal(ps, signal, payload);
+        });
+    }
 
     /// <summary>
     /// Saves SignalHandler delegate for trigerring when a signal comes

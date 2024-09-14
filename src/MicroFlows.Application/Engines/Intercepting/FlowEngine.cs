@@ -138,6 +138,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
 
+        _targetFlow.SetServiceProvider(_services);
+        _flowProxy.SetServiceProvider(_services);
+
         // signals
         await UpdateSignalJournal();
 

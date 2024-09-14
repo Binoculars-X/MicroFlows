@@ -56,10 +56,11 @@ public class InvoiceFlow : FlowBase<InvoiceModel>
             ErrorMessage = ErrorMessage
         };
 
-        await Task.Run(() =>
-        {
-            _flowsProvider.SendSignal(ps, OrderFlow.InvoiceCreatedSignal, payload);
-        });
+        await SendSignal(ps, OrderFlow.InvoiceCreatedSignal, payload);
+        //await Task.Run(() =>
+        //{
+        //    _flowsProvider.SendSignal(ps, OrderFlow.InvoiceCreatedSignal, payload);
+        //});
     }
 
     private async Task SaveInvoice()

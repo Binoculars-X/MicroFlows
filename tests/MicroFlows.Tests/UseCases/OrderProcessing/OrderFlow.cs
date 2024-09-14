@@ -67,12 +67,13 @@ public class OrderFlow : FlowBase
         ps.ParentItemId = OrderId;
         ps.FlowType = typeof(InvoiceFlow);
 
-        // ANother flow must be run in a separate thread
-        await Task.Run(() =>
-        {
-            _flowsProvider.ExecuteFlow(ps);
-        });
-        
+        await ExecuteFlow(ps);
+        // Another flow must be run in a separate thread
+        //await Task.Run(() =>
+        //{
+        //    _flowsProvider.ExecuteFlow(ps);
+        //});
+
     }
 
     private async Task Init()
