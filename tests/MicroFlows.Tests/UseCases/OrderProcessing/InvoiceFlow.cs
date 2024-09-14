@@ -9,7 +9,7 @@ namespace MicroFlows.Tests.UseCases.OrderProcessing;
 public class InvoiceFlow : FlowBase<InvoiceModel>
 {
     // dependencies
-    private readonly IFlowsProvider _flowsProvider;
+    //private readonly IFlowsProvider _flowsProvider;
     private readonly IInvoiceRepository _repository;
 
     // signals
@@ -20,9 +20,9 @@ public class InvoiceFlow : FlowBase<InvoiceModel>
     public DateTime? InvoiceDate;
     public string? ErrorMessage;
 
-    public InvoiceFlow(IFlowsProvider flowsProvider, IInvoiceRepository repository)
+    public InvoiceFlow(/*IFlowsProvider flowsProvider, */IInvoiceRepository repository)
     {
-        _flowsProvider = flowsProvider;
+        //_flowsProvider = flowsProvider;
         _repository = repository;
     }
 

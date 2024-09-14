@@ -50,6 +50,7 @@ public class OrderProcessingTests
         ps.ExternalId = "1234";
         ps.FlowType = typeof(OrderFlow);
 
+        // on the first pass OrderFlow will be stopped to wating signal from InvoiceFlow
         var ctx = await _flowsProvider.ExecuteFlow(ps);
         var flow = await _flowsRepository.GetFlowModel(ctx.RefId);
 
@@ -62,6 +63,7 @@ public class OrderProcessingTests
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
 
+        // on the second pass the signal should be received
         var ctx2 = await _flowsProvider.ExecuteFlow(ps);
         Assert.Equal(ctx.RefId, ctx2.RefId);
 

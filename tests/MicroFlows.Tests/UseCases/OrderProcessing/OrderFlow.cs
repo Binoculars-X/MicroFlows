@@ -10,7 +10,7 @@ namespace MicroFlows.Tests.UseCases.OrderProcessing;
 public class OrderFlow : FlowBase
 {
     // dependencies
-    private readonly IFlowsProvider _flowsProvider;
+    //private readonly IFlowsProvider _flowsProvider;
 
     // signals
     public static string InvoiceCreatedSignal = "InvoiceCreatedSignal";
@@ -25,9 +25,9 @@ public class OrderFlow : FlowBase
     public DateTime? InvoiceDate;
     public InvoiceCreatedSignalPayload InvoicePayload;
 
-    public OrderFlow(IFlowsProvider flowsProvider)
+    public OrderFlow(/*IFlowsProvider flowsProvider*/)
     {
-        _flowsProvider = flowsProvider;
+        //_flowsProvider = flowsProvider;
     }
 
     public async Task Flow()
