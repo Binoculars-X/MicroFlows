@@ -83,7 +83,7 @@ public class OrderProcessingTests
         _invoiceRepository.Setup(c => c.Save(It.IsAny<InvoiceModel>())).Returns(Task.FromResult(false));
 
         var ps = new FlowParams();
-        ps.ExternalId = "1234";
+        ps.ExternalId = "12345";
         ps.FlowType = typeof(OrderFlow);
 
         var ctx = await _flowsProvider.ExecuteFlow(ps);
