@@ -11,13 +11,29 @@ using JsonPathToModel;
 using System.Linq;
 
 namespace MicroFlows;
+
+/// <summary>
+/// Base class for typed model flows
+/// </summary>
+/// <typeparam name="TModel">Model type</typeparam>
+public abstract class FlowBase<TModel> : FlowBase where TModel : class, new()
+{
+    public TModel Model { get; set; } = new();
+}
+
+/// <summary>
+/// Base class for Flows
+/// All properties and fields except privates will be tracked as Model
+/// </summary>
 public abstract class FlowBase : IFlow
 {
     [JsonIgnore]
     public string RefId { get; set; }
+    //[JsonIgnore]
+    //public string ExternalId { get; set; }
 
     [JsonIgnore]
-    public FlowParams FlowParams { get; private set; }
+    public FlowParams Params { get; private set; } = new();
 
     [JsonIgnore]
     protected Dictionary<string, Func<SignalPayload, Task>> _signalHandlers = [];
@@ -125,6 +141,6 @@ public abstract class FlowBase : IFlow
 
     public void SetParams(FlowParams flowParams)
     {
-        FlowParams = flowParams;
+        Params = flowParams;
     }
 }

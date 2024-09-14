@@ -10,6 +10,7 @@ public class FlowParams : IFlowParams
 
     public string RefId { get; set; } = null!;
     public string ExternalId { get; set; } = null!;
+    public string CorrelationId { get; set; } = null!;
     public string FlowName { get; set; } = null!;
     
     /// <summary>
