@@ -58,7 +58,7 @@ public class OrderProcessingTests
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
@@ -94,7 +94,7 @@ public class OrderProcessingTests
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);

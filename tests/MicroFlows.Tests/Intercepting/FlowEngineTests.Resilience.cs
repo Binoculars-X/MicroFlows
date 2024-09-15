@@ -32,7 +32,7 @@ public partial class FlowEngineTests
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
         Assert.Equal(4, flow.ContextHistory.Count);
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Fail, ctx.ExecutionResult.ResultState);
@@ -70,7 +70,7 @@ public partial class FlowEngineTests
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
         Assert.Equal(4, flow.ContextHistory.Count);
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Fail, ctx.ExecutionResult.ResultState);

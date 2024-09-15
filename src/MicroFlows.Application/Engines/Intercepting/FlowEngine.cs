@@ -280,6 +280,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         if (model == null)
         {
             _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
+
+            // The first task is always Begin, the last task is always End
+            _context.CurrentTask = $"{TaskDefTypes.Begin}:{_callIndex}";
         }
         else
         {
@@ -296,6 +299,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     private async Task SaveEndContext()
     {
+        // The first task is always Begin, the last task is always End
         _context.Model.ImportFrom(_flowProxy, _importOptions);
         _context.CurrentTask = $"{TaskDefTypes.End}:{_callIndex + 1}";
         await AddContextToHistory(_context);

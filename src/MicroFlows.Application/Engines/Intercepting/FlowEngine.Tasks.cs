@@ -34,7 +34,7 @@ internal partial class FlowEngine
         if (historicTaskContext == null)
         {
             // if not the last in history and not found
-            if (_callIndex < _contextHistory.Select(h => h.CurrentTask).Distinct().Count())
+            if (_callIndex < _contextHistory.Select(h => h.CurrentTask).Where(h => h != null).Distinct().Count())
             {
                 // ToDo: if task not found in not empty _contextHistory this is determinism error
                 throw new NonDeterministicFlowException(
