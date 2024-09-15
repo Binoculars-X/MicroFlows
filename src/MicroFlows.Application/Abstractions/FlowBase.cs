@@ -18,7 +18,7 @@ namespace MicroFlows;
 /// Base class for typed model flows
 /// </summary>
 /// <typeparam name="TModel">Model type</typeparam>
-public abstract class FlowBase<TModel> : FlowBase where TModel : class, new()
+public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, new()
 {
     public TModel Model { get; set; } = new();
 }
@@ -27,7 +27,7 @@ public abstract class FlowBase<TModel> : FlowBase where TModel : class, new()
 /// Base class for Flows
 /// All properties and fields except privates will be tracked as Model
 /// </summary>
-public abstract class FlowBase : IFlow
+public abstract partial class FlowBase : IFlow
 {
     [JsonIgnore]
     public string RefId { get; set; }
@@ -50,6 +50,11 @@ public abstract class FlowBase : IFlow
     [JsonIgnore]
     private IFlowsProvider _flowsProvider;
 
+    /// <summary>
+    /// Should be supplied by FlowEngine
+    /// Is used to generate required dependencies for example to IFlowsProvider
+    /// </summary>
+    /// <param name="services"></param>
     internal void SetServiceProvider(IServiceProvider services)
     {
         _flowsProvider = services.GetService<IFlowsProvider>()!;
