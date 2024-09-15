@@ -77,7 +77,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
         var last = flow.ContextHistory.Last();
-        Assert.Null(last.CurrentTask);
+        Assert.Equal("CallAsync_CheckStatus:3", last.CurrentTask);
         Assert.NotNull(last.ExecutionResult.ExceptionMessage);
         Assert.Equal("Some error code here", last.ExecutionResult.ExceptionMessage);
         Assert.Equal("Exception", last.ExecutionResult.ExceptionType);
@@ -89,9 +89,9 @@ public partial class FlowEngineTests
         var ctx2 = await engine.ExecuteFlow(typeof(SampleWithExceptionInDelegateFlow), new FlowParams { RefId = ctx.RefId });
         flow = await _repo.GetFlowModel(ctx2.RefId);
 
-        Assert.Equal(6, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
+        Assert.Equal(6, flow.ContextHistory.Count);
         
         var prelast = flow.ContextHistory[4];
         Assert.Equal("CallAsync_CheckStatus:3", prelast.CurrentTask);
@@ -105,6 +105,9 @@ public partial class FlowEngineTests
         last = flow.ContextHistory.Last();
         Assert.Equal("recovered", last.Model.Records["$.Id"].Deserialize());
         Assert.Equal(414, last.Model.Records["$.ModelInt"].Deserialize());
-        Assert.Equal($"{TaskDefTypes.End}:5", flow.ContextHistory[2].CurrentTask);
+
+        var callstack = flow.ContextHistory.Select(c => c.CurrentTask).Distinct().ToList();
+        Assert.Equal(5, callstack.Count);
+        Assert.Equal("End:4", callstack[4]);
     }
 }

@@ -72,13 +72,14 @@ public class OrderProcessingTests
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
 
         var callstack = flow2.ContextHistory.Select(c => c.CurrentTask).Distinct().ToList();
-        Assert.Equal(5, callstack.Count);
+        Assert.Equal(6, callstack.Count);
         Assert.Equal("CallAsync_Finish:4", callstack[4]);
         Assert.Equal(true, flow2.ContextHistory.Last().Model.Records["$.IsSuccessful"].Deserialize());
+        Assert.Equal("End:5", callstack[5]);
     }
 
     [Fact]
-    public async Task OrderProcessingFlows_Should_FailWHenCannotSaveInvoice()
+    public async Task OrderProcessingFlows_Should_FailWhenCannotSaveInvoice()
     {
         _invoiceRepository.Setup(c => c.Save(It.IsAny<InvoiceModel>())).Returns(Task.FromResult(false));
 
@@ -106,8 +107,9 @@ public class OrderProcessingTests
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
 
         var callstack = flow2.ContextHistory.Select(c => c.CurrentTask).Distinct().ToList();
-        Assert.Equal(5, callstack.Count);
+        Assert.Equal(6, callstack.Count);
         Assert.Equal("CallAsync_Finish:4", callstack[4]);
         Assert.Equal(true, flow2.ContextHistory.Last().Model.Records["$.IsFailed"].Deserialize());
+        Assert.Equal("End:5", callstack[5]);
     }
 }

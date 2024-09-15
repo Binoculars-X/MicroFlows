@@ -69,6 +69,8 @@ internal partial class FlowEngine
         else
         {
             // execute task
+            // save current task if case of exception inside the delegate
+            _context.CurrentTask = taskNameId;
 
             // if flow changed model we should inherit this change
             // we make sure that model is a new instance

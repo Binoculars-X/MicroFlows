@@ -14,6 +14,7 @@ using MicroFlows.Domain.Models;
 using Microsoft.CodeAnalysis;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
+using JsonPathToModel;
 
 namespace MicroFlows.Application.Engines.Interceptors;
     
@@ -168,6 +169,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             // flow executed completely
             _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
             _context.ExecutionResult.ResultState = ResultStateEnum.Success;
+            SaveEndContext();
         }
         catch (TargetInvocationException exc)
         {
@@ -206,7 +208,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             //_context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
 
-            // if exception happened inside Flow method body we should save it
+            // if exception happened inside delegate method body we should save it
             await SaveFailedContext();
         }
         catch (FlowFailedException exc)
@@ -219,6 +221,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         catch (NonDeterministicFlowException exc)
@@ -237,6 +240,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         finally
@@ -286,8 +290,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     }
 
     private async Task SaveFailedContext()
+    {        
+        await AddContextToHistory(_context);
+    }
+
+    private async Task SaveEndContext()
     {
-        _context.CurrentTask = null;
+        _context.Model.ImportFrom(_flowProxy, _importOptions);
+        _context.CurrentTask = $"{TaskDefTypes.End}:{_callIndex + 1}";
         await AddContextToHistory(_context);
     }
 

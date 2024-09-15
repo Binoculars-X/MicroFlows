@@ -157,7 +157,7 @@ public partial class FlowEngineTests
         var ctx3 = await engine.SendSignal(typeof(SampleCheckSignalFlow), SampleCheckSignalFlow.OrderAcceptedSignal, ps);
 
         var flow3 = await _repo.GetFlowModel(ctx.RefId);
-        Assert.Equal(8, flow3.ContextHistory.Count);
+        Assert.Equal(9, flow3.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx3.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx3.ExecutionResult.FlowState);
         Assert.NotNull(flow3.ContextHistory.Last().Model.Records["$.CancelDate"].Deserialize());
