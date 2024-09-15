@@ -196,6 +196,19 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
         }
+        catch (FlowTaskFailedException exc)
+        {
+            _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            // preserve original exception details
+            //_context.ExecutionResult.ExceptionMessage = exc.Message;
+            //_context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
+            //_context.ExecutionResult.ExceptionType = exc.GetType().Name;
+            LogException(exc);
+
+            // if exception happened inside Flow method body we should save it
+            await SaveFailedContext();
+        }
         catch (FlowFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;

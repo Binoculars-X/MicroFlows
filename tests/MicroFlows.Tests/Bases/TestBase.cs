@@ -54,6 +54,8 @@ public abstract class TestBase
                     .RegisterFlow<SampleWithDependenciesFlow>()
                     .RegisterFlow<SampleWithNonReadonlyDependenciesFlow>()
                     .RegisterFlow<SampleTypedModelFlow>()
+                    .RegisterFlow<SampleWithExceptionInBodyFlow>()
+                    .RegisterFlow<SampleWithExceptionInDelegateFlow>()
                     ;
                 
             })

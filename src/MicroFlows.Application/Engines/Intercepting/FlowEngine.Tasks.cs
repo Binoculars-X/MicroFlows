@@ -171,7 +171,6 @@ internal partial class FlowEngine
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;
-            LogException(exc);
         }
         catch (Exception exc)
         {
@@ -181,7 +180,6 @@ internal partial class FlowEngine
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;
-            LogException(exc);
         }
         finally
         {
@@ -218,6 +216,14 @@ internal partial class FlowEngine
 
     private bool CanContinueExecution(TaskExecutionResult result)
     {
+        if (result.ResultState == ResultStateEnum.Fail)
+        {
+            _context.ExecutionResult.ExceptionMessage = result.ExceptionMessage;
+            _context.ExecutionResult.ExceptionStackTrace = result.ExceptionStackTrace;
+            _context.ExecutionResult.ExceptionType = result.ExceptionType;
+            throw new FlowTaskFailedException();
+        }
+
         return result.ResultState != ResultStateEnum.Fail && result.FlowState == FlowStateEnum.Continue;
     }
 
