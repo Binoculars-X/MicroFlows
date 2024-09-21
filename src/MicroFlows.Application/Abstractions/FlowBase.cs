@@ -40,24 +40,95 @@ public abstract partial class FlowBase : IFlow
     [JsonIgnore]
     protected Dictionary<string, Func<SignalPayload, Task>> _signalHandlers = [];
 
-    // it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
+    /// <summary>
+    /// it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
+    /// </summary>
     [JsonIgnore]
     public List<SignalJournalEntry> SignalJournal { get; internal set; } = [];
+
+    /// <summary>
+    /// it should not be stored in ModelSnapshot, it is stored in FlowStoreModel level
+    /// </summary>
+    [JsonIgnore]
+    public List<string> Patches { get; internal set; } = [];
 
     // https://stackoverflow.com/questions/1495465/get-name-of-action-func-delegate
     //public virtual async Task Call(Expression<Func<Task>> action)
 
     [JsonIgnore]
-    private IFlowsProvider _flowsProvider;
+    private IFlowProvider _flowProvider = null!;
+
+    /// <summary>
+    /// returns version number using naming convention SampleFlowV2 => V2
+    /// </summary>
+    /// <returns></returns>
+    public virtual string GetVersion() 
+    { 
+        var name = GetType().Name;
+        var version = "";
+
+        for  (int i = name.Length-1; i >= 0; i--)
+        {
+            if (char.IsDigit(name[i]))
+            {
+                version = name[i] + version;
+            }
+            else if (name[i].ToString().ToLower() == "v")
+            {
+                version = name[i] + version;
+                break;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        if (version == name || version == "")
+        {
+            return "V1";
+        }
+
+        return version;
+    }
+
+    /// <summary>
+    /// Flows add patches here, the patches saved to the storage when flow instance executed first time
+    /// </summary>
+    /// <param name="patch"></param>
+    public void RegisterPatch(string patch)
+    {
+        Patches.Add(patch);
+    }
+
+    /// <summary>
+    /// returns if current floe instance (stored in the database) has a particular path
+    /// </summary>
+    /// <param name="patch"></param>
+    /// <returns></returns>
+    public bool IsPatch(string patch)
+    {
+        return Patches.Contains(patch); 
+    }
+
+
+    /// <summary>
+    /// Should be overriden to add all registered patches
+    /// Executed by FlowEngine
+    /// </summary>
+    /// <param name="patches"></param>
+    public virtual void RegisterPatches(List<string> patches)
+    {
+    }
 
     /// <summary>
     /// Should be supplied by FlowEngine
-    /// Is used to generate required dependencies for example to IFlowsProvider
+    /// Is used to generate required dependencies for example to IFlowProvider
     /// </summary>
     /// <param name="services"></param>
     internal void SetServiceProvider(IServiceProvider services)
     {
-        _flowsProvider = services.GetService<IFlowsProvider>()!;
+        _flowProvider = services.GetService<IFlowProvider>()!;
     }
 
     /// <summary>
@@ -69,7 +140,7 @@ public abstract partial class FlowBase : IFlow
     {
         await Task.Run(() =>
         {
-            _flowsProvider.ExecuteFlow(ps);
+            _flowProvider.ExecuteFlow(ps);
         });
     }
 
@@ -84,7 +155,7 @@ public abstract partial class FlowBase : IFlow
     {
         await Task.Run(() =>
         {
-            _flowsProvider.SendSignal(ps, signal, payload);
+            _flowProvider.SendSignal(ps, signal, payload);
         });
     }
 

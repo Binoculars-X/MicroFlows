@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MicroFlows;
 
-public interface IFluentFlow : IFlow
+public interface IFluentFlow //: IFlow
 {
     //void Define();
     List<TaskDetails> Parse();

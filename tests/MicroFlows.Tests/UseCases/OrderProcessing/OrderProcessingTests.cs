@@ -18,7 +18,7 @@ namespace MicroFlows.Tests.UseCases.OrderProcessing;
 public class OrderProcessingTests
 {
     private readonly IServiceProvider _services;
-    private readonly IFlowsProvider _flowsProvider;
+    private readonly IFlowProvider _flowsProvider;
     private readonly IFlowRepository _flowsRepository;
     private readonly Mock<IInvoiceRepository> _invoiceRepository;
 
@@ -37,7 +37,7 @@ public class OrderProcessingTests
                 ;
         });
 
-        _flowsProvider = _services.GetService<IFlowsProvider>();
+        _flowsProvider = _services.GetService<IFlowProvider>();
         _flowsRepository = _services.GetService<IFlowRepository>();
     }
 

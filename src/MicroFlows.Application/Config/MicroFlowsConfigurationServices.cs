@@ -37,7 +37,7 @@ public static class MicroFlowsConfigurationServices
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddTransient<IFlowsProvider, FlowsProvider>();
+        services.AddTransient<IFlowProvider, FlowProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();
         return services;
     }

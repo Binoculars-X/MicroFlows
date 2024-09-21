@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace MicroFlows;
 
-public interface IFlowsProvider
+public interface IFlowProvider
 {
     Task<FlowContext> ExecuteFlow(FlowParams flowParams);
     Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null);

@@ -74,7 +74,7 @@ public partial class FlowEngineTests : TestBase
             await engine.ExecuteFlow(typeof(SampleWithNonReadonlyDependenciesFlow)));
 
         var inner = exc.InnerException;
-        Assert.Contains("IFlowsProvider", inner.Message);
+        Assert.Contains("IFlowProvider", inner.Message);
         Assert.Contains("Deserialization of interface types is not supported", inner.Message);
     }
 }
