@@ -12,7 +12,9 @@ namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
 public class SqlTestContainersTestBase : IAsyncLifetime
 {
-    protected readonly MsSqlContainer _msSqlContainer = new MsSqlBuilder().Build();
+    protected readonly MsSqlContainer _msSqlContainer = new MsSqlBuilder()
+        .WithImage("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
+
     protected IServiceProvider _services;
 
     public async Task InitializeAsync()
