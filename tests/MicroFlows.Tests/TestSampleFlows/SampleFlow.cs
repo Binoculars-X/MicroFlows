@@ -32,7 +32,7 @@ public class SampleFlow : FlowBase
 
         Call(() => 
         { 
-            if (FlowParams["flag"] == "stop")
+            if (Params["flag"] == "stop")
             {
                 throw new FlowStopException();
             }

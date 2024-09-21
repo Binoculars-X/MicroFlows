@@ -37,7 +37,7 @@ public static class MicroFlowsConfigurationServices
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddTransient<IFlowsProvider, FlowsProvider>();
+        services.AddTransient<IFlowProvider, FlowProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();
         return services;
     }
@@ -89,10 +89,15 @@ public static class MicroFlowsConfigurationServices
 
         var method = methods.FirstOrDefault();
 
-        if (method == null)
+        if (method == null && !IsFluentFlow(type))
         {
             throw new FlowValidationException(
-                $"{type.Name}: Flow should have 'public async Task Flow()' method");
+                $"{type.Name}: Flow should have 'public Task Flow()' method or override 'public override void Define(IFlowBuilder builder)'");
         }
+    }
+
+    public static bool IsFluentFlow(Type type)
+    {
+        return type.GetMethod("Define")?.DeclaringType == type;
     }
 }

@@ -30,8 +30,4 @@
     <ProjectReference Include="..\MicroFlows.Domain\MicroFlows.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Engines\Fluent\" />
-  </ItemGroup>
-
 </Project>

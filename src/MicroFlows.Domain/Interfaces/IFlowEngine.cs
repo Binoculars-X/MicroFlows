@@ -14,4 +14,5 @@ public interface IFlowEngine
     Task<FlowContext> SendSignals(Type flowType, IDictionary<string, object?> signals, FlowParams? flowParams = null);
     //Task<FlowContext> ExecuteFlow(string flowTypeName, FlowParams? flowParams = null);
     //Task<FlowContext> ResumeFlow(string flowId, FlowParams? flowParams = null);
+    Task<FlowDefinitionDetails> GetFlowDefinitionDetails(FlowParams runParameters);
 }

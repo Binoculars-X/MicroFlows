@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroFlows.Application", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MicroFlows.Package.Tests", "tests\MicroFlows.Package.Tests\MicroFlows.Package.Tests.csproj", "{0C4426DD-7CE5-492A-A7EB-021349A6B824}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroFlows.Infrastructure.Tests", "tests\MicroFlows.Infrastructure.Tests\MicroFlows.Infrastructure.Tests.csproj", "{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,6 +45,10 @@ Global
 		{0C4426DD-7CE5-492A-A7EB-021349A6B824}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C4426DD-7CE5-492A-A7EB-021349A6B824}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0C4426DD-7CE5-492A-A7EB-021349A6B824}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -52,6 +58,7 @@ Global
 		{AB5ED928-0D06-404C-A59E-6962DC5CBF4F} = {A6055C13-E45D-4F05-90E3-30D5661A1B6E}
 		{BFA2E302-C04F-4E2E-83FA-B06F873ABFB1} = {4F32E7DA-49AF-4095-863A-05482EF2310C}
 		{0C4426DD-7CE5-492A-A7EB-021349A6B824} = {A6055C13-E45D-4F05-90E3-30D5661A1B6E}
+		{FDAE8A44-4FB7-48BD-89CC-70D6CC2BA406} = {A6055C13-E45D-4F05-90E3-30D5661A1B6E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2B78B207-E55F-4F38-A130-92F4A5F4928C}

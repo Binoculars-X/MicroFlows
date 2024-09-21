@@ -11,12 +11,12 @@ using MicroFlows.Application.Exceptions;
 
 namespace MicroFlows.Application;
 
-public class FlowsProvider : IFlowsProvider
+public class FlowProvider : IFlowProvider
 {
     //private readonly Logger<FlowsProvider> _logger;
     private readonly IServiceProvider _services;
 
-    public FlowsProvider(
+    public FlowProvider(
         //Logger<FlowsProvider> logger, 
         IServiceProvider services)
     {
