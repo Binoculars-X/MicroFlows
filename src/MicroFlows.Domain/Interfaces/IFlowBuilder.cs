@@ -5,7 +5,7 @@ using System.Text;
 
 namespace MicroFlows;
 
-public interface IFluentFlow //: IFlow
+public interface IFlowBuilder //: IFlow
 {
     //void Define();
     List<TaskDetails> Parse();
@@ -14,9 +14,9 @@ public interface IFluentFlow //: IFlow
     //void SetParams(FlowParamsGeneric p);
     //IFlowContext CreateContext();
     List<TaskDetails> Tasks { get; }
-    void SetFlowRefId(string refId);
-    void SetFirstPass(bool firstPass);
-    string CreateRefId();
+    //void SetFlowRefId(string refId);
+    //void SetFirstPass(bool firstPass);
+    //string CreateRefId();
     //void SetFlowContext(IFlowContext flowContext);
     void UpdateCurrentContext(string statusMessage, string assignedUser, string adminUser, string assignedTeam);
 }

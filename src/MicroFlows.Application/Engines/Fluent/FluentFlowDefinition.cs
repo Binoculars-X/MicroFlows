@@ -4,16 +4,16 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Domain.Models;
 
-namespace MicroFlows.Application.Engines.Fluent;
+namespace MicroFlows;
 
 public static class FluentFlowDefinition
 {
-    public static F Begin<F>(this F flow) where F : class, IFluentFlow { RegisterStart(flow.Tasks, null); return flow; }
-    public static F Begin<F>(this F flow, Func<Task> action) where F : class, IFluentFlow { RegisterStart(flow.Tasks, action); return flow; }
-    public static F End<F>(this F flow, Func<Task> action) where F : class, IFluentFlow { RegisterFinish(flow.Tasks, action); return flow; }
-    public static F End<F>(this F flow) where F : class, IFluentFlow { RegisterFinish(flow.Tasks, null); return flow; }
-    public static F Next<F>(this F flow, Func<Task> action) where F : class, IFluentFlow { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
-    public static F Next<F>(this F flow, Action action) where F : class, IFluentFlow { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
+    public static F Begin<F>(this F flow) where F : class, IFlowBuilder { RegisterStart(flow.Tasks, null); return flow; }
+    public static F Begin<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterStart(flow.Tasks, action); return flow; }
+    public static F End<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterFinish(flow.Tasks, action); return flow; }
+    public static F End<F>(this F flow) where F : class, IFlowBuilder { RegisterFinish(flow.Tasks, null); return flow; }
+    public static F Next<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
+    public static F Next<F>(this F flow, Action action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
     //public static F NextForm<F>(this F flow, Type formType, Func<Task> action) where F : class, IFluentFlow { RegisterFormTask(flow.Tasks, formType.Name, formType, action); return flow; }
 
     //public static F NextForm<F>(this F flow, Type formType) where F : class, IFluentFlow { RegisterFormTask(flow.Tasks, formType.Name, formType); return flow; }
@@ -29,13 +29,13 @@ public static class FluentFlowDefinition
     //    RegisterListFormTask(flow.Tasks, formType.Name, formType, callBack, preloadTableData);
     //}
 
-    public static F Goto<F>(this F flow, string label) where F : class, IFluentFlow { RegisterGoto(flow.Tasks, label); return flow; }
-    public static F Label<F>(this F flow, string label) where F : class, IFluentFlow { RegisterLabel(flow.Tasks, label); return flow; }
-    public static F GotoIf<F>(this F flow, string label, Func<bool> condition) where F : class, IFluentFlow { RegisterGotoIf(flow.Tasks, label, condition); return flow; }
-    public static F If<F>(this F flow, Func<bool> condition) where F : class, IFluentFlow { RegisterIf(flow.Tasks, condition); return flow; }
-    public static F Else<F>(this F flow) where F : class, IFluentFlow { RegisterTask(flow.Tasks, TaskDefTypes.Else, "Else", null); return flow; }
-    public static F EndIf<F>(this F flow) where F : class, IFluentFlow { RegisterTask(flow.Tasks, TaskDefTypes.EndIf, "EndIf", null); return flow; }
-    public static F Wait<F>(this F flow, Func<bool> condition) where F : class, IFluentFlow { RegisterWait(flow.Tasks, condition); return flow; }
+    public static F Goto<F>(this F flow, string label) where F : class, IFlowBuilder { RegisterGoto(flow.Tasks, label); return flow; }
+    public static F Label<F>(this F flow, string label) where F : class, IFlowBuilder { RegisterLabel(flow.Tasks, label); return flow; }
+    public static F GotoIf<F>(this F flow, string label, Func<bool> condition) where F : class, IFlowBuilder { RegisterGotoIf(flow.Tasks, label, condition); return flow; }
+    public static F If<F>(this F flow, Func<bool> condition) where F : class, IFlowBuilder { RegisterIf(flow.Tasks, condition); return flow; }
+    public static F Else<F>(this F flow) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, TaskDefTypes.Else, "Else", null); return flow; }
+    public static F EndIf<F>(this F flow) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, TaskDefTypes.EndIf, "EndIf", null); return flow; }
+    public static F Wait<F>(this F flow, Func<bool> condition) where F : class, IFlowBuilder { RegisterWait(flow.Tasks, condition); return flow; }
 
     private static void RegisterTask(List<TaskDetails> tasks, TaskDefTypes type, string name, Func<Task> action)
     {

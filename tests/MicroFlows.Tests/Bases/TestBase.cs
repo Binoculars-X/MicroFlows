@@ -10,6 +10,7 @@ using MicroFlows.Tests.TestSampleFlows;
 using MicroFlows.Tests.TestFlows;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MicroFlows.Tests.TestSampleFlows.Fluent;
 
 namespace MicroFlows.Tests;
 public abstract class TestBase
@@ -56,6 +57,7 @@ public abstract class TestBase
                     .RegisterFlow<SampleTypedModelFlow>()
                     .RegisterFlow<SampleWithExceptionInBodyFlow>()
                     .RegisterFlow<SampleWithExceptionInDelegateFlow>()
+                    .RegisterFlow<SampleFluentFlow>()
                     ;
                 
             })
