@@ -89,12 +89,15 @@ public static class MicroFlowsConfigurationServices
 
         var method = methods.FirstOrDefault();
 
-        var isDefineOverriden = type.GetMethod("Define").DeclaringType == type;
-
-        if (method == null && !isDefineOverriden)
+        if (method == null && !IsFluentFlow(type))
         {
             throw new FlowValidationException(
                 $"{type.Name}: Flow should have 'public Task Flow()' method or override 'public override void Define(IFlowBuilder builder)'");
         }
+    }
+
+    public static bool IsFluentFlow(Type type)
+    {
+        return type.GetMethod("Define")?.DeclaringType == type;
     }
 }
