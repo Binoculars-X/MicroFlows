@@ -99,6 +99,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
     {
+        _flowParams = flowParams ?? new FlowParams();
+        _flowParams.FlowType = flowType;
+
+        if (MicroFlowsConfigurationServices.IsFluentFlow(flowType))
+        {
+            return await ExecuteFluentFlow(flowParams);
+        }
+
         // construct flow
         _targetFlow = _services.GetService(flowType) as FlowBase;
 
@@ -108,7 +116,6 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
 
         _runningFlowType = flowType;
-        _flowParams = flowParams ?? new FlowParams();
 
         var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
         var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);

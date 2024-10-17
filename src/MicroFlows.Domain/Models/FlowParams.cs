@@ -14,7 +14,7 @@ public class FlowParams : IFlowParams
     public string FlowName { get; set; } = null!;
     
     /// <summary>
-    /// Used internaly but should not be serizlied
+    /// Used internaly but should not be serialized
     /// </summary>
     //[JsonIgnore]
     internal Type? FlowType { get; set; } = null!;
