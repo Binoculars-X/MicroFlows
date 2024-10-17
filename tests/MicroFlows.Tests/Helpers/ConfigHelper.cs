@@ -1,5 +1,4 @@
-﻿using Castle.Core.Configuration;
-using MicroFlows.Tests.TestFlows;
+﻿using MicroFlows.Tests.TestFlows;
 using MicroFlows.Tests.TestSampleFlows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,22 +14,12 @@ namespace MicroFlows.Tests.Helpers;
 
 public static class ConfigHelper
 {
-    public static IServiceProvider GetConfigurationServices()
-    {
-        return GetConfigurationServices(false);
-    }
-
-    public static IServiceProvider GetConfigurationServices(bool optimizeWithCodeEmitter)
+    public static IServiceProvider GetConfigurationServices(Action<IServiceCollection, IConfiguration> action)
     {
         var configuration = new ConfigurationBuilder().Build();
-
-        var services = new ServiceCollection()
-            .AddLogging()
-
-            .AddMicroFlows(configuration)
-                .RegisterFlow<SampleWithDependenciesFlow>()
-            .BuildServiceProvider();
-
-        return services;
+        var services = new ServiceCollection();
+        services.AddLogging();
+        action(services, configuration);
+        return services.BuildServiceProvider();
     }
 }

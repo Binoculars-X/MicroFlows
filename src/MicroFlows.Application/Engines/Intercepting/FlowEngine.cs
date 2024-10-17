@@ -14,6 +14,7 @@ using MicroFlows.Domain.Models;
 using Microsoft.CodeAnalysis;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
+using JsonPathToModel;
 
 namespace MicroFlows.Application.Engines.Interceptors;
     
@@ -98,6 +99,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
     {
+        _flowParams = flowParams ?? new FlowParams();
+        _flowParams.FlowType = flowType;
+
+        if (MicroFlowsConfigurationServices.IsFluentFlow(flowType))
+        {
+            return await ExecuteFluentFlow(flowParams);
+        }
+
         // construct flow
         _targetFlow = _services.GetService(flowType) as FlowBase;
 
@@ -107,7 +116,6 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
 
         _runningFlowType = flowType;
-        _flowParams = flowParams ?? new FlowParams();
 
         var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
         var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);
@@ -138,6 +146,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
 
+        _targetFlow.SetServiceProvider(_services);
+        _flowProxy.SetServiceProvider(_services);
+
         // signals
         await UpdateSignalJournal();
 
@@ -165,6 +176,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             // flow executed completely
             _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
             _context.ExecutionResult.ResultState = ResultStateEnum.Success;
+            SaveEndContext();
         }
         catch (TargetInvocationException exc)
         {
@@ -193,6 +205,19 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
         }
+        catch (FlowTaskFailedException exc)
+        {
+            _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            // preserve original exception details
+            //_context.ExecutionResult.ExceptionMessage = exc.Message;
+            //_context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
+            //_context.ExecutionResult.ExceptionType = exc.GetType().Name;
+            LogException(exc);
+
+            // if exception happened inside delegate method body we should save it
+            await SaveFailedContext();
+        }
         catch (FlowFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
@@ -203,6 +228,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         catch (NonDeterministicFlowException exc)
@@ -221,6 +247,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         finally
@@ -260,6 +287,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         if (model == null)
         {
             _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
+
+            // The first task is always Begin, the last task is always End
+            _context.CurrentTask = $"{TaskDefTypes.Begin}:{_callIndex}";
         }
         else
         {
@@ -270,8 +300,15 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     }
 
     private async Task SaveFailedContext()
+    {        
+        await AddContextToHistory(_context);
+    }
+
+    private async Task SaveEndContext()
     {
-        _context.CurrentTask = null;
+        // The first task is always Begin, the last task is always End
+        _context.Model.ImportFrom(_flowProxy, _importOptions);
+        _context.CurrentTask = $"{TaskDefTypes.End}:{_callIndex + 1}";
         await AddContextToHistory(_context);
     }
 

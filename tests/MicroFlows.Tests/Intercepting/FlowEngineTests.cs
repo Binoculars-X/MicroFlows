@@ -76,7 +76,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(4, flow.ContextHistory.Count);
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Null(flow.ContextHistory[0].Model.Records["$.OrderId"].Deserialize());
         Assert.Equal(false, flow.ContextHistory[0].Model.Records["$.InvoiceSent"].Deserialize());
         Assert.Null(flow.ContextHistory[0].Model.Records["$.SentOrderId"].Deserialize());
@@ -182,7 +182,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(3, flow.ContextHistory.Count);
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelInt"].Deserialize());
         Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelString"].Deserialize());
 
@@ -209,7 +209,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(4, flow.ContextHistory.Count);
 
         Assert.Equal(FlowStateEnum.Start, flow.ContextHistory[0].ExecutionResult.FlowState);
-        Assert.Null(flow.ContextHistory[0].CurrentTask);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelInt"].Deserialize());
         Assert.Null(flow.ContextHistory[0].Model.Records["$.ModelString"].Deserialize());
 
