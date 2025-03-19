@@ -15,6 +15,7 @@ public interface IFlowRepository
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
 
     Task SaveContextHistory(List<FlowContext> contextHistory);
+    Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false);
 }
 
 public record FlowSearchQuery(string? RefId, string? ExternalId);

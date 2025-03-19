@@ -23,8 +23,8 @@ public abstract partial class FlowBase
     //[JsonIgnore]
     //public bool IsFluentFlow { get;private set; } = true;
 
-    //[JsonIgnore]
-    //public List<TaskDetails> Tasks => throw new NotImplementedException();
+    [JsonIgnore]
+    public List<TaskDetails> Tasks { get; internal set; } = [];
 
     /// <summary>
     /// Fluent flow definition
@@ -33,6 +33,11 @@ public abstract partial class FlowBase
     public virtual void Define(IFlowBuilder builder)
     {
         //IsFluentFlow = false;
+    }
+
+    internal void Parse()
+    {
+        //throw new NotImplementedException();
     }
 
     //public string CreateRefId()

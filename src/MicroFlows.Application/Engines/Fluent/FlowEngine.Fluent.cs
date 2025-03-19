@@ -37,9 +37,10 @@ internal partial class FlowEngine
             throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
         }
 
-        //flow.Parse();
+        flow.Parse();
         var flowBuilder = new FlowBuilder();
         flow.Define(flowBuilder);
+        flow.Tasks = flowBuilder.Tasks;
         //flow.SetFirstPass(runParameters.FirstPass);
 
         if (context == null)
@@ -126,8 +127,11 @@ internal partial class FlowEngine
         }
     }
 
-    private async Task RunFlowTasks(int index, IFlow flow, FlowContext context, IFlowBuilder flowBuilder)
+    public const int MAX_LOOP_COUNT = 1000;
+
+    private async Task RunFlowTasks(int index, FlowBase flow, FlowContext context, IFlowBuilder flowBuilder)
     {
+        var settings = flow.Params.FlowOptions;
         var i = index;
         var currentIteration = 0;
 
@@ -138,14 +142,16 @@ internal partial class FlowEngine
                 context.ExecutionResult.FlowState == FlowStateEnum.Finished)
             {
                 // save context and stop if flow settings NoStoreTillStop
-                if (flow.Settings.StoreModel == FlowExecutionStoreModel.NoStoreTillStop &&
+                if (settings.StoreModel == FlowExecutionStoreModel.NoStoreTillStop &&
                     context.ExecutionResult.FlowState == FlowStateEnum.Stop)
                 {
-                    await _storage.SaveProcessExecutionContext(context, context.ExecutionResult, true);
+                    //await _storage.SaveProcessExecutionContext(context, context.ExecutionResult, true);
+                    await _flowRepository.SaveProcessExecutionContext(context, context.ExecutionResult, true);
                 }
-                else if (!noStorage)
+                else if (!settings.NoStorage)
                 {
-                    await _storage.SaveProcessExecutionContext(context, context.ExecutionResult);
+                    //await _storage.SaveProcessExecutionContext(context, context.ExecutionResult);
+                    await _flowRepository.SaveProcessExecutionContext(context, context.ExecutionResult);
                 }
 
                 return;
@@ -204,51 +210,52 @@ internal partial class FlowEngine
 
                     continue;
 
-                case TaskDefTypes.Form:
-                    if (task.FormType != null)
-                    {
-                        // get an instance of the FormRulesCollection generic for this model, it must be registered in DI
-                        var formInstance = _serviceProvider.GetService(task.FormType);
-                        var formInstanceType = formInstance?.GetType();
-                        var methodInfo = formInstanceType?.GetMethod("RootRule");
+                // ToDo: add Form task case when enable forms
+                //case TaskDefTypes.Form:
+                //    if (task.FormType != null)
+                //    {
+                //        // get an instance of the FormRulesCollection generic for this model, it must be registered in DI
+                //        var formInstance = _serviceProvider.GetService(task.FormType);
+                //        var formInstanceType = formInstance?.GetType();
+                //        var methodInfo = formInstanceType?.GetMethod("RootRule");
 
-                        var formRuleInstance = methodInfo?.Invoke(formInstance, null);
+                //        var formRuleInstance = methodInfo?.Invoke(formInstance, null);
 
-                        var formRuleInstanceType = formRuleInstance?.GetType();
-                        var formRuleMethodInfo = formRuleInstanceType?.GetMethod("Handle");
+                //        var formRuleInstanceType = formRuleInstance?.GetType();
+                //        var formRuleMethodInfo = formRuleInstanceType?.GetMethod("Handle");
 
-                        // Run the form rule
-                        _ = formRuleMethodInfo?.Invoke(formRuleInstance, new object[] { context.Model }) is Task<bool> resultTask
-                            && await resultTask;
-                    }
+                //        // Run the form rule
+                //        _ = formRuleMethodInfo?.Invoke(formRuleInstance, new object[] { context.Model }) is Task<bool> resultTask
+                //            && await resultTask;
+                //    }
 
-                    if (task.Action is not null)
-                    {
-                        await ExecuteTask(task, flow, context);
-                    }
+                //    if (task.Action is not null)
+                //    {
+                //        await ExecuteTask(task, flow, context);
+                //    }
 
-                    if (context.ExecutionResult.FormState != FormTaskStateEnum.Submitted &&
-                        context.ExecutionResult.FormState != FormTaskStateEnum.Rejected)
-                    {
-                        // stop execution and wait for Form submit
-                        context.ExecutionResult.ResultState = ResultStateEnum.Success;
-                        context.ExecutionResult.FlowState = FlowStateEnum.Stop;
-                        context.ExecutionResult.FormId = task.FormType?.FullName ?? task.FormTypeName;
-                        context.ExecutionResult.IsFormTask = true;
-                        context.ExecutionResult.CallbackTaskId = task.CallbackTask;
-                        context.ExecutionResult.PreloadTableData = task.PreloadTableData;
-                    }
-                    else
-                    {
-                        // form submitted - goto next task
-                        context.ExecutionResult.ResultState = ResultStateEnum.Success;
-                        context.ExecutionResult.FlowState = FlowStateEnum.Continue;
-                        context.ExecutionResult.IsFormTask = false;
-                        context.ExecutionResult.FormState = FormTaskStateEnum.Initialized;
-                        i++;
-                    }
+                //    if (context.ExecutionResult.FormState != FormTaskStateEnum.Submitted &&
+                //        context.ExecutionResult.FormState != FormTaskStateEnum.Rejected)
+                //    {
+                //        // stop execution and wait for Form submit
+                //        context.ExecutionResult.ResultState = ResultStateEnum.Success;
+                //        context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+                //        context.ExecutionResult.FormId = task.FormType?.FullName ?? task.FormTypeName;
+                //        context.ExecutionResult.IsFormTask = true;
+                //        context.ExecutionResult.CallbackTaskId = task.CallbackTask;
+                //        context.ExecutionResult.PreloadTableData = task.PreloadTableData;
+                //    }
+                //    else
+                //    {
+                //        // form submitted - goto next task
+                //        context.ExecutionResult.ResultState = ResultStateEnum.Success;
+                //        context.ExecutionResult.FlowState = FlowStateEnum.Continue;
+                //        context.ExecutionResult.IsFormTask = false;
+                //        context.ExecutionResult.FormState = FormTaskStateEnum.Initialized;
+                //        i++;
+                //    }
 
-                    continue;
+                //    continue;
 
                 case TaskDefTypes.End:
                     await ExecuteTask(task, flow, context);

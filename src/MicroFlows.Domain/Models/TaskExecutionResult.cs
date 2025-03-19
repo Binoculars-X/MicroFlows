@@ -19,4 +19,5 @@ public class TaskExecutionResult
     public string ExceptionStackTrace { get; set; }
     public string ExceptionType { get; set; }
     //public Exception ExecutionException { get; set; }
+    public bool IsWaitTask { get; set; }
 }

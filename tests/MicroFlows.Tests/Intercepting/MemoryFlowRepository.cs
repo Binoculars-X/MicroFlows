@@ -80,4 +80,9 @@ internal class MemoryFlowRepository : IFlowRepository
         _flowModelDictionary[id].ContextHistory = contextHistory;
         return Task.CompletedTask;
     }
+
+    public async Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false)
+    {
+        // ToDo: Implement fluent flow save
+    }
 }
