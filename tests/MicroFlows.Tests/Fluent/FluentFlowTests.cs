@@ -55,4 +55,17 @@ public class FluentFlowTests : TestBase
         Assert.Equal(10, data.States.Count);
         Assert.Equal(10, data.Transitions.Count);
     }
+
+    [Fact]
+    public async Task FluentFlow_Executed_Successfully()
+    {
+        var engine = GetEngine();
+
+        var ps = new FlowParams
+        {
+            FlowType = typeof(SampleFluentFlow),
+        };
+
+        await engine.ExecuteFluentFlow(ps);
+    }
 }

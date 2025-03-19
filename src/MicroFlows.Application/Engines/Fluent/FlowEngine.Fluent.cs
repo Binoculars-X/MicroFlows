@@ -37,10 +37,12 @@ internal partial class FlowEngine
             throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
         }
 
-        flow.Parse();
-        var flowBuilder = new FlowBuilder();
-        flow.Define(flowBuilder);
-        flow.Tasks = flowBuilder.Tasks;
+        //flow.Parse();
+        var flowBuilder = new FluentFlowBuilder(flow);
+        flowBuilder.Parse();
+        //flow.Define(flowBuilder);
+        //flow.Tasks = flowBuilder.Tasks;
+        
         //flow.SetFirstPass(runParameters.FirstPass);
 
         if (context == null)
@@ -307,9 +309,10 @@ internal partial class FlowEngine
             throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
         }
 
-        var flowBuilder = new FlowBuilder();
+        var flowBuilder = new FluentFlowBuilder(flow);
         flow.Define(flowBuilder);
         //flow.Parse();
+        
         var stateNames = new HashSet<string>();
         var index = -1;
         TaskDetails task = null;
