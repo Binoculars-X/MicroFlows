@@ -75,6 +75,6 @@ public partial class FlowEngineTests : TestBase
 
         var inner = exc.InnerException;
         Assert.Contains("IFlowProvider", inner.Message);
-        Assert.Contains("Deserialization of interface types is not supported", inner.Message);
+        Assert.Contains("Deserialization of interface or abstract types is not supported.", inner.Message);
     }
 }

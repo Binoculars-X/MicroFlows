@@ -42,7 +42,7 @@ public class FluentFlowTests : TestBase
     }
 
     [Fact]
-    public async Task SimpleClientKeptContextTest()
+    public async Task GetFlowDefinitionDetails_Returns_States_and_Transitions()
     {
         var engine = GetEngine();
 

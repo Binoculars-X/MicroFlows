@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Testcontainers.MsSql;
+using MicroFlows;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -33,6 +34,12 @@ public class SqlTestContainersTestBase : IAsyncLifetime
             })
             .ConfigureServices(services =>
             {
+                services.AddMicroFlowsMsSqlRepo(configuration,
+                    new MsSqlFlowRepositorySettings
+                    {
+                        ConnectionString = _msSqlContainer.GetConnectionString()
+                    });
+
                 //services.TryAddScoped<IRepository, Repository>();
 
                 //services.AddEntityFrameworkInMemoryDatabase();

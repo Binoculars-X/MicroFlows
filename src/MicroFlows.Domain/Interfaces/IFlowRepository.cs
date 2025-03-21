@@ -8,14 +8,26 @@ namespace MicroFlows.Domain.Interfaces;
 public interface IFlowRepository
 {
     Task<FlowStoreModel> GetFlowModel(string refId);
+    Task<List<FlowContext>> GetFlowHistory(string refId);
+    Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
+    Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query);
+
+
     Task<FlowStoreModel> UpdateFlow(IFlow flow);
 
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
-    Task<List<FlowContext>> GetFlowHistory(string refId);
-    Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
 
     Task SaveContextHistory(List<FlowContext> contextHistory);
     Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false);
 }
 
-public record FlowSearchQuery(string? RefId, string? ExternalId);
+public record FlowSearchQuery(string? RefId, string? ExternalId)
+{
+    public string? Tag;
+
+    public bool IsNotEmpty()
+    {
+        return !string.IsNullOrEmpty(RefId) || !string.IsNullOrEmpty(ExternalId) 
+            || !string.IsNullOrEmpty(Tag);
+    }
+}

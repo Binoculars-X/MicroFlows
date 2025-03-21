@@ -85,4 +85,9 @@ internal class MemoryFlowRepository : IFlowRepository
     {
         // ToDo: Implement fluent flow save
     }
+
+    public Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -29,7 +29,7 @@ public static class MicroFlowsConfigurationServices
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
         ValidateFlow(typeof(T));
-        _registeredFlows.TryAdd(typeof(T), 0);
+        _registeredFlows.TryAdd(typeof(T), default);
         services.AddTransient<T>();
         return services;
     }

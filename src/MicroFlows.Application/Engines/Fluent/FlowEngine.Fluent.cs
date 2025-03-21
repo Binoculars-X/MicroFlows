@@ -143,6 +143,7 @@ internal partial class FlowEngine
                 context.ExecutionResult.FlowState == FlowStateEnum.Stop ||
                 context.ExecutionResult.FlowState == FlowStateEnum.Finished)
             {
+                // ToDo: refactor to use AddContextToHistory/_flowRepository.SaveContextHistory
                 // save context and stop if flow settings NoStoreTillStop
                 if (settings.StoreModel == FlowExecutionStoreModel.NoStoreTillStop &&
                     context.ExecutionResult.FlowState == FlowStateEnum.Stop)

@@ -6,6 +6,7 @@ using System.Text;
 using System.Linq;
 
 namespace MicroFlows.Application.Engines.Interceptors;
+
 public class FreezableProxyGenerationHook : IProxyGenerationHook
 {
     private readonly string[] _systemMethods = [

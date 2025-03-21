@@ -56,6 +56,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
     {
+        // ToDo: should we store signals in a DB to prevent loosing them if app crashes or for concurrent nodes processing?
         _signals[signal] = payload;
         return await ExecuteFlow(flowType, flowParams);
     }

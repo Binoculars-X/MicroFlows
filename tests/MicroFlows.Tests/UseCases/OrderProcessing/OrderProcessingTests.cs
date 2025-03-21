@@ -18,8 +18,8 @@ namespace MicroFlows.Tests.UseCases.OrderProcessing;
 public class OrderProcessingTests
 {
     private readonly IServiceProvider _services;
-    private readonly IFlowProvider _flowsProvider;
-    private readonly IFlowRepository _flowsRepository;
+    private readonly IFlowProvider _flowProvider;
+    private readonly IFlowRepository _flowRepository;
     private readonly Mock<IInvoiceRepository> _invoiceRepository;
 
     public OrderProcessingTests()
@@ -37,8 +37,8 @@ public class OrderProcessingTests
                 ;
         });
 
-        _flowsProvider = _services.GetService<IFlowProvider>();
-        _flowsRepository = _services.GetService<IFlowRepository>();
+        _flowProvider = _services.GetService<IFlowProvider>();
+        _flowRepository = _services.GetService<IFlowRepository>();
     }
 
     [Fact]
@@ -51,8 +51,8 @@ public class OrderProcessingTests
         ps.FlowType = typeof(OrderFlow);
 
         // on the first pass OrderFlow will be stopped to wating signal from InvoiceFlow
-        var ctx = await _flowsProvider.ExecuteFlow(ps);
-        var flow = await _flowsRepository.GetFlowModel(ctx.RefId);
+        var ctx = await _flowProvider.ExecuteFlow(ps);
+        var flow = await _flowRepository.GetFlowModel(ctx.RefId);
 
         Assert.Equal(4, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
@@ -64,10 +64,10 @@ public class OrderProcessingTests
         Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
 
         // on the second pass the signal should be received
-        var ctx2 = await _flowsProvider.ExecuteFlow(ps);
+        var ctx2 = await _flowProvider.ExecuteFlow(ps);
         Assert.Equal(ctx.RefId, ctx2.RefId);
 
-        var flow2 = await _flowsRepository.GetFlowModel(ctx2.RefId);
+        var flow2 = await _flowRepository.GetFlowModel(ctx2.RefId);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
 
@@ -87,8 +87,8 @@ public class OrderProcessingTests
         ps.ExternalId = "12345";
         ps.FlowType = typeof(OrderFlow);
 
-        var ctx = await _flowsProvider.ExecuteFlow(ps);
-        var flow = await _flowsRepository.GetFlowModel(ctx.RefId);
+        var ctx = await _flowProvider.ExecuteFlow(ps);
+        var flow = await _flowRepository.GetFlowModel(ctx.RefId);
 
         Assert.Equal(4, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
@@ -99,10 +99,10 @@ public class OrderProcessingTests
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
 
-        var ctx2 = await _flowsProvider.ExecuteFlow(ps);
+        var ctx2 = await _flowProvider.ExecuteFlow(ps);
         Assert.Equal(ctx.RefId, ctx2.RefId);
 
-        var flow2 = await _flowsRepository.GetFlowModel(ctx2.RefId);
+        var flow2 = await _flowRepository.GetFlowModel(ctx2.RefId);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
 

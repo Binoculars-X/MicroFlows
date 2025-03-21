@@ -13,7 +13,7 @@ Use MicroFlows to implement Stateful workflows for microservices
 ...
 
 // constructor
-public void MyService(IFlowsProvider flowsProvider)
+public void MyService(IFlowProvider flowProvider)
 ...
 ```
 
@@ -24,6 +24,10 @@ public void MyService(IFlowsProvider flowsProvider)
 ```
 
 **Release Notes**
+
+**1.0.0+**
+- Added MsSqlFlowRepository
+- Added Fluent Flows
 
 **0.5.0+**
 - Added Non Public Fields and Properties to model

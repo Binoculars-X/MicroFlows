@@ -9,7 +9,9 @@ namespace MicroFlows;
 public static class FluentFlowDefinition
 {
     public static F Begin<F>(this F flow) where F : class, IFlowBuilder { RegisterStart(flow.Tasks, null); return flow; }
+    public static F Begin<F>(this F flow, Action action) where F : class, IFlowBuilder { RegisterStart(flow.Tasks, action); return flow; }
     public static F Begin<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterStart(flow.Tasks, action); return flow; }
+    public static F End<F>(this F flow, Action action) where F : class, IFlowBuilder { RegisterFinish(flow.Tasks, action); return flow; }
     public static F End<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterFinish(flow.Tasks, action); return flow; }
     public static F End<F>(this F flow) where F : class, IFlowBuilder { RegisterFinish(flow.Tasks, null); return flow; }
     public static F Next<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
@@ -42,6 +44,11 @@ public static class FluentFlowDefinition
         tasks.Add(new TaskDetails { Action = action, Name = name, Type = type });
     }
 
+    private static void RegisterTask(List<TaskDetails> tasks, TaskDefTypes type, string name, Action action)
+    {
+        tasks.Add(new TaskDetails { NonAsyncAction = action, Name = name, Type = type });
+    }
+
     private static void RegisterWait(List<TaskDetails> tasks, Func<bool> condition)
     {
         tasks.Add(new TaskDetails { Name = "Wait", Type = TaskDefTypes.Wait, Condition = condition });
@@ -67,6 +74,16 @@ public static class FluentFlowDefinition
     private static void RegisterStart(List<TaskDetails> tasks, Func<Task> action)
     {
         RegisterTask(tasks, TaskDefTypes.Begin, "Start", action);
+    }
+
+    private static void RegisterStart(List<TaskDetails> tasks, Action action)
+    {
+        RegisterTask(tasks, TaskDefTypes.Begin, "Start", action);
+    }
+
+    private static void RegisterFinish(List<TaskDetails> tasks, Action action)
+    {
+        RegisterTask(tasks, TaskDefTypes.End, "Finish", action);
     }
 
     private static void RegisterFinish(List<TaskDetails> tasks, Func<Task> action)
