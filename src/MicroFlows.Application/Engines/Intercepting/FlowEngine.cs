@@ -17,9 +17,9 @@ using MicroFlows.Domain.Enums;
 using JsonPathToModel;
 
 namespace MicroFlows.Application.Engines.Interceptors;
-    
+
 /// <summary>
-/// InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
+/// FlowEngine keeps state of running flow and cannot be shared with other scopes
 /// </summary>
 internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {

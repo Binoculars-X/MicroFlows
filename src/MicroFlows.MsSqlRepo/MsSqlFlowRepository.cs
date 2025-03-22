@@ -2,6 +2,7 @@
 using MicroFlows.Application.Helpers;
 using MicroFlows.Domain.Interfaces;
 using MicroFlows.Domain.Models;
+using MicroFlows.Application.Exceptions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -178,14 +179,14 @@ WHERE id = @p2;
                 return model!;
             }
                 
-            throw new Exception($"Cannot find flow for refId '{refId}'");
+            throw new FlowNotFoundException($"Cannot find flow for refId '{refId}'");
         }
     }
 
     public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
         var list = new List<FlowStoreModel>();
-        var q = $"select id, flow_json from {_tableName} ";
+        var q = $"select id, flow_json from {_tableName}";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -194,18 +195,18 @@ WHERE id = @p2;
 
             if (query.IsNotEmpty())
             {
-                q += "where ";
+                q += " where 1=1";
             }
 
             if (!string.IsNullOrEmpty(query.ExternalId))
             {
-                q += " JSON_VALUE(flow_json, '$.externalId') = @p1";
+                q += " and JSON_VALUE(flow_json, '$.externalId') = @p1";
                 cmd.Parameters.AddWithValue("p1", query.ExternalId);
             }
 
             if (!string.IsNullOrEmpty(query.RefId))
             {
-                q += " id = @p2";
+                q += " and id = @p2";
                 cmd.Parameters.AddWithValue("p2", query.RefId);
             }
 
@@ -233,24 +234,21 @@ WHERE id = @p2;
 
     public async Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query)
     {
-        if (query.RefId != null)
-        {
-            return await GetFlowHistory(query.RefId);
-        }
+        var list = await SearchFlowModel(query);
+        return list.FirstOrDefault()?.ContextHistory;
 
-        // ToDo: implement search flow in DB table
-        //if (query.ExternalId != null)
+        //if (query.RefId != null)
         //{
-        //    var record = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
-        //    return record?.ContextHistory;
+        //    return await GetFlowHistory(query.RefId);
         //}
 
-        return null;
-    }
-        
-    public Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false)
-    {
-        throw new NotImplementedException();
-    }
+        //// ToDo: implement search flow in DB table
+        ////if (query.ExternalId != null)
+        ////{
+        ////    var record = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
+        ////    return record?.ContextHistory;
+        ////}
 
+        //return null;
+    }
 }

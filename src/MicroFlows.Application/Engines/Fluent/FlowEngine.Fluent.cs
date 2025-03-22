@@ -52,20 +52,22 @@ internal partial class FlowEngine
                 //context = await _storage.CreateProcessExecutionContext(flow, parameters, noStorage);
                 context = await _flowRepository.CreateFlowContext(flow, runParameters);
                 context.ExecutionResult = new TaskExecutionResult();
+                _contextHistory = new List<FlowContext>();
             }
             else
             {
-                var hist = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, 
+                var _contextHistory = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, 
                     _flowParams.ExternalId));
 
-                if (hist == null)
+                if (_contextHistory == null)
                 {
                     context = await _flowRepository.CreateFlowContext(flow, runParameters);
                     context.RefId = refId;
+                    _contextHistory = new List<FlowContext>();
                 }
                 else
                 {
-                    context = hist.First();
+                    context = _contextHistory.First();
                 }
 
                 //context = await _storage.GetProcessExecutionContext(refId);
@@ -143,18 +145,21 @@ internal partial class FlowEngine
                 context.ExecutionResult.FlowState == FlowStateEnum.Stop ||
                 context.ExecutionResult.FlowState == FlowStateEnum.Finished)
             {
+                await AddContextToHistory(context);
+
                 // ToDo: refactor to use AddContextToHistory/_flowRepository.SaveContextHistory
                 // save context and stop if flow settings NoStoreTillStop
                 if (settings.StoreModel == FlowExecutionStoreModel.NoStoreTillStop &&
                     context.ExecutionResult.FlowState == FlowStateEnum.Stop)
                 {
                     //await _storage.SaveProcessExecutionContext(context, context.ExecutionResult, true);
-                    await _flowRepository.SaveProcessExecutionContext(context, context.ExecutionResult, true);
+                    await _flowRepository.SaveContextHistory(_contextHistory);
                 }
-                else if (!settings.NoStorage)
+
+                else if (settings.StoreModel != FlowExecutionStoreModel.NoStoreTillStop && !settings.NoStorage)
                 {
                     //await _storage.SaveProcessExecutionContext(context, context.ExecutionResult);
-                    await _flowRepository.SaveProcessExecutionContext(context, context.ExecutionResult);
+                    await _flowRepository.SaveContextHistory(_contextHistory);
                 }
 
                 return;

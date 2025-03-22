@@ -12,5 +12,7 @@ public class FlowOptions
 
 public enum FlowExecutionStoreModel
 {
-    NoStoreTillStop = 1,
+    Full = 1,
+    FullNoHistory,
+    NoStoreTillStop,
 }

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MicroFlows.Domain.Interfaces;
+
 public interface IFlowRepository
 {
     Task<FlowStoreModel> GetFlowModel(string refId);
@@ -12,13 +13,13 @@ public interface IFlowRepository
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
     Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query);
 
-
-    Task<FlowStoreModel> UpdateFlow(IFlow flow);
-
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
+    Task<FlowStoreModel> UpdateFlow(IFlow flow);
+    Task UpdateFlowModel(FlowStoreModel flowModel);
 
     Task SaveContextHistory(List<FlowContext> contextHistory);
-    Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false);
+
+    //Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false);
 }
 
 public record FlowSearchQuery(string? RefId, string? ExternalId)
