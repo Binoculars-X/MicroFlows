@@ -48,7 +48,7 @@ public class OrderProcessingTests
 
         var ps = new FlowParams();
         ps.ExternalId = "1234";
-        ps.FlowType = typeof(OrderFlow);
+        ps.FlowName = typeof(OrderFlow).FullName;
 
         // on the first pass OrderFlow will be stopped to wating signal from InvoiceFlow
         var ctx = await _flowProvider.ExecuteFlow(ps);

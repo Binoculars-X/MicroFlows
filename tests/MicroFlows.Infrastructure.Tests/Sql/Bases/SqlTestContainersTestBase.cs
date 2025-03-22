@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Testcontainers.MsSql;
 using MicroFlows;
+using MicroFlows.Infrastructure.Tests.TestSampleFlows.Fluent;
+using MicroFlows.Infrastructure.Tests.TestSampleFlows;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -34,6 +36,11 @@ public class SqlTestContainersTestBase : IAsyncLifetime
             })
             .ConfigureServices(services =>
             {
+                services.AddMicroFlows(configuration)
+                    .RegisterFlow<LinearInlineFlow>()
+                    .RegisterFlow<SampleFlow>()
+                    ;
+
                 services.AddMicroFlowsMsSqlRepo(configuration,
                     new MsSqlFlowRepositorySettings
                     {

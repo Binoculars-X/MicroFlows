@@ -89,25 +89,26 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
             SignalJournal = flow.SignalJournal!,
         };
 
-        var json = JsonSerializer.Serialize(flowModel);
+        if (!flowParams.FlowOptions.NoStorage)
+        {
+            var json = JsonSerializer.Serialize(flowModel);
 
-        var q = $@"
+            var q = $@"
 INSERT INTO {_tableName}
 SELECT @p1, @p2;
 ";
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
-        {
-            SqlCommand cmd = new SqlCommand(q, connection);
-            cmd.CommandType = System.Data.CommandType.Text;
-            cmd.Parameters.AddWithValue("p1", ctx.RefId);
-            cmd.Parameters.AddWithValue("p2", json);
-            await connection.OpenAsync();
-            var result = await cmd.ExecuteNonQueryAsync();
+            using (SqlConnection connection = new SqlConnection(
+                           _connectionString))
+            {
+                SqlCommand cmd = new SqlCommand(q, connection);
+                cmd.CommandType = System.Data.CommandType.Text;
+                cmd.Parameters.AddWithValue("p1", ctx.RefId);
+                cmd.Parameters.AddWithValue("p2", json);
+                await connection.OpenAsync();
+                var result = await cmd.ExecuteNonQueryAsync();
+            }
         }
-
-        //_flowModelDictionary[ctx.RefId] = flowModel;
 
         return ctx;
     }
@@ -157,14 +158,13 @@ WHERE id = @p2;
         //return Task.FromResult(clone);
     }
 
-    public async Task<FlowStoreModel> GetFlowModel(string refId)
+    public async Task<FlowStoreModel?> GetFlowModel(string refId)
     {
         // _flowModelDictionary[refId]
 
         var q = $"select id, flow_json from {_tableName} where id = @p1";
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+        using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             SqlCommand cmd = new SqlCommand(q, connection);
             cmd.CommandType = System.Data.CommandType.Text;
@@ -178,8 +178,9 @@ WHERE id = @p2;
                 var model = JsonSerializer.Deserialize<FlowStoreModel>(json);
                 return model!;
             }
-                
-            throw new FlowNotFoundException($"Cannot find flow for refId '{refId}'");
+
+            return null;
+            //throw new FlowNotFoundException($"Cannot find flow for refId '{refId}'");
         }
     }
 

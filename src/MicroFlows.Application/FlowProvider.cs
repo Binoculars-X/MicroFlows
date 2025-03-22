@@ -57,6 +57,11 @@ public class FlowProvider : IFlowProvider
 
             if (type == null)
             {
+                type = MicroFlowsConfigurationServices.GetFlowType(flowParams.FlowName);
+            }
+
+            if (type == null)
+            {
                 throw new InvalidDependencyException($"Flow '{flowParams.FlowName}' is not registered");
             }
 

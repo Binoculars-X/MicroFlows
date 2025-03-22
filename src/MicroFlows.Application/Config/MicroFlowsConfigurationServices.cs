@@ -26,6 +26,11 @@ public static class MicroFlowsConfigurationServices
         return _registeredFlows.Keys.ToHashSet(); 
     }
 
+    internal static Type GetFlowType(string name)
+    {
+        return _registeredFlows.Keys.FirstOrDefault(x => x.FullName == name);
+    }
+
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
         ValidateFlow(typeof(T));

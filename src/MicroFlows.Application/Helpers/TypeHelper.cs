@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
 
 namespace MicroFlows.Application.Helpers;
+
 public static class TypeHelper
 {
     public static Type ResolveType(string name)

@@ -1,10 +1,11 @@
 using MicroFlows.Domain.Interfaces;
 using MicroFlows.Infrastructure.Tests.Sql.Bases;
+using MicroFlows.Infrastructure.Tests.TestSampleFlows.Fluent;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace MicroFlows.Infrastructure.Tests.MsSql;
 
-public class MsSqlSampleFlowStoreTests : SqlTestContainersTestBase
+public class MsSqlRepoTests : SqlTestContainersTestBase
 {
     [Fact]
     public async Task Can_Create_FlowContext_and_Read_FlowModel()
@@ -41,24 +42,5 @@ public class MsSqlSampleFlowStoreTests : SqlTestContainersTestBase
         Assert.Equal(2, models.Count);
     }
 
-    public class LinearModel
-    {
-        public bool FlowStartExecuted { get; set; }
-        public bool NextExecuted { get; set; }
-        public bool Next2Executed { get; set; }
-        public bool FlowEndExecuted { get; set; }
-        public bool Condition1 { get; set; }
-    }
-
-    public class LinearInlineFlow : FlowBase<LinearModel>
-    {
-        public override void Define(IFlowBuilder builder)
-        {
-            builder
-                .Begin(() => { Model.FlowStartExecuted = true; })
-                .Next(() => { Model.NextExecuted = true; })
-                .Next(() => { Model.Next2Executed = true; })
-                .End(() => { Model.FlowEndExecuted = true; });
-        }
-    }
+    
 }
