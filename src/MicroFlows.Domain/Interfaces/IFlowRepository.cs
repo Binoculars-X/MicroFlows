@@ -1,4 +1,5 @@
-﻿using MicroFlows.Domain.Models;
+﻿using MicroFlows.Domain.Enums;
+using MicroFlows.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -19,16 +20,18 @@ public interface IFlowRepository
 
     Task SaveContextHistory(List<FlowContext> contextHistory);
 
-    //Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false);
+    Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query);
 }
 
-public record FlowSearchQuery(string? RefId, string? ExternalId)
+public record FlowSearchQuery(string? RefId, string? ExternalId = null)
 {
     public string? Tag;
+    public FlowStateEnum? State;
+    public ResultStateEnum? Result;
 
     public bool IsNotEmpty()
     {
         return !string.IsNullOrEmpty(RefId) || !string.IsNullOrEmpty(ExternalId) 
-            || !string.IsNullOrEmpty(Tag);
+            || !string.IsNullOrEmpty(Tag) || State != null || Result != null;
     }
 }

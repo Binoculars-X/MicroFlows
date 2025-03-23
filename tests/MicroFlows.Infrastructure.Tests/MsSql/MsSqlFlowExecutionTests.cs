@@ -6,6 +6,7 @@ using MicroFlows.Domain.Interfaces;
 using MicroFlows.Infrastructure.Tests.Sql.Bases;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows.Fluent;
+using MicroFlows.MsSqlRepo;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
@@ -108,5 +109,28 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
         Assert.True(model.UpdatePassed);
         Assert.True(model.InitPassed);
         Assert.True(model.CallInlinePassed);
+    }
+
+    [Fact]
+    public async Task Can_Search_Flow_After_Run()
+    {
+        var repo = _services.GetService<IFlowRepository>() as MsSqlFlowRepository;
+        var engine = GetEngine();
+        var ps = new FlowParams() { ExternalId = "my ID", Tag = "my tag" };
+
+        var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);
+        Assert.NotNull(ctx);
+        Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+
+        var result = await repo.SearchFlow(new FlowSearchQuery(ctx.RefId));
+
+        Assert.NotNull(result);
+        Assert.Single(result);
+        Assert.Equal(ctx.RefId, result.First().RefId);
+        Assert.Equal(FlowStateEnum.Finished, result.First().State);
+        Assert.Equal(ResultStateEnum.Success, result.First().Result);
+        Assert.Equal(ps.ExternalId, result.First().ExternalId);
+        Assert.Equal(ps.Tag, result.First().Tag);
     }
 }

@@ -93,7 +93,12 @@ internal class MemoryFlowRepository : IFlowRepository
         return Task.CompletedTask;
     }
 
-    public Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false)
+    //public Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false)
+    //{
+    //    throw new NotImplementedException();
+    //}
+
+    public async Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query)
     {
         throw new NotImplementedException();
     }

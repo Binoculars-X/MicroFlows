@@ -12,6 +12,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.MsSqlRepo;
 
@@ -79,6 +80,7 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
+        ctx.ExecutionResult.ResultState = Domain.Enums.ResultStateEnum.Success;
 
         var flowModel = new FlowStoreModel()
         {
@@ -88,6 +90,8 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
             ContextHistory = [ctx],
             SignalJournal = flow.SignalJournal!,
         };
+
+        RefreshFlowStoreModelRoot(flowModel);
 
         if (!flowParams.FlowOptions.NoStorage)
         {
@@ -113,8 +117,29 @@ SELECT @p1, @p2;
         return ctx;
     }
 
+    /// <summary>
+    /// Populates root fields for faster search
+    /// !!! Data Dublication !!!
+    /// </summary>
+    /// <param name="flowModel"></param>
+    /// <exception cref="NotImplementedException"></exception>
+    private void RefreshFlowStoreModelRoot(FlowStoreModel flowModel)
+    {
+        var ctx = flowModel.ContextHistory.Last();
+
+        if (ctx != null)
+        {
+            flowModel.Result = ctx.ExecutionResult.ResultState;
+            flowModel.State = ctx.ExecutionResult.FlowState;
+            flowModel.ExceptionMessage = ctx.ExecutionResult.ExceptionMessage;
+            flowModel.Tag = ctx.Params.Tag;
+            flowModel.ExternalId = ctx.Params.ExternalId;
+        }
+    }
+
     public async Task UpdateFlowModel(FlowStoreModel flowModel)
     {
+        RefreshFlowStoreModelRoot(flowModel);
         var json = JsonSerializer.Serialize(flowModel);
 
         var q = $@"
@@ -150,18 +175,11 @@ WHERE id = @p2;
         var model = await GetFlowModel(flow.RefId);
         model.SignalJournal.AddRange(flow.SignalJournal);
         await UpdateFlowModel(model);
-        var clone = TypeHelper.CloneObject(model);
-        return clone;
-        //_flowModelDictionary[flow.RefId].SignalJournal.AddRange(flow.SignalJournal);
-        //var model = _flowModelDictionary[flow.RefId];
-        //var clone = TypeHelper.CloneObject(model);
-        //return Task.FromResult(clone);
+        return model;
     }
 
     public async Task<FlowStoreModel?> GetFlowModel(string refId)
     {
-        // _flowModelDictionary[refId]
-
         var q = $"select id, flow_json from {_tableName} where id = @p1";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -184,6 +202,101 @@ WHERE id = @p2;
         }
     }
 
+    public async Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query)
+    {
+        var list = new List<SearchFlowDetails>();
+        
+        var q = @$"
+select id
+, JSON_VALUE(flow_json, '$.ExternalId') externalId
+, JSON_VALUE(flow_json, '$.Tag') tag
+, JSON_VALUE(flow_json, '$.State') state
+, JSON_VALUE(flow_json, '$.Result') result
+from {_tableName}
+";
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            SqlCommand cmd = new SqlCommand(q, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+
+            if (query.IsNotEmpty())
+            {
+                q += " where 1=1";
+            }
+
+            if (!string.IsNullOrEmpty(query.ExternalId))
+            {
+                q += " and JSON_VALUE(flow_json, '$.ExternalId') = @p1";
+                cmd.Parameters.AddWithValue("p1", query.ExternalId);
+            }
+
+            if (!string.IsNullOrEmpty(query.RefId))
+            {
+                q += " and id = @p2";
+                cmd.Parameters.AddWithValue("p2", query.RefId);
+            }
+
+            if (!string.IsNullOrEmpty(query.Tag))
+            {
+                q += " and JSON_VALUE(flow_json, '$.Tag') = @p3";
+                cmd.Parameters.AddWithValue("p3", query.Tag);
+            }
+
+            if (query.State != null)
+            {
+                q += " and JSON_VALUE(flow_json, '$.State') = @p4";
+                cmd.Parameters.AddWithValue("p4", query.State);
+            }
+
+            if (query.Result != null)
+            {
+                q += " and JSON_VALUE(flow_json, '$.Result') = @p5";
+                cmd.Parameters.AddWithValue("p5", query.Result);
+            }
+
+            cmd.CommandText = q;
+            await connection.OpenAsync();
+            var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                var model = new SearchFlowDetails(
+                    reader.GetGuid(0).ToString(),
+                    GetNullableString(reader, 1),
+                    GetNullableString(reader, 2),
+                    GetNullableEnum<FlowStateEnum>(reader, 3),
+                    GetNullableEnum<ResultStateEnum>(reader, 4));
+
+                list.Add(model!);
+            }
+        }
+
+        return list;
+    }
+
+    private string? GetNullableString(SqlDataReader reader, int i)
+    {
+        if (reader.IsDBNull(i))
+        {
+            return null;
+        }
+
+        return reader.GetString(i);
+    }
+
+    private T? GetNullableEnum<T>(SqlDataReader reader, int i) where T : Enum
+    {
+        if (reader.IsDBNull(i))
+        {
+            return (T?)(object?)null;
+        }
+
+        int v = Convert.ToInt32(reader.GetString(i));
+        var result = (T)(object)v;
+        return result;
+    }
+
     public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
         var list = new List<FlowStoreModel>();
@@ -201,7 +314,7 @@ WHERE id = @p2;
 
             if (!string.IsNullOrEmpty(query.ExternalId))
             {
-                q += " and JSON_VALUE(flow_json, '$.externalId') = @p1";
+                q += " and JSON_VALUE(flow_json, '$.ExternalId') = @p1";
                 cmd.Parameters.AddWithValue("p1", query.ExternalId);
             }
 
@@ -211,6 +324,7 @@ WHERE id = @p2;
                 cmd.Parameters.AddWithValue("p2", query.RefId);
             }
 
+            cmd.CommandText = q;
             await connection.OpenAsync();
             var reader = await cmd.ExecuteReaderAsync();
 
@@ -229,27 +343,12 @@ WHERE id = @p2;
     {
         var model = await GetFlowModel(refId);
         var history = model.ContextHistory;
-        var clone = TypeHelper.CloneObject(history);
-        return clone;
+        return history;
     }
 
     public async Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query)
     {
         var list = await SearchFlowModel(query);
         return list.FirstOrDefault()?.ContextHistory;
-
-        //if (query.RefId != null)
-        //{
-        //    return await GetFlowHistory(query.RefId);
-        //}
-
-        //// ToDo: implement search flow in DB table
-        ////if (query.ExternalId != null)
-        ////{
-        ////    var record = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
-        ////    return record?.ContextHistory;
-        ////}
-
-        //return null;
     }
 }

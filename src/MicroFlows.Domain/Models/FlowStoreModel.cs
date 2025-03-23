@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MicroFlows.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -30,4 +31,13 @@ public class FlowStoreModel
     /// 
     /// </summary>
     public List<SignalJournalEntry> SignalJournal { get; set; } = [];
+
+    /// <summary>
+    /// Use Tag to mark and retreive flows
+    /// </summary>
+    public string Tag { get; set; } = null!;
+
+    public ResultStateEnum Result { get; set; }
+    public FlowStateEnum State { get; set; }
+    public string ExceptionMessage { get; set; }
 }
