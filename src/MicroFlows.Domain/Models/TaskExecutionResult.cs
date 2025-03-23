@@ -14,10 +14,10 @@ public class TaskExecutionResult
     public string FormId { get; set; }
     public string CallbackTaskId { get; set; }
     public string NextStep { get; set; }
-    public string ExceptionMessage { get; set; }
+    public string? ExceptionMessage { get; set; }
     //public List<TaskExecutionValidationResult> TaskExecutionValidationIssues { get; set; } = [];
-    public string ExceptionStackTrace { get; set; }
-    public string ExceptionType { get; set; }
+    public string? ExceptionStackTrace { get; set; }
+    public string? ExceptionType { get; set; }
     //public Exception ExecutionException { get; set; }
     public bool IsWaitTask { get; set; }
 }

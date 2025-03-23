@@ -35,9 +35,9 @@ public class FlowStoreModel
     /// <summary>
     /// Use Tag to mark and retreive flows
     /// </summary>
-    public string Tag { get; set; } = null!;
+    public string? Tag { get; set; } = null;
 
     public ResultStateEnum Result { get; set; }
     public FlowStateEnum State { get; set; }
-    public string ExceptionMessage { get; set; }
+    public string? ExceptionMessage { get; set; }
 }
