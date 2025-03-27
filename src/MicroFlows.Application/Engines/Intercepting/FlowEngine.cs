@@ -14,11 +14,12 @@ using MicroFlows.Domain.Models;
 using Microsoft.CodeAnalysis;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
+using JsonPathToModel;
 
 namespace MicroFlows.Application.Engines.Interceptors;
-    
+
 /// <summary>
-/// InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
+/// FlowEngine keeps state of running flow and cannot be shared with other scopes
 /// </summary>
 internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
@@ -55,6 +56,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
     {
+        // ToDo: should we store signals in a DB to prevent loosing them if app crashes or for concurrent nodes processing?
         _signals[signal] = payload;
         return await ExecuteFlow(flowType, flowParams);
     }
@@ -63,6 +65,58 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     {
         _signals = new Dictionary<string, object?>(signals);
         return await ExecuteFlow(flowType, flowParams);
+    }
+
+    /// <summary>
+    /// Creates flow, saves it to repo but doesn't run
+    /// </summary>
+    /// <param name="flowType"></param>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
+    public async Task<FlowContext> CreateFlow(Type flowType, FlowParams? flowParams = null)
+    {
+        _flowParams = flowParams ?? new FlowParams();
+        _flowParams.FlowType = flowType;
+
+        if (MicroFlowsConfigurationServices.IsFluentFlow(flowType))
+        {
+            return await CreateFluentFlow(flowParams);
+        }
+
+        // construct flow
+        _targetFlow = _services.GetService(flowType) as FlowBase;
+
+        if (_targetFlow == null)
+        {
+            throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
+        }
+
+        _runningFlowType = flowType;
+
+        var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
+        var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);
+
+        try
+        {
+            _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType,
+                constructorArguments: flowParameters,
+                target: _targetFlow,
+                options: options,
+                interceptors: [this]) as FlowBase;
+
+            if (_flowProxy == null)
+            {
+                throw new Exception($"Cannot create proxy from Flow '{flowType.FullName}'");
+            }
+        }
+        catch (Exception exc)
+        {
+            _logger.LogError(exc, "CreateClassProxy failed");
+            throw;
+        }
+
+        await FindOrCreateContext();
+        return _context;
     }
 
     /// <summary>
@@ -98,6 +152,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null)
     {
+        _flowParams = flowParams ?? new FlowParams();
+        _flowParams.FlowType = flowType;
+
+        if (MicroFlowsConfigurationServices.IsFluentFlow(flowType))
+        {
+            return await ExecuteFluentFlow(flowParams);
+        }
+
         // construct flow
         _targetFlow = _services.GetService(flowType) as FlowBase;
 
@@ -107,7 +169,6 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
 
         _runningFlowType = flowType;
-        _flowParams = flowParams ?? new FlowParams();
 
         var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
         var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);
@@ -138,6 +199,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _targetFlow.SetParams(_flowParams);
         _flowProxy.SetParams(_flowParams);
 
+        _targetFlow.SetServiceProvider(_services);
+        _flowProxy.SetServiceProvider(_services);
+
         // signals
         await UpdateSignalJournal();
 
@@ -165,6 +229,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             // flow executed completely
             _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
             _context.ExecutionResult.ResultState = ResultStateEnum.Success;
+            SaveEndContext();
         }
         catch (TargetInvocationException exc)
         {
@@ -193,6 +258,19 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
             LogException(exc);
         }
+        catch (FlowTaskFailedException exc)
+        {
+            _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            // preserve original exception details
+            //_context.ExecutionResult.ExceptionMessage = exc.Message;
+            //_context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
+            //_context.ExecutionResult.ExceptionType = exc.GetType().Name;
+            LogException(exc);
+
+            // if exception happened inside delegate method body we should save it
+            await SaveFailedContext();
+        }
         catch (FlowFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
@@ -203,6 +281,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         catch (NonDeterministicFlowException exc)
@@ -221,6 +300,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             LogException(exc);
 
             // if exception happened inside Flow method body we should save it
+            _context.CurrentTask = null;
             await SaveFailedContext();
         }
         finally
@@ -260,6 +340,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         if (model == null)
         {
             _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
+
+            // The first task is always Begin, the last task is always End
+            _context.CurrentTask = $"{TaskDefTypes.Begin}:{_callIndex}";
         }
         else
         {
@@ -270,8 +353,15 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     }
 
     private async Task SaveFailedContext()
+    {        
+        await AddContextToHistory(_context);
+    }
+
+    private async Task SaveEndContext()
     {
-        _context.CurrentTask = null;
+        // The first task is always Begin, the last task is always End
+        _context.Model.ImportFrom(_flowProxy, _importOptions);
+        _context.CurrentTask = $"{TaskDefTypes.End}:{_callIndex + 1}";
         await AddContextToHistory(_context);
     }
 

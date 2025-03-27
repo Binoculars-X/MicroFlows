@@ -8,16 +8,16 @@ using MicroFlows.Application.Exceptions;
 namespace MicroFlows.Tests.TestSampleFlows;
 public class SampleWithNonReadonlyDependenciesFlow : FlowBase
 {
-    protected IFlowsProvider _flowsProvider;
+    protected IFlowProvider _flowProvider;
 
     protected internal DateTime? _modelDate;
     internal int? _modelInt;
     protected string? _modelString;
     protected string? _modelStringProperty { get; set; }
 
-    public SampleWithNonReadonlyDependenciesFlow(IFlowsProvider flowsProvider)
+    public SampleWithNonReadonlyDependenciesFlow(IFlowProvider flowProvider)
     { 
-        _flowsProvider = flowsProvider;
+        _flowProvider = flowProvider;
     }
 
     public async Task Flow()
@@ -37,7 +37,7 @@ public class SampleWithNonReadonlyDependenciesFlow : FlowBase
         _modelInt = 33;
         _modelString = "test";
         
-        if (_flowsProvider == null)
+        if (_flowProvider == null)
         { 
         }
     }

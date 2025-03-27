@@ -26,10 +26,15 @@ public static class MicroFlowsConfigurationServices
         return _registeredFlows.Keys.ToHashSet(); 
     }
 
+    internal static Type GetFlowType(string name)
+    {
+        return _registeredFlows.Keys.FirstOrDefault(x => x.FullName == name);
+    }
+
     public static IServiceCollection RegisterFlow<T>(this IServiceCollection services) where T : class, IFlow
     {
         ValidateFlow(typeof(T));
-        _registeredFlows.TryAdd(typeof(T), 0);
+        _registeredFlows.TryAdd(typeof(T), default);
         services.AddTransient<T>();
         return services;
     }
@@ -37,7 +42,7 @@ public static class MicroFlowsConfigurationServices
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
-        services.AddTransient<IFlowsProvider, FlowsProvider>();
+        services.AddTransient<IFlowProvider, FlowProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();
         return services;
     }
@@ -89,10 +94,15 @@ public static class MicroFlowsConfigurationServices
 
         var method = methods.FirstOrDefault();
 
-        if (method == null)
+        if (method == null && !IsFluentFlow(type))
         {
             throw new FlowValidationException(
-                $"{type.Name}: Flow should have 'public async Task Flow()' method");
+                $"{type.Name}: Flow should have 'public Task Flow()' method or override 'public override void Define(IFlowBuilder builder)'");
         }
+    }
+
+    public static bool IsFluentFlow(Type type)
+    {
+        return type.GetMethod("Define")?.DeclaringType == type;
     }
 }

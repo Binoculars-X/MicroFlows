@@ -8,14 +8,14 @@ using MicroFlows.Application.Exceptions;
 namespace MicroFlows.Tests.TestSampleFlows;
 public class SampleWithDependenciesFlow : FlowBase
 {
-    private readonly IFlowsProvider _flowsProvider;
+    private readonly IFlowProvider _flowsProvider;
 
     protected internal DateTime? _modelDate;
     internal int? _modelInt;
     protected string? _modelString;
     protected string? _modelStringProperty { get; set; }
 
-    public SampleWithDependenciesFlow(IFlowsProvider flowsProvider)
+    public SampleWithDependenciesFlow(IFlowProvider flowsProvider)
     { 
         _flowsProvider = flowsProvider;
     }

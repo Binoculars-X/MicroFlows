@@ -11,6 +11,7 @@ using System.Collections.Concurrent;
 using JsonPathToModel;
 
 namespace MicroFlows.Tests.Intercepting;
+
 internal class MemoryFlowRepository : IFlowRepository
 {
     internal ConcurrentDictionary<string, FlowStoreModel> _flowModelDictionary = [];
@@ -79,5 +80,26 @@ internal class MemoryFlowRepository : IFlowRepository
         var id = contextHistory.First().RefId;
         _flowModelDictionary[id].ContextHistory = contextHistory;
         return Task.CompletedTask;
+    }
+
+    public Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task UpdateFlowModel(FlowStoreModel flowModel)
+    {
+        _flowModelDictionary[flowModel.RefId] = flowModel;
+        return Task.CompletedTask;
+    }
+
+    //public Task SaveProcessExecutionContext(FlowContext context, TaskExecutionResult executionResult, bool create = false)
+    //{
+    //    throw new NotImplementedException();
+    //}
+
+    public async Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query)
+    {
+        throw new NotImplementedException();
     }
 }

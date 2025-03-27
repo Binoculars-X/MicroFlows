@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MicroFlows</id>
-    <version>0.5.0</version>
+    <version>1.0.2</version>
     <authors>Binoculars X</authors>
     <owners>Binoculars X</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -13,15 +13,16 @@
     <readme>readme.md</readme>
     <projectUrl>https://github.com/Binoculars-X/MicroFlows</projectUrl>
     <dependencies>
-		<group targetFramework="NETStandard2.1">
+		<group targetFramework="net9.0">
           <dependency id="Castle.Core" version="5.1.1" />
           <dependency id="Castle.Core.AsyncInterceptor" version="2.1.0" />
-          <dependency id="JsonPathToModel" version="1.5.3" />
+          <dependency id="JsonPathToModel" version="1.6.1" />
           <dependency id="Microsoft.Extensions.Configuration" version="8.0.0" />
-          <dependency id="Microsoft.Extensions.Logging.Abstractions" version="8.0.1" />
+          <dependency id="Microsoft.Extensions.Logging.Abstractions" version="9.0.0" />
           <dependency id="System.Net.Http" version="4.3.4" />
-          <dependency id="System.Text.Json" version="8.0.4" />
+          <dependency id="System.Text.Json" version="8.0.5" />
           <dependency id="System.Text.RegularExpressions" version="4.3.1" />
+          <dependency id="Microsoft.Data.SqlClient" version="6.0.1" />
 		</group>
     </dependencies>
     <contentFiles>
@@ -33,7 +34,8 @@
   </metadata>
   <files>
     <file src="readme.md" />
-    <file src="..\bin\Release\netstandard2.1\MicroFlows.Domain.dll" target="lib\netstandard2.1\MicroFlows.Domain.dll" />
-    <file src="..\bin\Release\netstandard2.1\MicroFlows.Application.dll" target="lib\netstandard2.1\MicroFlows.Application.dll" />
+    <file src="..\bin\Release\net9.0\MicroFlows.Domain.dll" target="lib\net9.0\MicroFlows.Domain.dll" />
+    <file src="..\bin\Release\net9.0\MicroFlows.Application.dll" target="lib\net9.0\MicroFlows.Application.dll" />
+    <file src="..\..\MicroFlows.MsSqlRepo\bin\Release\net9.0\MicroFlows.MsSqlRepo.dll" target="lib\net9.0\MicroFlows.MsSqlRepo.dll" />
   </files>
 </package>

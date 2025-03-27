@@ -31,7 +31,7 @@ public partial class FlowEngineTests
 
         Assert.Equal(ctx.RefId, ctx2.RefId);
         flow = await _repo.GetFlowModel(ctx2.RefId);
-        Assert.Equal(5, flow.ContextHistory.Count);
+        Assert.Equal(6, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
     }
@@ -56,14 +56,15 @@ public partial class FlowEngineTests
 		ctx = await engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps, date);
 		flow = await _repo.GetFlowModel(ctx.RefId);
 
-		Assert.Equal(5, flow.ContextHistory.Count);
+		Assert.Equal(6, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[3].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
+        Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
+        Assert.Equal("End:4", flow.ContextHistory[5].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
 		Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
-		//Assert.Equal(date, DateTime.Parse(ctx.Model.Values["$.ModelDate"]));
 	}
 
 	[Fact]
@@ -88,7 +89,7 @@ public partial class FlowEngineTests
 		ctx = await engine.SendSignals(typeof(SampleTwoSignalsWaitingFlow), signals, ps);
 		flow = await _repo.GetFlowModel(ctx.RefId);
 
-		Assert.Equal(6, flow.ContextHistory.Count);
+		Assert.Equal(7, flow.ContextHistory.Count);
 		Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
 		Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
 		//Assert.Equal(date, DateTime.Parse(ctx.Model.Values["$.ModelDate"]));
@@ -97,5 +98,6 @@ public partial class FlowEngineTests
         Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[3].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
         Assert.Equal("WaitForSignalAsync:4", flow.ContextHistory[5].CurrentTask);
+        Assert.Equal("End:5", flow.ContextHistory[6].CurrentTask);
     }
 }

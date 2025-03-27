@@ -396,3 +396,4 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+/demo/MicroFlows.Demo/MicroFlows.Demo.json

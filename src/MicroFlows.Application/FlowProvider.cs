@@ -11,12 +11,12 @@ using MicroFlows.Application.Exceptions;
 
 namespace MicroFlows.Application;
 
-public class FlowsProvider : IFlowsProvider
+public class FlowProvider : IFlowProvider
 {
     //private readonly Logger<FlowsProvider> _logger;
     private readonly IServiceProvider _services;
 
-    public FlowsProvider(
+    public FlowProvider(
         //Logger<FlowsProvider> logger, 
         IServiceProvider services)
     {
@@ -36,10 +36,26 @@ public class FlowsProvider : IFlowsProvider
         return await interceptEngine.SendSignals(flowParams.FlowType!, signals, flowParams);
     }
 
+    /// <summary>
+    /// Executes an existing or creates a new flow and executes
+    /// </summary>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(FlowParams flowParams)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
         return await interceptEngine.ExecuteFlow(flowParams.FlowType!, flowParams);
+    }
+
+    /// <summary>
+    /// Creates flow, saves it to repo but doesn't run
+    /// </summary>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
+    public async Task<FlowContext> CreateFlow(FlowParams flowParams)
+    {
+        var interceptEngine = PrepareFlowEngine(flowParams);
+        return await interceptEngine.CreateFlow(flowParams.FlowType!, flowParams);
     }
 
     private IFlowEngine PrepareFlowEngine(FlowParams flowParams)
@@ -54,6 +70,11 @@ public class FlowsProvider : IFlowsProvider
         if (flowParams.FlowType == null)
         {
             var type = TypeHelper.ResolveType(flowParams.FlowName);
+
+            if (type == null)
+            {
+                type = MicroFlowsConfigurationServices.GetFlowType(flowParams.FlowName);
+            }
 
             if (type == null)
             {
