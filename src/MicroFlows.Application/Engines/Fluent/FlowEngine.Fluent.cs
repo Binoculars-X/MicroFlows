@@ -21,6 +21,52 @@ namespace MicroFlows.Application.Engines.Interceptors;
 // InterceptorFlowRunEngine keeps state of running flow and cannot be shared with other scopes
 internal partial class FlowEngine
 {
+    public virtual async Task<FlowContext> CreateFluentFlow(FlowParams? runParameters)
+    {
+        var flowType = runParameters.FlowType;
+        var refId = runParameters.RefId;
+        FlowContext? context = null;
+
+        var flow = _services.GetService(flowType) as FlowBase;
+
+        if (flow == null)
+        {
+            throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
+        }
+
+        var flowBuilder = new FluentFlowBuilder(flow);
+        flowBuilder.Parse();
+
+        if (string.IsNullOrEmpty(refId))
+        {
+            context = await _flowRepository.CreateFlowContext(flow, runParameters);
+            context.ExecutionResult = new TaskExecutionResult();
+            _contextHistory = new List<FlowContext>();
+        }
+        else
+        {
+            var _contextHistory = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId,
+                _flowParams.ExternalId));
+
+            if (_contextHistory == null)
+            {
+                context = await _flowRepository.CreateFlowContext(flow, runParameters);
+                context.RefId = refId;
+                _contextHistory = new List<FlowContext>();
+            }
+            else
+            {
+                context = _contextHistory.First();
+            }
+
+
+            context.ExecutionResult.FlowState = FlowStateEnum.Continue;
+            context.ExecutionResult.ResultState = ResultStateEnum.Success;
+        }
+
+        return context;
+    }
+
     public virtual async Task<FlowContext> ExecuteFluentFlow(FlowParams? runParameters)
     {
         var flowType = runParameters.FlowType;

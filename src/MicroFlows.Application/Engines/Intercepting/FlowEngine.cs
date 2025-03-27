@@ -68,6 +68,58 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     }
 
     /// <summary>
+    /// Creates flow, saves it to repo but doesn't run
+    /// </summary>
+    /// <param name="flowType"></param>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
+    public async Task<FlowContext> CreateFlow(Type flowType, FlowParams? flowParams = null)
+    {
+        _flowParams = flowParams ?? new FlowParams();
+        _flowParams.FlowType = flowType;
+
+        if (MicroFlowsConfigurationServices.IsFluentFlow(flowType))
+        {
+            return await CreateFluentFlow(flowParams);
+        }
+
+        // construct flow
+        _targetFlow = _services.GetService(flowType) as FlowBase;
+
+        if (_targetFlow == null)
+        {
+            throw new FlowValidationException($"Flow of type '{flowType}' is not registered");
+        }
+
+        _runningFlowType = flowType;
+
+        var options = new ProxyGenerationOptions(new FreezableProxyGenerationHook(_targetFlow));
+        var flowParameters = TypeHelper.GetConstructorParameters(_services, flowType);
+
+        try
+        {
+            _flowProxy = _proxyGenerator.CreateClassProxyWithTarget(classToProxy: flowType,
+                constructorArguments: flowParameters,
+                target: _targetFlow,
+                options: options,
+                interceptors: [this]) as FlowBase;
+
+            if (_flowProxy == null)
+            {
+                throw new Exception($"Cannot create proxy from Flow '{flowType.FullName}'");
+            }
+        }
+        catch (Exception exc)
+        {
+            _logger.LogError(exc, "CreateClassProxy failed");
+            throw;
+        }
+
+        await FindOrCreateContext();
+        return _context;
+    }
+
+    /// <summary>
     /// Flow execution steps:
     /// 1. Create _targetFlow, _flowProxy, _context
     /// 2. Set RefId and SetParams

@@ -58,6 +58,10 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
     create table {_tableName} (
         id uniqueidentifier not null,
         flow_json varchar(max) not null,
+        created_on datetimeoffset(7) null,
+        modified_on datetimeoffset(7) null,
+        time_lock datetimeoffset(7) null,
+        ver timestamp not null,
         CONSTRAINT [PK_{_tableName}] PRIMARY KEY CLUSTERED 
         (
 	        [id] ASC
@@ -98,7 +102,7 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
             var json = JsonSerializer.Serialize(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}
+INSERT INTO {_tableName}(id, flow_json)
 SELECT @p1, @p2;
 ";
 

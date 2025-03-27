@@ -36,10 +36,26 @@ public class FlowProvider : IFlowProvider
         return await interceptEngine.SendSignals(flowParams.FlowType!, signals, flowParams);
     }
 
+    /// <summary>
+    /// Executes an existing or creates a new flow and executes
+    /// </summary>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
     public async Task<FlowContext> ExecuteFlow(FlowParams flowParams)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
         return await interceptEngine.ExecuteFlow(flowParams.FlowType!, flowParams);
+    }
+
+    /// <summary>
+    /// Creates flow, saves it to repo but doesn't run
+    /// </summary>
+    /// <param name="flowParams"></param>
+    /// <returns></returns>
+    public async Task<FlowContext> CreateFlow(FlowParams flowParams)
+    {
+        var interceptEngine = PrepareFlowEngine(flowParams);
+        return await interceptEngine.CreateFlow(flowParams.FlowType!, flowParams);
     }
 
     private IFlowEngine PrepareFlowEngine(FlowParams flowParams)
