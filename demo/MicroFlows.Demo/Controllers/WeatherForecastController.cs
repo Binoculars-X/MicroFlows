@@ -29,5 +29,10 @@ namespace MicroFlows.Demo.Controllers
             })
             .ToArray();
         }
+
+        [HttpPost(Name = "PostWeatherForecast")]
+        public void Post()
+        {
+        }
     }
 }
