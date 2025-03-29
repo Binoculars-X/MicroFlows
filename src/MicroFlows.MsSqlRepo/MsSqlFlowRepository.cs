@@ -23,10 +23,17 @@ public class MsSqlFlowRepository : IFlowRepository
 
     private readonly string _connectionString;
     private readonly string _tableName;
+    private readonly MsSqlFlowRepositorySettings _settings;
 
     public MsSqlFlowRepository(IConfiguration configuration, MsSqlFlowRepositorySettings? settings = null)
     {
-        _tableName = settings?.TableName ?? TABLE_NAME;
+        _settings = settings ?? new MsSqlFlowRepositorySettings();
+        _tableName = GetTableNameOnly();
+
+        if (_settings?.DatabaseName != null)
+        {
+            _tableName = $"{_settings.DatabaseName}..{_tableName}";
+        }
 
         if (string.IsNullOrEmpty(_tableName))
         {
@@ -48,21 +55,44 @@ public class MsSqlFlowRepository : IFlowRepository
             throw new ArgumentOutOfRangeException(nameof(_connectionString));
         }
 
-        CheckTablesExist();
+        CheckDbTablesExist();
     }
 
-    private void CheckTablesExist()
+    private string GetTableNameOnly()
     {
+        return _settings?.TableName ?? TABLE_NAME;
+    }
+
+    private void CheckDbTablesExist()
+    {
+        if (_settings.CreateDatabase == true)
+        {
+            var dbQuery = @$"
+IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '{_settings.DatabaseName}')
+BEGIN
+    CREATE DATABASE [{_settings.DatabaseName}]
+END
+";
+            using (SqlConnection connection = new SqlConnection(
+                       _connectionString))
+            {
+                SqlCommand command = new SqlCommand(dbQuery, connection);
+                command.Connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
         var q = @$"
-if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
+if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
     create table {_tableName} (
         id uniqueidentifier not null,
+        external_id varchar(64) null,
         flow_json varchar(max) not null,
         created_on datetimeoffset(7) null,
         modified_on datetimeoffset(7) null,
         time_lock datetimeoffset(7) null,
         ver timestamp not null,
-        CONSTRAINT [PK_{_tableName}] PRIMARY KEY CLUSTERED 
+        CONSTRAINT [PK_{GetTableNameOnly()}] PRIMARY KEY CLUSTERED 
         (
 	        [id] ASC
         )

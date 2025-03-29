@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 using MicroFlows.Application.Exceptions;
 
-namespace MicroFlows.Application;
+namespace MicroFlows.Application.Services;
 
 public class FlowProvider : IFlowProvider
 {

@@ -20,6 +20,9 @@ public class SqlTestContainersTestBase : IAsyncLifetime
 
     protected IServiceProvider _services;
 
+    public virtual void ConfigureServices(IConfiguration configuration, IServiceCollection services)
+    { }
+
     public async Task InitializeAsync()
     {
         IConfiguration? configuration = null;
@@ -55,6 +58,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                 //    options.UseSqlServer(_msSqlContainer.GetConnectionString());
                 //});
 
+                ConfigureServices(configuration, services);
             })
             .Build();
 

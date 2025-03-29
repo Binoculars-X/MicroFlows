@@ -7,13 +7,13 @@ using MicroFlows.Domain.Interfaces;
 using MicroFlows.Application.Engines;
 using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
-using MicroFlows.Application;
 using System.Collections.Concurrent;
 using System.Linq;
 using JsonPathToModel;
 using MicroFlows.Application.Exceptions;
 using System.Data;
 using System.Threading.Tasks;
+using MicroFlows.Application.Services;
 
 namespace MicroFlows;
 
@@ -47,9 +47,35 @@ public static class MicroFlowsConfigurationServices
         return services;
     }
 
+    public static IServiceCollection AddMicroFlowsServer(this IServiceCollection services)
+    {
+        services.AddConfigOptions<FlowProcessingServiceSettings>();
+        services.AddSingleton<IFlowProcessingService, FlowProcessingService>();
+        return services;
+    }
+
+    public static IServiceCollection AddMicroFlowsServer(this IServiceCollection services, 
+        FlowProcessingServiceSettings settings)
+    {
+        services.AddSingleton<IFlowProcessingService>(new FlowProcessingService(settings));
+        return services;
+    }
+
     public static IServiceCollection AddMicroFlows(this IServiceCollection services, IConfiguration configuration)
     {
         AddMicroFlows(services);
+        return services;
+    }
+
+    public static IServiceCollection AddConfigOptions<T>(this IServiceCollection services, string? section = null) where T : class
+    {
+        section ??= typeof(T).Name;
+
+        services.AddOptions<T>()
+                .BindConfiguration(section)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
         return services;
     }
 

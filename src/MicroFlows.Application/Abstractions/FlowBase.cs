@@ -11,6 +11,8 @@ using JsonPathToModel;
 using System.Linq;
 using MicroFlows.Application;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using System.Text.Json;
 
 namespace MicroFlows;
 
@@ -21,6 +23,17 @@ namespace MicroFlows;
 public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, new()
 {
     public TModel Model { get; set; } = new();
+
+    public new void LoadModelFromParams()
+    {
+        if (Params?.Payload == null)
+        {
+            throw new FlowExecutionException("Params.Payload cannot be null");
+        }
+
+        var modelSnapshot = JsonSerializer.Deserialize<ModelSnapshot>(Params.Payload);
+        modelSnapshot.ExportTo(Model);
+    }
 }
 
 /// <summary>
@@ -256,5 +269,16 @@ public abstract partial class FlowBase : IFlow
     public void SetParams(FlowParams flowParams)
     {
         Params = flowParams;
+    }
+
+    public void LoadModelFromParams()
+    {
+        if (Params?.Payload == null)
+        {
+            throw new FlowExecutionException("Params.Payload cannot be null");
+        }
+
+        var modelSnapshot = JsonSerializer.Deserialize<ModelSnapshot>(Params.Payload);
+        modelSnapshot.ExportTo(this);
     }
 }
