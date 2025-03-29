@@ -4,13 +4,19 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
 {
     public async Task Flow()
     {
-        await CallAsync(Init);
+        // use Call or CallAsync to avoid extra execution when replaying
+        Call(Init);
+
+        await CallAsync(NotifyBookingReceived);
     }
 
-    private async Task Init()
+    private void Init()
     {
         LoadModelFromParams();
-        Model.BookingId = Params.ExternalId;
+    }
+
+    private async Task NotifyBookingReceived()
+    {
     }
 }
 
@@ -22,4 +28,12 @@ public class HotelBookingModel
     public DateTime Created { get; set; }
     public DateTime? From { get; set; }
     public DateTime? To { get; set; }
+
+    public HotelBookingStatus Status { get; set; }
+}
+
+public enum HotelBookingStatus
+{
+    Created,
+    Approved,
 }

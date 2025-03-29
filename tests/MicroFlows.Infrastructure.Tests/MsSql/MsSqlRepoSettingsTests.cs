@@ -13,7 +13,7 @@ namespace MicroFlows.Infrastructure.Tests.MsSql;
 
 public class MsSqlRepoSettingsTests: SqlTestContainersTestBase
 {
-    public override void ConfigureServices(IConfiguration configuration, IServiceCollection services)
+    public override void ConfigureSqlServices(IConfiguration configuration, IServiceCollection services)
     {
         services.AddMicroFlowsMsSqlRepo(configuration,
                     new MsSqlFlowRepositorySettings

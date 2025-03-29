@@ -20,8 +20,14 @@ public class SqlTestContainersTestBase : IAsyncLifetime
 
     protected IServiceProvider _services;
 
-    public virtual void ConfigureServices(IConfiguration configuration, IServiceCollection services)
-    { }
+    public virtual void ConfigureSqlServices(IConfiguration configuration, IServiceCollection services)
+    {
+        services.AddMicroFlowsMsSqlRepo(configuration,
+                    new MsSqlFlowRepositorySettings
+                    {
+                        ConnectionString = _msSqlContainer.GetConnectionString()
+                    });
+    }
 
     public async Task InitializeAsync()
     {
@@ -44,11 +50,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                     .RegisterFlow<SampleFlow>()
                     ;
 
-                services.AddMicroFlowsMsSqlRepo(configuration,
-                    new MsSqlFlowRepositorySettings
-                    {
-                        ConnectionString = _msSqlContainer.GetConnectionString()
-                    });
+                
 
                 //services.TryAddScoped<IRepository, Repository>();
 
@@ -58,7 +60,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                 //    options.UseSqlServer(_msSqlContainer.GetConnectionString());
                 //});
 
-                ConfigureServices(configuration, services);
+                ConfigureSqlServices(configuration, services);
             })
             .Build();
 

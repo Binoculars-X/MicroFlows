@@ -1,7 +1,6 @@
 ﻿using Castle.DynamicProxy;
 using JsonPathToModel;
 using MicroFlows.Application.Engines.Interceptors;
-using MicroFlows.Application.Helpers;
 using MicroFlows.Domain.Models;
 using MicroFlows.Tests.TestSampleFlows;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -46,7 +45,7 @@ public class ModelSnapshotTests : TestBase
         Assert.NotNull(ctx);
         Assert.NotNull(ctx.Model);
 
-        var result = new TypedModelFlow();
+        var result = new ModelWrapper<SampleTypedModel>();
         ctx.Model.ExportTo(result);
 
         Assert.Equal(model.Id, result.Model.Id);
@@ -68,7 +67,7 @@ public class ModelSnapshotTests : TestBase
         Assert.NotNull(ctx);
         Assert.NotNull(ctx.Model);
 
-        var result = new TypedModelInlineFlow();
+        var result = new ModelWrapper<SampleTypedModel>();
         ctx.Model.ExportTo(result);
 
         Assert.Equal(model.Id, result.Model.Id);
