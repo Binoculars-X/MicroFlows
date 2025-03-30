@@ -84,9 +84,11 @@ END
 
         var q = @$"
 if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
+begin
     create table {_tableName} (
         id uniqueidentifier not null,
         external_id varchar(64) null,
+        exec_status tinyint not null,
         flow_json varchar(max) not null,
         created_on datetimeoffset(7) null,
         modified_on datetimeoffset(7) null,
@@ -96,7 +98,25 @@ if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xt
         (
 	        [id] ASC
         )
-    )";
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_external_id] ON {_tableName}
+    (
+	    [external_id] ASC
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_exec_status] ON {_tableName}
+    (
+	    [exec_status] ASC
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_time_lock] ON {_tableName}
+    (
+	    [time_lock] ASC
+    );
+end
+
+";
 
         using (SqlConnection connection = new SqlConnection(
                        _connectionString))
@@ -130,10 +150,11 @@ if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xt
         if (!flowParams.FlowOptions.NoStorage)
         {
             var json = JsonSerializer.Serialize(flowModel);
+            var rec = GetFlowRecord(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}(id, flow_json)
-SELECT @p1, @p2;
+INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on)
+SELECT @p1, @p2, @p3, @p4, @p5;
 ";
 
             using (SqlConnection connection = new SqlConnection(
@@ -143,12 +164,23 @@ SELECT @p1, @p2;
                 cmd.CommandType = System.Data.CommandType.Text;
                 cmd.Parameters.AddWithValue("p1", ctx.RefId);
                 cmd.Parameters.AddWithValue("p2", json);
+                cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("p4", rec.Status);
+                cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
                 await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
             }
         }
 
         return ctx;
+    }
+
+    public record FlowRecord(string RefId, string? ExternalId, string FlowTypeName, FlowStateEnum? Status);
+
+    private FlowRecord GetFlowRecord(FlowStoreModel m)
+    {
+        var status = m.ContextHistory.Last().ExecutionResult.FlowState;
+        return new FlowRecord(m.RefId, m.ExternalId, m.FlowTypeName, status);
     }
 
     /// <summary>
@@ -175,10 +207,11 @@ SELECT @p1, @p2;
     {
         RefreshFlowStoreModelRoot(flowModel);
         var json = JsonSerializer.Serialize(flowModel);
+        var rec = GetFlowRecord(flowModel);
 
         var q = $@"
 UPDATE {_tableName}
-SET flow_json = @p1
+SET flow_json = @p1, external_id = @p3, exec_status = @p4, modified_on = @p5
 WHERE id = @p2;
 ";
 
@@ -189,6 +222,9 @@ WHERE id = @p2;
             cmd.CommandType = System.Data.CommandType.Text;
             cmd.Parameters.AddWithValue("p1", json);
             cmd.Parameters.AddWithValue("p2", flowModel.RefId);
+            cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("p4", rec.Status);
+            cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
             await connection.OpenAsync();
             var result = await cmd.ExecuteNonQueryAsync();
         }
@@ -384,5 +420,10 @@ from {_tableName}
     {
         var list = await SearchFlowModel(query);
         return list.FirstOrDefault()?.ContextHistory;
+    }
+
+    public Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -102,4 +102,9 @@ internal class MemoryFlowRepository : IFlowRepository
     {
         throw new NotImplementedException();
     }
+
+    public Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -54,12 +54,12 @@ public static class MicroFlowsConfigurationServices
         return services;
     }
 
-    public static IServiceCollection AddMicroFlowsServer(this IServiceCollection services, 
-        FlowProcessingServiceSettings settings)
-    {
-        services.AddSingleton<IFlowProcessingService>(new FlowProcessingService(settings));
-        return services;
-    }
+    //public static IServiceCollection AddMicroFlowsServer(this IServiceCollection services, 
+    //    FlowProcessingServiceSettings settings)
+    //{
+    //    services.AddSingleton<IFlowProcessingService>(new FlowProcessingService(settings));
+    //    return services;
+    //}
 
     public static IServiceCollection AddMicroFlows(this IServiceCollection services, IConfiguration configuration)
     {

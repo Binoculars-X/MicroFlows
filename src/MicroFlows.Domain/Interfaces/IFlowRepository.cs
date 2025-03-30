@@ -21,6 +21,7 @@ public interface IFlowRepository
     Task SaveContextHistory(List<FlowContext> contextHistory);
 
     Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query);
+    Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock);
 }
 
 public record FlowSearchQuery(string? RefId, string? ExternalId = null)
@@ -35,3 +36,5 @@ public record FlowSearchQuery(string? RefId, string? ExternalId = null)
             || !string.IsNullOrEmpty(Tag) || State != null || Result != null;
     }
 }
+
+public record FlowInstanceDetails(string RefId, string FlowName);
