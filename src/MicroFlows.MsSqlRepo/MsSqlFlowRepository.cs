@@ -212,7 +212,7 @@ SELECT @p1, @p2, @p3, @p4, @p5;
         var q = $@"
 UPDATE {_tableName}
 SET flow_json = @p1, external_id = @p3, exec_status = @p4, modified_on = @p5
-WHERE id = @p2;
+WHERE id = @p2 AND ver = @p6;
 ";
 
         using (SqlConnection connection = new SqlConnection(
@@ -225,8 +225,14 @@ WHERE id = @p2;
             cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
             cmd.Parameters.AddWithValue("p4", rec.Status);
             cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
+            cmd.Parameters.AddWithValue("p6", flowModel.Timestamp);
             await connection.OpenAsync();
             var result = await cmd.ExecuteNonQueryAsync();
+
+            if (result != 1)
+            {
+                throw new OptimisticLockMsSqlFlowRepositoryException($"Flow {flowModel.FlowTypeName} with RefId {flowModel.RefId} update returned not single row count: {result}");
+            }
         }
     }
 
@@ -250,7 +256,7 @@ WHERE id = @p2;
 
     public async Task<FlowStoreModel?> GetFlowModel(string refId)
     {
-        var q = $"select id, flow_json from {_tableName} where id = @p1";
+        var q = $"select id, flow_json, ver from {_tableName} where id = @p1";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -264,6 +270,7 @@ WHERE id = @p2;
             {
                 var json = reader.GetString(1);
                 var model = JsonSerializer.Deserialize<FlowStoreModel>(json);
+                model.Timestamp = reader.GetValue(2) as byte[];
                 return model!;
             }
 
@@ -370,7 +377,7 @@ from {_tableName}
     public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
         var list = new List<FlowStoreModel>();
-        var q = $"select id, flow_json from {_tableName}";
+        var q = $"select id, flow_json, ver from {_tableName}";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -402,6 +409,7 @@ from {_tableName}
             {
                 var json = reader.GetString(1);
                 var model = JsonSerializer.Deserialize<FlowStoreModel>(json);
+                model.Timestamp = reader.GetValue(2) as byte[];
                 list.Add(model!);
             }
         }

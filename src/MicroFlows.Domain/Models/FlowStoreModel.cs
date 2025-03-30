@@ -40,4 +40,6 @@ public class FlowStoreModel
     public ResultStateEnum Result { get; set; }
     public FlowStateEnum State { get; set; }
     public string? ExceptionMessage { get; set; }
+
+    public byte[] Timestamp { get; set; }
 }

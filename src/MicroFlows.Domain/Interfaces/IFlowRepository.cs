@@ -37,4 +37,4 @@ public record FlowSearchQuery(string? RefId, string? ExternalId = null)
     }
 }
 
-public record FlowInstanceDetails(string RefId, string FlowName);
+public record FlowInstanceDetails(string RefId, string FlowName, byte[] Version);
