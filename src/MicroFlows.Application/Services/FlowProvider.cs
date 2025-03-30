@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 using MicroFlows.Application.Exceptions;
+using System.Threading;
 
 namespace MicroFlows.Application.Services;
 
@@ -27,12 +28,14 @@ public class FlowProvider : IFlowProvider
     public async Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
+        await interceptEngine.EnsureFlowExists(flowParams);
         return await interceptEngine.SendSignal(flowParams.FlowType!, signal, flowParams, payload);
     }
 
     public async Task<FlowContext> SendSignals(FlowParams flowParams, IDictionary<string, object?> signals)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
+        await interceptEngine.EnsureFlowExists(flowParams);
         return await interceptEngine.SendSignals(flowParams.FlowType!, signals, flowParams);
     }
 
@@ -41,7 +44,7 @@ public class FlowProvider : IFlowProvider
     /// </summary>
     /// <param name="flowParams"></param>
     /// <returns></returns>
-    public async Task<FlowContext> ExecuteFlow(FlowParams flowParams)
+    public async Task<FlowContext> ExecuteFlow(FlowParams flowParams, CancellationToken cancellationToken = default)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
         return await interceptEngine.ExecuteFlow(flowParams.FlowType!, flowParams);
@@ -52,7 +55,7 @@ public class FlowProvider : IFlowProvider
     /// </summary>
     /// <param name="flowParams"></param>
     /// <returns></returns>
-    public async Task<FlowContext> CreateFlow(FlowParams flowParams)
+    public async Task<FlowContext> CreateFlow(FlowParams flowParams, CancellationToken cancellationToken = default)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);
         return await interceptEngine.CreateFlow(flowParams.FlowType!, flowParams);

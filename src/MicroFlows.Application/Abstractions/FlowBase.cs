@@ -42,6 +42,12 @@ public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, 
 /// </summary>
 public abstract partial class FlowBase : IFlow
 {
+    //public static string Name() 
+    //{
+    //    var method = MethodBase.GetCurrentMethod();
+    //    return method.DeclaringType.FullName; 
+    //}
+
     [JsonIgnore]
     public string RefId { get; set; }
     //[JsonIgnore]

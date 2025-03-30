@@ -67,6 +67,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         return await ExecuteFlow(flowType, flowParams);
     }
 
+    public async Task EnsureFlowExists(FlowParams flowParams)
+    {
+        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(flowParams.RefId, flowParams.ExternalId));
+
+        if (model == null)
+        {
+            throw new FlowExecutionException($"Cannot find flow '{flowParams.FlowName}' with RefId: {flowParams.RefId} and ExternalId: {flowParams.ExternalId}");
+        }
+    }
+
     /// <summary>
     /// Creates flow, saves it to repo but doesn't run
     /// </summary>
@@ -115,6 +125,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             throw;
         }
 
+        // check that flow instance doesn't exist
+        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+
+        if (model != null)
+        {
+            throw new FlowExecutionException($"Cannot create new instance of flow '{_flowParams.FlowName}' with RefId: {_flowParams.RefId} and ExternalId: {_flowParams.ExternalId} because such instance already exists");
+        }
+        
         await FindOrCreateContext();
         return _context;
     }
@@ -321,6 +339,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         return _context;
     }
 
+    private void MergeContextFlowParams()
+    {
+        var inputParams = _flowParams;
+        _flowParams = _context.Params;
+        _flowParams.FlowType = _flowParams.FlowType ?? inputParams?.FlowType;
+        _flowParams.RefId = _flowParams.RefId ?? inputParams?.RefId!;
+        _flowParams.ExternalId = _flowParams.ExternalId ?? inputParams?.ExternalId!;
+        _flowParams.CorrelationId = _flowParams.CorrelationId ?? inputParams?.CorrelationId!;
+    }
+
     private async Task UpdateSignalJournal()
     {
         foreach (var signal in _signals)
@@ -347,6 +375,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         else
         {
             _context = model.First();
+            MergeContextFlowParams();
         }
 
         return _context.RefId;

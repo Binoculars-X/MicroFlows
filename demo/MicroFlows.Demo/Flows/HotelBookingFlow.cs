@@ -1,39 +1,59 @@
-﻿namespace MicroFlows.Demo.Flows;
+﻿using MicroFlows.Demo.Models;
+
+namespace MicroFlows.Demo.Flows;
 
 public class HotelBookingFlow: FlowBase<HotelBookingModel>
 {
+    // signals
+    public const string PaymentReceivedSignal = "PaymentReceived";
+    public const string ReservationConfirmedSignal = "ReservationConfirmed";
+
     public async Task Flow()
     {
         // use Call or CallAsync to avoid extra execution when replaying
         Call(Init);
 
         await CallAsync(NotifyBookingReceived);
+
+        if (Model.PaymentType == PaymentType.Card)
+        {
+            await CallAsync(ProcessCardPayment);
+        }
+
+        await CallAsync(VendorReservation);
+
+        if (Model.PaymentType != PaymentType.Card)
+        {
+            await WaitForSignalAsync(PaymentReceivedSignal);
+        }
+
+        await WaitForSignalAsync(ReservationConfirmedSignal);
+
+        await CallAsync(FinalizeBooking);
+
+        await CallAsync(NotifyBookingCompleted);
     }
 
     private void Init()
     {
         LoadModelFromParams();
+        Model.Status = HotelBookingStatus.Created;
     }
 
     private async Task NotifyBookingReceived()
     {
     }
+    private async Task VendorReservation()
+    {
+    }
+    private async Task ProcessCardPayment()
+    {
+    }
+    private async Task FinalizeBooking()
+    {
+    }
+    private async Task NotifyBookingCompleted()
+    {
+    }
 }
 
-public class HotelBookingModel
-{
-    public string BookingId { get; set; }
-    public string VendorId { get; set; }
-    public string RoomId { get; set; }
-    public DateTime Created { get; set; }
-    public DateTime? From { get; set; }
-    public DateTime? To { get; set; }
-
-    public HotelBookingStatus Status { get; set; }
-}
-
-public enum HotelBookingStatus
-{
-    Created,
-    Approved,
-}

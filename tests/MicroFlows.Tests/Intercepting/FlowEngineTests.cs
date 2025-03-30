@@ -38,6 +38,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task Engine_Should_ThrowException_ForNotRegisteredFlow()
     {
+        //var name = SampleFlow.Name();
         var engine = GetEngine();
         await Assert.ThrowsAsync<FlowValidationException>(async () => await engine.ExecuteFlow(this.GetType(), null));
     }

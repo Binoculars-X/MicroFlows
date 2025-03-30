@@ -1,5 +1,6 @@
 using Coravel;
 using MicroFlows;
+using MicroFlows.Demo.Flows;
 using MicroFlows.Domain.Interfaces;
 using Microsoft.Extensions.Hosting;
 using Testcontainers.MsSql;
@@ -16,8 +17,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddMicroFlows(configuration)
-                    //.RegisterFlow<LinearInlineFlow>()
-                    //.RegisterFlow<SampleFlow>()
+                    .RegisterFlow<HotelBookingFlow>()
                     ;
 
 builder.Services.AddMicroFlowsMsSqlRepo(configuration,
