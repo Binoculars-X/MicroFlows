@@ -109,7 +109,7 @@ public partial class FlowEngineTests
             SampleTwoSignalPayloadWaitingFlow.Signal2, ps2, text);
 
         var flow2 = await _repo.GetFlowModel(ctx2.RefId);
-        Assert.Equal(4, flow2.ContextHistory.Count);
+        Assert.Equal(3, flow2.ContextHistory.Count);
         Assert.Null(ctx2.Model.Records["$.Signal1PayloadDate"].Deserialize());
         Assert.Null(ctx2.Model.Records["$.Signal2PayloadText"].Deserialize());
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
@@ -148,7 +148,7 @@ public partial class FlowEngineTests
             SampleCheckSignalFlow.OrderCancelledSignal, ps, date);
 
         var flow2 = await _repo.GetFlowModel(ctx.RefId);
-        Assert.Equal(5, flow2.ContextHistory.Count);
+        Assert.Equal(4, flow2.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
 
@@ -157,7 +157,7 @@ public partial class FlowEngineTests
         var ctx3 = await engine.SendSignal(typeof(SampleCheckSignalFlow), SampleCheckSignalFlow.OrderAcceptedSignal, ps);
 
         var flow3 = await _repo.GetFlowModel(ctx.RefId);
-        Assert.Equal(9, flow3.ContextHistory.Count);
+        Assert.Equal(8, flow3.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx3.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Finished, ctx3.ExecutionResult.FlowState);
         Assert.NotNull(flow3.ContextHistory.Last().Model.Records["$.CancelDate"].Deserialize());
