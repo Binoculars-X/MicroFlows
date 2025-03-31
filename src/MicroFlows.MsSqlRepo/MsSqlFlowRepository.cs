@@ -73,8 +73,7 @@ BEGIN
     CREATE DATABASE [{_settings.DatabaseName}]
 END
 ";
-            using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+            using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 SqlCommand command = new SqlCommand(dbQuery, connection);
                 command.Connection.Open();
@@ -83,6 +82,7 @@ END
         }
 
         var q = @$"
+use [{_settings?.DatabaseName ?? "master"}];
 if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
 begin
     create table {_tableName} (
@@ -90,6 +90,7 @@ begin
         external_id varchar(64) null,
         exec_status tinyint not null,
         flow_json varchar(max) not null,
+        flow_name varchar(256) not null,
         created_on datetimeoffset(7) null,
         modified_on datetimeoffset(7) null,
         time_lock datetimeoffset(7) null,
@@ -115,11 +116,9 @@ begin
 	    [time_lock] ASC
     );
 end
-
 ";
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+        using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             SqlCommand command = new SqlCommand(q, connection);
             command.Connection.Open();
@@ -153,12 +152,11 @@ end
             var rec = GetFlowRecord(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on)
-SELECT @p1, @p2, @p3, @p4, @p5;
+INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name)
+SELECT @p1, @p2, @p3, @p4, @p5, @p6;
 ";
 
-            using (SqlConnection connection = new SqlConnection(
-                           _connectionString))
+            using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 SqlCommand cmd = new SqlCommand(q, connection);
                 cmd.CommandType = System.Data.CommandType.Text;
@@ -167,6 +165,7 @@ SELECT @p1, @p2, @p3, @p4, @p5;
                 cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("p4", rec.Status);
                 cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
+                cmd.Parameters.AddWithValue("p6", rec.FlowName);
                 await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
             }
@@ -175,7 +174,7 @@ SELECT @p1, @p2, @p3, @p4, @p5;
         return ctx;
     }
 
-    public record FlowRecord(string RefId, string? ExternalId, string FlowTypeName, FlowStateEnum? Status);
+    public record FlowRecord(string RefId, string? ExternalId, string FlowName, FlowStateEnum? Status);
 
     private FlowRecord GetFlowRecord(FlowStoreModel m)
     {
@@ -215,8 +214,7 @@ SET flow_json = @p1, external_id = @p3, exec_status = @p4, modified_on = @p5
 WHERE id = @p2 AND ver = @p6;
 ";
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+        using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             SqlCommand cmd = new SqlCommand(q, connection);
             cmd.CommandType = System.Data.CommandType.Text;
@@ -233,6 +231,15 @@ WHERE id = @p2 AND ver = @p6;
             {
                 throw new OptimisticLockMsSqlFlowRepositoryException($"Flow {flowModel.FlowTypeName} with RefId {flowModel.RefId} update returned not single row count: {result}");
             }
+        }
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            SqlCommand cmd = new SqlCommand($"select ver from {_tableName} where id=@p1", connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", flowModel.RefId);
+            await connection.OpenAsync();
+            flowModel.Timestamp = (await cmd.ExecuteScalarAsync()) as byte[]; 
         }
     }
 
@@ -430,8 +437,75 @@ from {_tableName}
         return list.FirstOrDefault()?.ContextHistory;
     }
 
-    public Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
+    public async Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
     {
-        throw new NotImplementedException();
+        var list = new List<FlowInstanceDetails>();
+        var resultList = new List<FlowInstanceDetails>();
+        
+        var q = $@"
+select top {batchSize} id, flow_name, ver 
+from {_tableName} 
+where exec_status < {(int)FlowStateEnum.Finished} and (time_lock is null or time_lock < @p1)
+order by ver, exec_status ";
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            SqlCommand cmd = new SqlCommand(q, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow);
+            await connection.OpenAsync();
+            var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                list.Add(new FlowInstanceDetails(
+                    reader.GetGuid(0).ToString(), 
+                    reader.GetString(1), 
+                    reader.GetValue(2) as byte[]));
+            }
+        }
+
+        foreach (var record in list)
+        {
+            if (await LockFlow(record, timeLock))
+            {
+                resultList.Add(record);
+            }
+        }
+
+        return resultList;
+    }
+
+    public async Task<bool> LockFlow(FlowInstanceDetails instance, int timeLock)
+    {
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            var uq = $"update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3 and (time_lock is null or time_lock < @p4)";
+            SqlCommand cmd = new SqlCommand(uq, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow.AddMicroseconds(timeLock));
+            cmd.Parameters.AddWithValue("p2", instance.RefId);
+            cmd.Parameters.AddWithValue("p3", instance.Version);
+            cmd.Parameters.AddWithValue("p4", DateTimeOffset.UtcNow);
+            await connection.OpenAsync();
+            var result = await cmd.ExecuteNonQueryAsync();
+            return result == 1;
+        }
+    }
+
+    public async Task<bool> UnlockFlow(FlowInstanceDetails instance)
+    {
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            var uq = $"update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3";
+            SqlCommand cmd = new SqlCommand(uq, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow);
+            cmd.Parameters.AddWithValue("p2", instance.RefId);
+            cmd.Parameters.AddWithValue("p3", instance.Version);
+            await connection.OpenAsync();
+            var result = await cmd.ExecuteNonQueryAsync();
+            return result == 1;
+        }
     }
 }

@@ -22,6 +22,8 @@ public interface IFlowRepository
 
     Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query);
     Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock);
+    Task<bool> LockFlow(FlowInstanceDetails instance, int timeLock);
+    Task<bool> UnlockFlow(FlowInstanceDetails instance);
 }
 
 public record FlowSearchQuery(string? RefId, string? ExternalId = null)

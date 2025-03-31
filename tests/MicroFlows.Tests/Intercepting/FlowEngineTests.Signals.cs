@@ -37,6 +37,33 @@ public partial class FlowEngineTests
     }
 
     [Fact]
+    public async Task SampleSignalWaitingFlow_Second_Run_Doesnot_Increase_History()
+    {
+        var engine = GetEngine();
+        var ps = new FlowParams() { ExternalId = "ORDER-123" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
+
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+
+        engine = GetEngine();
+        var ctx2 = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
+
+        Assert.Equal(ctx.RefId, ctx2.RefId);
+
+        flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+    }
+
+    [Fact]
 	public async Task SampleSignalWaitingFlow_ShouldStop_and_RerunOnSignal()
 	{
 		var engine = GetEngine();

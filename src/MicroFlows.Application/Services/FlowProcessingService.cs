@@ -38,7 +38,14 @@ public class FlowProcessingService : IFlowProcessingService
         await Parallel.ForEachAsync(flows, options, async (flow, cancellationToken) =>
         {
             var ps = new FlowParams { RefId = flow.RefId, FlowName = flow.FlowName };
-            await _flowProvider.ExecuteFlow(ps, cancellationToken);
+            try
+            {
+                await _flowProvider.ExecuteFlow(ps, cancellationToken);
+            }
+            catch
+            {
+                await _flowRepository.UnlockFlow(flow);
+            }
         });
     }
 }

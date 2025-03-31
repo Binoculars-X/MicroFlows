@@ -44,8 +44,8 @@ namespace MicroFlows.Demo.Controllers
             var ctx = await _flowProvider.CreateFlow(ps, cancellationToken);
 
             // ToDo: remove when Server start processing in background
-            var ps2 = new FlowParams { RefId = ctx.RefId, FlowName = typeof(HotelBookingFlow).FullName! };
-            await _flowProvider.ExecuteFlow(ps2, cancellationToken);
+            //var ps2 = new FlowParams { RefId = ctx.RefId, FlowName = typeof(HotelBookingFlow).FullName! };
+            //await _flowProvider.ExecuteFlow(ps2, cancellationToken);
 
             return Ok(ctx.RefId);
         }

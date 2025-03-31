@@ -82,9 +82,25 @@ internal class MemoryFlowRepository : IFlowRepository
         return Task.CompletedTask;
     }
 
-    public Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
+    public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
-        throw new NotImplementedException();
+        var result = new List<FlowStoreModel>();
+        FlowStoreModel? model = null;
+
+        if (query.RefId != null)
+        {
+            model = await GetFlowModel(query.RefId);
+        }
+
+        if (query.ExternalId != null)
+        {
+            model = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
+        }
+
+        var clone = TypeHelper.CloneObject(model);
+        result.Add(clone);
+
+        return result;
     }
 
     public Task UpdateFlowModel(FlowStoreModel flowModel)
@@ -106,5 +122,15 @@ internal class MemoryFlowRepository : IFlowRepository
     public Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<bool> LockFlow(FlowInstanceDetails instance, int timeLock)
+    {
+        return true;
+    }
+
+    public async Task<bool> UnlockFlow(FlowInstanceDetails instance)
+    {
+        return true;
     }
 }

@@ -23,6 +23,9 @@ namespace MicroFlows.Application.Engines.Interceptors;
 /// </summary>
 internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
+    public const int TIME_LOCK_MILLISECONDS = 1000;
+    public const int TIME_LOCK_ATTEMPTS = 3;
+
     private readonly ILogger<FlowEngine> _logger;
     private readonly IServiceProvider _services;
     private readonly IProxyGenerator _proxyGenerator;
@@ -274,6 +277,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
+            CleanContextHistoryFromWaitingDubs();
             LogException(exc);
         }
         catch (FlowTaskFailedException exc)
@@ -339,6 +343,22 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         return _context;
     }
 
+    private void CleanContextHistoryFromWaitingDubs()
+    {
+        if (_contextHistory.Count > 2)
+        {
+            var last = _contextHistory.Last();
+            var prev = _contextHistory[_contextHistory.Count - 2];
+
+            // if the last execution is identical
+            if (last.CurrentTask == prev.CurrentTask
+                && last.CallStack.Count == prev.CallStack.Count)
+            {
+                _contextHistory.Remove(last);
+            }
+        }
+    }
+
     private void MergeContextFlowParams()
     {
         var inputParams = _flowParams;
@@ -363,9 +383,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     private async Task<string> FindOrCreateContext()
     {
-        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        //var history = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        var models = await _flowRepository.SearchFlowModel(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        var history = models.FirstOrDefault()?.ContextHistory;
 
-        if (model == null)
+        if (history == null)
         {
             _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
 
@@ -374,7 +396,27 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
         else
         {
-            _context = model.First();
+            _context = history.First();
+
+            if (!_flowParams.FlowOptions.NoStorage)
+            {
+                var model = models.First();
+                var flow = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
+                int i = 0;
+
+                while (!await _flowRepository.LockFlow(flow, TIME_LOCK_MILLISECONDS))
+                {
+                    i++;
+
+                    if (i > TIME_LOCK_ATTEMPTS)
+                    {
+                        throw new FlowExecutionException($"Cannot acquire an exclusive lock on flow {model.FlowTypeName} with RefId {model.RefId}");
+                    }
+
+                    await Task.Delay(TIME_LOCK_MILLISECONDS);
+                }
+            }
+
             MergeContextFlowParams();
         }
 
