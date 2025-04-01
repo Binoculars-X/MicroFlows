@@ -15,22 +15,28 @@
 
 <form>
     <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
-        Variant="Variant.Text" Margin="Margin.Dense" T="string"/>
+    Variant="Variant.Text" Margin="Margin.Dense" T="string"/>
 
     <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
-                  Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
     <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
-                  Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
 
     <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    <MudTextField @bind-Value="Name" Label="Flow Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    <MudTextField @bind-Value="Tag" Label="Tag" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    <MudTextField @bind-Value="Created" Label="Created" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+
+    <MudTextField Value="Query.Name" Label="Flow Name" ValueChanged="@NameChanged"
+    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+    <MudTextField Value="Query.Tag" Label="Tag" ValueChanged="@TagChanged"
+    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+    <MudDatePicker Editable=true Date="@Query.CreatedFrom" DateChanged="@CreatedChanged" Label="Created"
+    DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
 
     <MudDatePicker Editable=true Date="@Query.ModifiedFrom" DateChanged="@ModifiedChanged" Label="Modified"
-        DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense"></MudDatePicker>
+    DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
 
 </form>
 
@@ -129,7 +135,10 @@ FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
     async Task UpdateSearchQuery()
     {
-        
+        var json = JsonSerializer.Serialize(Query);
+        Params = new();
+        Params[FlowInstanceListFlow.SEARCH] = json;
+        StateHasChanged();
     }
 
     private async Task ListFormDataChanged(FormSubmittedArgs args)

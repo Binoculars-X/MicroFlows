@@ -67,17 +67,17 @@ public enum FlowSearchSortOrder
 
 public record FlowExtendedSearchQuery()
 {
-    public string? RefId;
-    public string? ExternalId;
-    public string? CorrelationId;
-    public FlowStateEnum? Status;
-    public string? Name;
-    public string? Tag;
-    public DateTime? CreatedFrom;
-    public DateTime? ModifiedFrom;
+    public string? RefId { get; set; }
+    public string? ExternalId { get; set; }
+    public string? CorrelationId { get; set; }
+    public FlowStateEnum? Status { get; set; }
+    public string? Name { get; set; }
+    public string? Tag { get; set; }
+    public DateTime? CreatedFrom { get; set; }
+    public DateTime? ModifiedFrom { get; set; }
 
-    public FlowSearchSortOrder? Sort;
-    public bool? Ascending;
+    public FlowSearchSortOrder? Sort { get; set; }
+    public bool? Ascending { get; set; }
 
     public bool? IncludeModel;
     public int Take = 200;

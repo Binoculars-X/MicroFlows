@@ -34,6 +34,7 @@ public class FormFlowList : FormListBase<FlowListModel>
 }
 public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
 {
+    public const string SEARCH = "SEARCH";
     private readonly IFlowRepository _flowRepository;
 
 	public FlowInstanceListFlow(IFlowRepository flowRepository)
@@ -43,12 +44,20 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
 
 	public override async Task<FlowListModel> LoadDataAsync(QueryOptions queryOptions)
     {
-
-		return new FlowListModel
+        if (Params.DynamicInput.ContainsKey(SEARCH))
         {
-            Data = [.. (new FlowModel[] { new FlowModel { ExternalId = "123" } })],
-            Count = 1,
-        };
+            var query = JsonSerializer.Deserialize<FlowExtendedSearchQuery>(Params[SEARCH]);
+
+            return new FlowListModel
+            {
+                Data = [.. (new FlowModel[] { new FlowModel { ExternalId = "123" } })],
+                Count = 1,
+            };
+        }
+        else
+        {
+            return new FlowListModel();
+        }
     }
 
     public const int DIFF_LENGTH = 52;
