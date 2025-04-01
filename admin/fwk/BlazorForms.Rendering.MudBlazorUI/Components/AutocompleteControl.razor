@@ -1,0 +1,144 @@
+﻿@using BlazorForms.Rendering.State
+@using MudBlazor
+@using BlazorForms.Forms
+@using BlazorForms.FlowRules
+@using BlazorForms.Rendering.Validation
+
+@inject IDynamicFieldValidator FieldValidator
+
+        <MudAutocomplete T="string" Value="@SearchText" SearchFunc="@GetOptions" Disabled="@Field.DisplayProperties.Disabled"
+                 TextChanged=@TextChanged ValueChanged=@ValueChanged OnBlur=@OnBlur
+                 ResetValueOnEmptyText="true" Immediate="true" CoerceText="false" CoerceValue="true"
+                 AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"
+                 Style="width: 100%;" Variant="FormOptions.Variant" @ref=@ControlRef />
+
+<ValidatorControl Validations="@GetValidations().Take(1)"></ValidatorControl>
+
+@code {
+    [CascadingParameter]
+    public FormOptions FormOptions { get; set; }
+
+    [CascadingParameter]
+    public IFormViewModel ViewModel { get; set; }
+
+    [Parameter]
+    public int RowIndex { get; set; }
+
+    [Parameter]
+    public FieldControlDetails Field { get; set; }
+    [Parameter]
+    public string Caption { get; set; }
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public EventCallback<ValueChangedArgs> ModelValueChanged { get; set; }
+
+    [Parameter]
+    public string TextValue { get; set; }
+
+    [Parameter]
+    public string ItemsBinding { get; set; }
+    [Parameter]
+    public string NameBinding { get; set; }
+
+    //[Parameter]
+    //public IEnumerable<RuleExecutionResult> Validations { get; set; }
+
+    [Parameter]
+    public bool Password { get; set; }
+
+    //public MatList ListRef;
+    private MudAutocomplete<string>? ControlRef;
+
+    private string SearchText;
+    private IEnumerable<string> _options;
+
+    private string MyId
+    {
+        get
+        {
+            return $"{Field.Group}-{Field.Name}-{Field.Caption}-{RowIndex}";
+        }
+    }
+
+    private async Task<IEnumerable<string>> GetOptions(string pattern, CancellationToken token)
+    {
+        var options = _options.Where(item => item?.Contains(pattern ?? "", StringComparison.OrdinalIgnoreCase) == true);
+        return options;
+    }
+
+    //private RuleExecutionResult _localValidation;
+    //private IEnumerable<RuleExecutionResult> AllValidations { get { return FieldValidator.PrepareValidations(Validations, _localValidation); } }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        SearchText = TextValue;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _options = ViewModel.FieldGetItemsValue(ViewModel.ModelUntyped, ItemsBinding)
+            .Select(item => ViewModel.PathNavi.GetValue(item, NameBinding) as string);
+    }
+
+    private IEnumerable<RuleExecutionResult> GetValidations()
+    {
+        return ViewModel.GetValidations(Field);
+    }
+
+    void TextChanged(string val)
+    {
+        //ControlRef.Label = val;
+
+        if (val != null)
+        {
+            ValueChanged(val);
+        }
+
+    }
+
+    void ValueChanged(string val)
+    {
+        //SearchText = val;
+
+        //_localValidation = Validate(val);
+        if (SearchText != val)
+        {
+            ModelValueChanged.InvokeAsync(new ValueChangedArgs { Binding = Field.Binding, NewValue = val, RowIndex = RowIndex });
+            ViewModel.RefreshValidations(Field);
+            //StateHasChanged();
+        }
+    }
+
+    void OnBlur(FocusEventArgs args)
+    {
+        //if (SearchText != null && !_options.Any(item => item == SearchText))
+        //{
+        //    _localValidation = new RuleExecutionResult
+        //        {
+        //            AffectedField = Field.Binding.Key,
+        //            RuleCode = Field.DisplayProperties.Caption,
+        //            ValidationMessage = "This is an incorrect value",
+        //            ValidationResult = RuleValidationResult.Error
+        //        };
+
+        //    StateHasChanged();
+        //}
+    }
+
+    //RuleExecutionResult Validate(string val)
+    //{
+    //    if (!_options.Any(item => item?.Contains(val ?? "", StringComparison.OrdinalIgnoreCase) == true))
+    //    {
+    //        return new RuleExecutionResult
+    //            {
+    //                AffectedField = Field.Binding.Key,
+    //                RuleCode = Field.DisplayProperties.Caption,
+    //                ValidationMessage = "This is an incorrect value",
+    //                ValidationResult = RuleValidationResult.Error
+    //            };
+    //    }
+
+    //    return FieldValidator.Validate(Field, val, ViewModel.ModelUntyped).FirstOrDefault();
+    //}
+}

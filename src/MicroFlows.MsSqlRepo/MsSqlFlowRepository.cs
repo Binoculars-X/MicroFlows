@@ -88,9 +88,11 @@ begin
     create table {_tableName} (
         id uniqueidentifier not null,
         external_id varchar(64) null,
+        correlation_id varchar(64) null,
         exec_status tinyint not null,
         flow_json varchar(max) not null,
         flow_name varchar(256) not null,
+        tag varchar(256) null,
         created_on datetimeoffset(7) null,
         modified_on datetimeoffset(7) null,
         time_lock datetimeoffset(7) null,
@@ -507,5 +509,10 @@ order by ver, exec_status ";
             var result = await cmd.ExecuteNonQueryAsync();
             return result == 1;
         }
+    }
+
+    public Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query)
+    {
+        throw new NotImplementedException();
     }
 }

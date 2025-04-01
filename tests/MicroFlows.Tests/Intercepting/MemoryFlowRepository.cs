@@ -133,4 +133,9 @@ internal class MemoryFlowRepository : IFlowRepository
     {
         return true;
     }
+
+    public Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query)
+    {
+        throw new NotImplementedException();
+    }
 }

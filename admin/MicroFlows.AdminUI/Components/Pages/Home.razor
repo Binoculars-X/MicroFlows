@@ -1,7 +1,142 @@
 ﻿@page "/"
 
+<style>
+    form {
+    display: flex; /* 2. display flex to the rescue */
+    flex-direction: row;
+    }
+
+    label, input {
+    display: block; /* 1. oh noes, my inputs are styled as block... */
+    }
+</style>
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<form>
+    <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
+        Variant="Variant.Text" Margin="Margin.Dense" T="string"/>
 
-Welcome to your new app.
+    <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
+                  Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+    <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
+                  Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+
+    <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    <MudTextField @bind-Value="Name" Label="Flow Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    <MudTextField @bind-Value="Tag" Label="Tag" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    <MudTextField @bind-Value="Created" Label="Created" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+
+    <MudDatePicker Editable=true Date="@Query.ModifiedFrom" DateChanged="@ModifiedChanged" Label="Modified"
+        DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense"></MudDatePicker>
+
+</form>
+
+@* <table>
+<tr>
+    <td>
+        <MudTextField @bind-Value="RefId" Label="RefId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </td>
+    <td>
+        <MudTextField @bind-Value="ExternalId" Label="ExternalId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </td>
+    <td>
+        <MudTextField @bind-Value="CorrelationId" Label="CorrelationId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </td>
+        <td>
+            <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+        </td>
+        <td>
+        <MudTextField @bind-Value="Name" Label="Flow Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </td>
+    <td>
+        <MudTextField @bind-Value="Tag" Label="Tag" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+    </td>
+        <td>
+            <MudTextField @bind-Value="Created" Label="Created" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+        </td>
+        <td>
+            <MudTextField @bind-Value="Modified" Label="Modified" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+        </td>
+    </tr>
+</table>
+ *@
+<FlowListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
+Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
+FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
+
+
+@code {
+    FlowParamsGeneric Params = new();
+    FlowParamsGeneric SearchParams = new FlowParamsGeneric();
+
+    FlowExtendedSearchQuery Query = new();
+
+    string DateFormat = GlobalSettings.EditFormOptions.DateFormat;
+
+    string? RefId;
+    string? ExternalId;
+    string? CorrelationId;
+    string? Status;
+    string? Name;
+    string? Tag;
+    DateTime? Created;
+    DateTime? Modified;
+
+    async Task RefIdChanged(string? val)
+    {
+        Query.RefId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task ExternalIdChanged(string? val)
+    {
+        Query.ExternalId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task CorrelationIdChanged(string? val)
+    {
+        Query.CorrelationId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task NameChanged(string? val)
+    {
+        Query.Name = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task TagChanged(string? val)
+    {
+        Query.Tag = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task CreatedChanged(DateTime? val)
+    {
+        Query.CreatedFrom = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task ModifiedChanged(DateTime? val)
+    {
+        Query.ModifiedFrom = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task UpdateSearchQuery()
+    {
+        
+    }
+
+    private async Task ListFormDataChanged(FormSubmittedArgs args)
+    {
+    }
+
+    private async Task ListFormRowClick(FormRowClickArgs args)
+    {
+    }
+}

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MicroFlows.Domain.Interfaces;
+namespace MicroFlows;
 
 public interface IFlowRepository
 {
@@ -13,6 +13,7 @@ public interface IFlowRepository
     Task<List<FlowContext>> GetFlowHistory(string refId);
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
     Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query);
+    Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query);
 
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
     Task<FlowStoreModel> UpdateFlow(IFlow flow);
@@ -40,3 +41,57 @@ public record FlowSearchQuery(string? RefId, string? ExternalId = null)
 }
 
 public record FlowInstanceDetails(string RefId, string FlowName, byte[] Version);
+
+public record FlowExtendedSearchResult(
+    string? RefId,
+    string? ExternalId,
+    string? CorrelationId,
+    FlowStateEnum? Status,
+    string? Name,
+    string? Tag,
+    DateTime? Created,
+    DateTime? Modified,
+    FlowStoreModel? Model);
+
+public enum FlowSearchSortOrder
+{
+    RefId,
+    ExternalId,
+    CorrelationId,
+    Status,
+    Name,
+    Tag,
+    Created,
+    Modified
+}
+
+public record FlowExtendedSearchQuery()
+{
+    public string? RefId;
+    public string? ExternalId;
+    public string? CorrelationId;
+    public FlowStateEnum? Status;
+    public string? Name;
+    public string? Tag;
+    public DateTime? CreatedFrom;
+    public DateTime? ModifiedFrom;
+
+    public FlowSearchSortOrder? Sort;
+    public bool? Ascending;
+
+    public bool? IncludeModel;
+    public int Take = 200;
+
+    public bool IsNotEmpty()
+    {
+        return !string.IsNullOrEmpty(RefId) || !string.IsNullOrEmpty(ExternalId) || !string.IsNullOrEmpty(CorrelationId)
+            || !string.IsNullOrEmpty(Tag) || Status != null || string.IsNullOrEmpty(Name)
+            || CreatedFrom != null || ModifiedFrom != null;
+    }
+
+    public bool IsSorting()
+    {
+        return Sort != null;
+    }
+}
+

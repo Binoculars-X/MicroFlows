@@ -1,10 +1,25 @@
+using BlazorForms;
 using MicroFlows.AdminUI.Components;
+using MicroFlows.AdminUI.Forms;
+using MicroFlows;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// BlazorForms
+builder.Services.AddServerSideBlazorForms();
+builder.Services.AddBlazorFormsMudBlazorUI();
+builder.Services.AddBlazorFormsServerModelAssemblyTypes(typeof(FlowInstanceListFlow));
+
+builder.Services.AddMicroFlowsMsSqlRepo(configuration,
+    new MsSqlFlowRepositorySettings
+    {
+        ConnectionString = configuration.GetConnectionString("MicroFlowsSql")
+    });
 
 var app = builder.Build();
 
@@ -20,5 +35,8 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// BlazorForms
+app.BlazorFormsRun();
 
 app.Run();
