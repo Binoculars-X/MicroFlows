@@ -43,14 +43,14 @@ public record FlowSearchQuery(string? RefId, string? ExternalId = null)
 public record FlowInstanceDetails(string RefId, string FlowName, byte[] Version);
 
 public record FlowExtendedSearchResult(
-    string? RefId,
+    string RefId,
     string? ExternalId,
     string? CorrelationId,
     FlowStateEnum? Status,
-    string? Name,
+    string Name,
     string? Tag,
-    DateTime? Created,
-    DateTime? Modified,
+    DateTimeOffset? Created,
+    DateTimeOffset? Modified,
     FlowStoreModel? Model);
 
 public enum FlowSearchSortOrder

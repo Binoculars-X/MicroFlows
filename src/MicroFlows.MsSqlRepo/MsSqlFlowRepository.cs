@@ -16,7 +16,7 @@ using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.MsSqlRepo;
 
-public class MsSqlFlowRepository : IFlowRepository
+public partial class MsSqlFlowRepository : IFlowRepository
 {
     public const string CONNECTION_STRING_KEY = "MsSqlFlowRepositoryConnectionString";
     public const string TABLE_NAME = "flow_run";
@@ -378,9 +378,19 @@ from {_tableName}
             return (T?)(object?)null;
         }
 
-        int v = Convert.ToInt32(reader.GetString(i));
+        int v = Convert.ToInt32(reader.GetValue(i));
         var result = (T)(object)v;
         return result;
+    }
+
+    private DateTimeOffset? GetNullableDateTimeOffset(SqlDataReader reader, int i)
+    {
+        if (reader.IsDBNull(i))
+        {
+            return null;
+        }
+
+        return reader.GetDateTimeOffset(i);
     }
 
     public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
@@ -509,10 +519,5 @@ order by ver, exec_status ";
             var result = await cmd.ExecuteNonQueryAsync();
             return result == 1;
         }
-    }
-
-    public Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -47,6 +47,7 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
         if (Params.DynamicInput.ContainsKey(SEARCH))
         {
             var query = JsonSerializer.Deserialize<FlowExtendedSearchQuery>(Params[SEARCH]);
+            var data = await _flowRepository.ExtendedSearch(query);
 
             return new FlowListModel
             {

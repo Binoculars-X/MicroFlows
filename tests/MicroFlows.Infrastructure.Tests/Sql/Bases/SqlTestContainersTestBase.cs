@@ -10,6 +10,10 @@ using Testcontainers.MsSql;
 using MicroFlows;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows.Fluent;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows;
+using Castle.DynamicProxy;
+using MicroFlows.Application.Engines.Interceptors;
+using Microsoft.Extensions.Logging.Abstractions;
+using MicroFlows.Domain.Interfaces;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -27,6 +31,16 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                     {
                         ConnectionString = _msSqlContainer.GetConnectionString()
                     });
+    }
+
+    protected IFlowRepository _repo;
+
+    protected IFlowEngine NewEngine()
+    {
+        return new FlowEngine(new NullLogger<FlowEngine>(),
+            _services,
+            new ProxyGenerator(),
+            _repo);
     }
 
     public async Task InitializeAsync()
@@ -65,6 +79,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
             .Build();
 
         _services = host.Services;
+        _repo = _services.GetService<IFlowRepository>()!;
         //_context = _services.GetService<MyDbContext>()!;
         //_repo = _services.GetService<IRepository>()!;
     }
