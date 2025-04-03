@@ -11,7 +11,8 @@ public enum FlowStateEnum
     Start,
     Continue,
     Finished,
-    Failed
+    Failed,
+    Waiting
 }
 
 public enum ResultStateEnum

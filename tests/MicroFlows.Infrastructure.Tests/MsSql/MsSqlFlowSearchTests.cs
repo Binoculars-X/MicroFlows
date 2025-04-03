@@ -24,14 +24,29 @@ public class MsSqlFlowSearchTests : SqlTestContainersTestBase
         var result = await _repo.ExtendedSearch(new FlowExtendedSearchQuery());
 
         Assert.NotNull(result);
-        Assert.Single(result);
-        Assert.Equal(typeof(LinearInlineFlow).FullName, result[0].Name);
-        Assert.Null(result[0].Model);
-        Assert.Null(result[0].Tag);
-        Assert.Null(result[0].ExternalId);
-        Assert.Null(result[0].CorrelationId);
-        Assert.True(result[0].Created < DateTimeOffset.UtcNow);
-        Assert.True(result[0].Modified < DateTimeOffset.UtcNow);
+        Assert.Single(result.Lines);
+        Assert.Equal(typeof(LinearInlineFlow).FullName, result.Lines[0].Name);
+        Assert.Null(result.Lines[0].Model);
+        Assert.Null(result.Lines[0].Tag);
+        Assert.Null(result.Lines[0].ExternalId);
+        Assert.Null(result.Lines[0].CorrelationId);
+        Assert.True(result.Lines[0].Created < DateTimeOffset.UtcNow);
+        Assert.True(result.Lines[0].Modified < DateTimeOffset.UtcNow);
     }
-    
+
+    [Fact]
+    public async Task ExtendedSearch_Includes_Model()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams();
+
+        var ctx = await engine.ExecuteFlow(typeof(LinearInlineFlow), ps);
+
+        var result = await _repo.ExtendedSearch(new FlowExtendedSearchQuery { IncludeModel = true });
+
+        Assert.NotNull(result);
+        Assert.Single(result.Lines);
+        Assert.Equal(typeof(LinearInlineFlow).FullName, result.Lines[0].Name);
+        Assert.NotNull(result.Lines[0].Model);
+    }
 }

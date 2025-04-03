@@ -13,7 +13,7 @@ public interface IFlowRepository
     Task<List<FlowContext>> GetFlowHistory(string refId);
     Task<List<FlowContext>?> FindFlowHistory(FlowSearchQuery query);
     Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query);
-    Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query);
+    Task<FlowExtendedSearchResult> ExtendedSearch(FlowExtendedSearchQuery query);
 
     Task<FlowContext> CreateFlowContext(IFlow flow, FlowParams flowParams);
     Task<FlowStoreModel> UpdateFlow(IFlow flow);
@@ -30,23 +30,26 @@ public interface IFlowRepository
 public record FlowSearchQuery(string? RefId, string? ExternalId = null)
 {
     public string? Tag;
-    public FlowStateEnum? State;
+    public FlowStateEnum? Status;
     public ResultStateEnum? Result;
 
     public bool IsNotEmpty()
     {
         return !string.IsNullOrEmpty(RefId) || !string.IsNullOrEmpty(ExternalId) 
-            || !string.IsNullOrEmpty(Tag) || State != null || Result != null;
+            || !string.IsNullOrEmpty(Tag) || Status != null || Result != null;
     }
 }
 
 public record FlowInstanceDetails(string RefId, string FlowName, byte[] Version);
 
-public record FlowExtendedSearchResult(
+public record FlowExtendedSearchResult(List<FlowExtendedSearchResultLine> Lines, int Count);
+
+public record FlowExtendedSearchResultLine(
     string RefId,
     string? ExternalId,
     string? CorrelationId,
     FlowStateEnum? Status,
+    string? Task,
     string Name,
     string? Tag,
     DateTimeOffset? Created,
@@ -59,6 +62,7 @@ public enum FlowSearchSortOrder
     ExternalId,
     CorrelationId,
     Status,
+    Task,
     Name,
     Tag,
     Created,
@@ -73,8 +77,8 @@ public record FlowExtendedSearchQuery()
     public FlowStateEnum? Status { get; set; }
     public string? Name { get; set; }
     public string? Tag { get; set; }
-    public DateTime? CreatedFrom { get; set; }
-    public DateTime? ModifiedFrom { get; set; }
+    public DateTimeOffset? CreatedFrom { get; set; }
+    public DateTimeOffset? ModifiedFrom { get; set; }
 
     public FlowSearchSortOrder? Sort { get; set; }
     public bool? Ascending { get; set; }

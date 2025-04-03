@@ -34,6 +34,7 @@ internal partial class FlowEngine
     private async Task AddContextToHistory(FlowContext context)
     {
         var copy = TypeHelper.CloneObject(context);
+        copy.CreatedOn = DateTimeOffset.UtcNow;
         _contextHistory.Add(copy);
     }
 

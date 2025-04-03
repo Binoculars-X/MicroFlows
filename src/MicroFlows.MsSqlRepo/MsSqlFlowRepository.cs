@@ -58,6 +58,17 @@ public partial class MsSqlFlowRepository : IFlowRepository
         CheckDbTablesExist();
     }
 
+    public record FlowRecord(string RefId, string? ExternalId, string FlowName, string Status, 
+        FlowStateEnum? StatusEnum, string? LastTask);
+
+    private FlowRecord GetFlowRecord(FlowStoreModel m)
+    {
+        var statusEnum = m.ContextHistory.Last().ExecutionResult.FlowState;
+        var status = statusEnum.ToString();
+        var task = m.ContextHistory.Last().CurrentTask;
+        return new FlowRecord(m.RefId, m.ExternalId, m.FlowTypeName, status, statusEnum, task);
+    }
+
     private string GetTableNameOnly()
     {
         return _settings?.TableName ?? TABLE_NAME;
@@ -86,10 +97,12 @@ use [{_settings?.DatabaseName ?? "master"}];
 if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
 begin
     create table {_tableName} (
+        row_id int not null identity(1, 1),
         id uniqueidentifier not null,
         external_id varchar(64) null,
         correlation_id varchar(64) null,
-        exec_status tinyint not null,
+        exec_status varchar(10) not null,
+        exec_task varchar(64) null,
         flow_json varchar(max) not null,
         flow_name varchar(256) not null,
         tag varchar(256) null,
@@ -99,8 +112,13 @@ begin
         ver timestamp not null,
         CONSTRAINT [PK_{GetTableNameOnly()}] PRIMARY KEY CLUSTERED 
         (
-	        [id] ASC
+	        [row_id] ASC
         )
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_id] ON {_tableName}
+    (
+	    [external_id] ASC
     );
 
     CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_external_id] ON {_tableName}
@@ -154,8 +172,8 @@ end
             var rec = GetFlowRecord(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name)
-SELECT @p1, @p2, @p3, @p4, @p5, @p6;
+INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name, exec_task)
+SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7;
 ";
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -168,20 +186,13 @@ SELECT @p1, @p2, @p3, @p4, @p5, @p6;
                 cmd.Parameters.AddWithValue("p4", rec.Status);
                 cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
                 cmd.Parameters.AddWithValue("p6", rec.FlowName);
+                cmd.Parameters.AddWithValue("p7", ((object)rec.LastTask) ?? DBNull.Value);
                 await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
             }
         }
 
         return ctx;
-    }
-
-    public record FlowRecord(string RefId, string? ExternalId, string FlowName, FlowStateEnum? Status);
-
-    private FlowRecord GetFlowRecord(FlowStoreModel m)
-    {
-        var status = m.ContextHistory.Last().ExecutionResult.FlowState;
-        return new FlowRecord(m.RefId, m.ExternalId, m.FlowTypeName, status);
     }
 
     /// <summary>
@@ -212,7 +223,7 @@ SELECT @p1, @p2, @p3, @p4, @p5, @p6;
 
         var q = $@"
 UPDATE {_tableName}
-SET flow_json = @p1, external_id = @p3, exec_status = @p4, modified_on = @p5
+SET flow_json = @p1, external_id = @p3, exec_status = @p4, exec_task = @p7, modified_on = @p5
 WHERE id = @p2 AND ver = @p6;
 ";
 
@@ -226,6 +237,7 @@ WHERE id = @p2 AND ver = @p6;
             cmd.Parameters.AddWithValue("p4", rec.Status);
             cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
             cmd.Parameters.AddWithValue("p6", flowModel.Timestamp);
+            cmd.Parameters.AddWithValue("p7", ((object)rec.LastTask) ?? DBNull.Value);
             await connection.OpenAsync();
             var result = await cmd.ExecuteNonQueryAsync();
 
@@ -292,11 +304,13 @@ WHERE id = @p2 AND ver = @p6;
     {
         var list = new List<SearchFlowDetails>();
         
+        // ToDo: refactor to use sql columns here
         var q = @$"
 select id
 , JSON_VALUE(flow_json, '$.ExternalId') externalId
 , JSON_VALUE(flow_json, '$.Tag') tag
-, JSON_VALUE(flow_json, '$.State') state
+--, JSON_VALUE(flow_json, '$.State') state
+, exec_status
 , JSON_VALUE(flow_json, '$.Result') result
 from {_tableName}
 ";
@@ -329,10 +343,12 @@ from {_tableName}
                 cmd.Parameters.AddWithValue("p3", query.Tag);
             }
 
-            if (query.State != null)
+            if (query.Status != null)
             {
-                q += " and JSON_VALUE(flow_json, '$.State') = @p4";
-                cmd.Parameters.AddWithValue("p4", query.State);
+                //q += " and JSON_VALUE(flow_json, '$.State') = @p4";
+                //cmd.Parameters.AddWithValue("p4", query.Status);
+                q += " and exec_status = @p4";
+                cmd.Parameters.AddWithValue("p4", query.Status.ToString());
             }
 
             if (query.Result != null)
@@ -351,7 +367,7 @@ from {_tableName}
                     reader.GetGuid(0).ToString(),
                     GetNullableString(reader, 1),
                     GetNullableString(reader, 2),
-                    GetNullableEnum<FlowStateEnum>(reader, 3),
+                    ParseNullableEnum<FlowStateEnum>(reader, 3),
                     GetNullableEnum<ResultStateEnum>(reader, 4));
 
                 list.Add(model!);
@@ -380,6 +396,18 @@ from {_tableName}
 
         int v = Convert.ToInt32(reader.GetValue(i));
         var result = (T)(object)v;
+        return result;
+    }
+
+    private T? ParseNullableEnum<T>(SqlDataReader reader, int i) where T : struct, Enum 
+    {
+        if (reader.IsDBNull(i))
+        {
+            return (T?)(object?)null;
+        }
+
+        var s = reader.GetString(i);
+        var result = Enum.Parse<T>(s);
         return result;
     }
 
@@ -457,7 +485,9 @@ from {_tableName}
         var q = $@"
 select top {batchSize} id, flow_name, ver 
 from {_tableName} 
-where exec_status < {(int)FlowStateEnum.Finished} and (time_lock is null or time_lock < @p1)
+where (exec_status = '{FlowStateEnum.Start}' or exec_status = '{FlowStateEnum.Stop}' 
+    or exec_status = '{FlowStateEnum.Continue}' or exec_status = '{FlowStateEnum.Waiting}') 
+and (time_lock is null or time_lock < @p1)
 order by ver, exec_status ";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))

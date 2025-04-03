@@ -57,14 +57,14 @@ public class MsSqlRepoTests : SqlTestContainersTestBase
 
         Assert.NotNull(result);
         Assert.Single(result);
-        Assert.Equal(Domain.Enums.FlowStateEnum.Start, result.First().State);
+        Assert.Equal(Domain.Enums.FlowStateEnum.Start, result.First().Status);
         Assert.Equal(Domain.Enums.ResultStateEnum.Success, result.First().Result);
         Assert.Null(result.First().ExternalId);
         Assert.Null(result.First().Tag);
     }
 
     [Fact]
-    public async Task Can_Search_Flow_by_State()
+    public async Task Can_Search_Flow_by_Status()
     {
         var repo = _services.GetService<IFlowRepository>() as MsSqlFlowRepository;
         var flow = new LinearInlineFlow();
@@ -73,16 +73,16 @@ public class MsSqlRepoTests : SqlTestContainersTestBase
 
         Assert.NotNull(ctx);
 
-        var result = await repo.SearchFlow(new FlowSearchQuery(null) { State = Domain.Enums.FlowStateEnum.Start });
+        var result = await repo.SearchFlow(new FlowSearchQuery(null) { Status = Domain.Enums.FlowStateEnum.Start });
 
         Assert.NotNull(result);
         Assert.Single(result);
-        Assert.Equal(Domain.Enums.FlowStateEnum.Start, result.First().State);
+        Assert.Equal(Domain.Enums.FlowStateEnum.Start, result.First().Status);
         Assert.Equal(Domain.Enums.ResultStateEnum.Success, result.First().Result);
         Assert.Null(result.First().ExternalId);
         Assert.Null(result.First().Tag);
 
-        result = await repo.SearchFlow(new FlowSearchQuery(null) { State = Domain.Enums.FlowStateEnum.Stop });
+        result = await repo.SearchFlow(new FlowSearchQuery(null) { Status = Domain.Enums.FlowStateEnum.Stop });
 
         Assert.NotNull(result);
         Assert.Empty(result);

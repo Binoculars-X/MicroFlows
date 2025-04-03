@@ -128,7 +128,7 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
         Assert.NotNull(result);
         Assert.Single(result);
         Assert.Equal(ctx.RefId, result.First().RefId);
-        Assert.Equal(FlowStateEnum.Finished, result.First().State);
+        Assert.Equal(FlowStateEnum.Finished, result.First().Status);
         Assert.Equal(ResultStateEnum.Success, result.First().Result);
         Assert.Equal(ps.ExternalId, result.First().ExternalId);
         Assert.Equal(ps.Tag, result.First().Tag);

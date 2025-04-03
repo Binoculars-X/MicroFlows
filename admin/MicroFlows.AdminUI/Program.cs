@@ -2,6 +2,7 @@ using BlazorForms;
 using MicroFlows.AdminUI.Components;
 using MicroFlows.AdminUI.Forms;
 using MicroFlows;
+using MicroFlows.AdminUI.Components.Flows;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -20,6 +21,10 @@ builder.Services.AddMicroFlowsMsSqlRepo(configuration,
     {
         ConnectionString = configuration.GetConnectionString("MicroFlowsSql")
     });
+
+// DI
+builder.Services.AddScoped<LocalSettings>();
+builder.Services.AddScoped<FlowHistoryViewModel>();
 
 var app = builder.Build();
 

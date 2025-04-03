@@ -2,6 +2,7 @@
 using BlazorForms.Flows.Engine.Fluent;
 using BlazorForms.Forms;
 using BlazorForms.Shared.Extensions;
+using MicroFlows.Application.Helpers;
 using System.Text.Json;
 using System.Threading;
 
@@ -9,22 +10,21 @@ namespace MicroFlows.AdminUI.Forms;
 
 public class FormFlowList : FormListBase<FlowListModel>
 {
-    public const string SEARCH_ID = "SEARCH_ID";
-
 	protected override void Define(FormListBuilder<FlowListModel> builder)
     {
         builder.List(p => p.Data, e =>
         {
             //e.DisplayName = "Profiles";
 
-            e.Property(p => p.Id).IsPrimaryKey().Label("Id").IsHidden();
+            e.Property(p => p.RefId).IsPrimaryKey().Label("RefId");
             e.Property(p => p.ExternalId);
+            e.Property(p => p.CorrelationId);
             //e.Property(p => p.ProfileId);
-            e.Property(p => p.Source).Label("Source");
-            e.Property(p => p.DifferenceShort).Label("Difference").MaxLength(32);
-            e.Property(p => p.Operation);
-            e.Property(p => p.UserId).Label("By").MaxLength(16);
-            e.Property(p => p.Date).Label("Date").Format("dd/MM/yyyy HH:mm");
+            e.Property(p => p.Status).Label("Status");
+            e.Property(p => p.ShortName).Label("Flow").MaxLength(32);
+            e.Property(p => p.Tag).Label("Tag").MaxLength(32);
+            e.Property(p => p.CreatedOn).Label("Created").Format(GlobalSettings.DateTimeFormat);
+            e.Property(p => p.UpdatedOn).Label("Updated").Format(GlobalSettings.DateTimeFormat);
 
             //e.ContextButton("Details", typeof(FormHistoryDetailsDialogFlow),
             //    BlazorForms.Shared.FlowReferenceOperation.DialogForm);
@@ -36,10 +36,12 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
 {
     public const string SEARCH = "SEARCH";
     private readonly IFlowRepository _flowRepository;
+    private readonly LocalSettings _localSettings;
 
-	public FlowInstanceListFlow(IFlowRepository flowRepository)
+	public FlowInstanceListFlow(IFlowRepository flowRepository, LocalSettings localSettings)
 	{
         _flowRepository = flowRepository;
+        _localSettings = localSettings;
 	}
 
 	public override async Task<FlowListModel> LoadDataAsync(QueryOptions queryOptions)
@@ -51,8 +53,13 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
 
             return new FlowListModel
             {
-                Data = [.. (new FlowModel[] { new FlowModel { ExternalId = "123" } })],
-                Count = 1,
+                Data = data.Lines.Select(l => new FlowDetailsModel(l)
+                {
+                    ShortName = l.Name.Split('.').Last(),
+                    CreatedOn = TimeZoneHelper.ConvertToTimeZone(l.Created, _localSettings.TimeZone)?.DateTime,
+                    UpdatedOn = TimeZoneHelper.ConvertToTimeZone(l.Modified, _localSettings.TimeZone)?.DateTime,
+                }).ToList(),
+                Count = data.Count,
             };
         }
         else
@@ -72,21 +79,16 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
 public class FlowListModel : IFlowModel
 {
     public int? Count { get; set; }
-    public virtual List<FlowModel>? Data { get; set; } = [];
+    public virtual List<FlowDetailsModel>? Data { get; set; } = [];
 }
 
-public class FlowModel : IFlowModel
+public record FlowDetailsModel : FlowExtendedSearchResultLine
 {
-    public int Id { get; set; }
-    public string? ProfileId { get; set; } = null!;
-    public string? ExternalId { get; set; } = null!;
-    public string? FromJson { get; set; }
-    public string? ToJson { get; set; }
-    public string? DifferenceJson { get; set; }
-    public string? DifferenceShort { get; set; }
-    public string? Source { get; set; } = null!;
-    public string? Operation { get; set; } = null!;
-    public string? UserId { get; set; } = null!;
-    public DateTime Date { get; set; }
-}
+    public FlowDetailsModel(FlowExtendedSearchResultLine original) : base(original)
+    {
+    }
 
+    public string? ShortName { get; set; }
+    public DateTime? CreatedOn { get; set; }
+    public DateTime? UpdatedOn { get; set; }
+}

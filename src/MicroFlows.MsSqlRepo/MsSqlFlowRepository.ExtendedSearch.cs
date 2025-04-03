@@ -19,9 +19,9 @@ namespace MicroFlows.MsSqlRepo;
 
 public partial class MsSqlFlowRepository
 {
-    public async Task<List<FlowExtendedSearchResult>> ExtendedSearch(FlowExtendedSearchQuery query)
+    public async Task<FlowExtendedSearchResult> ExtendedSearch(FlowExtendedSearchQuery query)
     {
-        var list = new List<FlowExtendedSearchResult>();
+        var list = new List<FlowExtendedSearchResultLine>();
 
         var jsonColumn = query.IncludeModel == true ? "\r\n , flow_json" : "";
 
@@ -30,6 +30,7 @@ select id as RefId
 , external_id
 , correlation_id
 , exec_status
+, exec_task
 , flow_name
 , tag
 , created_on
@@ -72,18 +73,19 @@ from {_tableName}
             while (await reader.ReadAsync())
             {
                 FlowStoreModel model = query.IncludeModel == true
-                    ? JsonSerializer.Deserialize<FlowStoreModel>(GetNullableString(reader, 8))
+                    ? JsonSerializer.Deserialize<FlowStoreModel>(GetNullableString(reader, 9))
                     : null;
 
-                var record = new FlowExtendedSearchResult(
+                var record = new FlowExtendedSearchResultLine(
                     reader.GetGuid(0).ToString(),
                     GetNullableString(reader, 1),
                     GetNullableString(reader, 2),
-                    GetNullableEnum<FlowStateEnum>(reader, 3),
+                    ParseNullableEnum<FlowStateEnum>(reader, 3),
                     GetNullableString(reader, 4),
                     GetNullableString(reader, 5),
-                    GetNullableDateTimeOffset(reader, 6),
+                    GetNullableString(reader, 6),
                     GetNullableDateTimeOffset(reader, 7),
+                    GetNullableDateTimeOffset(reader, 8),
                     model
                     );
 
@@ -91,6 +93,8 @@ from {_tableName}
             }
         }
 
-        return list;
+        // ToDo: populate count
+        var result = new FlowExtendedSearchResult(list, 0);
+        return result;
     }
 }

@@ -1,5 +1,12 @@
 ﻿@page "/"
 
+@using MicroFlows.Application.Helpers
+@using MicroFlows.Domain.Models
+
+@inject IJSRuntime JSRuntime
+@inject LocalSettings LocalSettings
+@inject MicroFlows.IFlowRepository _repo
+
 <style>
     form {
     display: flex; /* 2. display flex to the rescue */
@@ -11,67 +18,49 @@
     }
 </style>
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Flows</PageTitle>
 
-<form>
-    <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
-    Variant="Variant.Text" Margin="Margin.Dense" T="string"/>
+<MudGrid>
+    <MudItem xs="9">
+        <form>
+            <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
+                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
-    <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
-    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
+                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
-    <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
-    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
+                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
 
-    <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-
-    <MudTextField Value="Query.Name" Label="Flow Name" ValueChanged="@NameChanged"
-    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
-
-    <MudTextField Value="Query.Tag" Label="Tag" ValueChanged="@TagChanged"
-    Variant="Variant.Text" Margin="Margin.Dense" T="string" />
-
-    <MudDatePicker Editable=true Date="@Query.CreatedFrom" DateChanged="@CreatedChanged" Label="Created"
-    DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
-
-    <MudDatePicker Editable=true Date="@Query.ModifiedFrom" DateChanged="@ModifiedChanged" Label="Modified"
-    DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
-
-</form>
-
-@* <table>
-<tr>
-    <td>
-        <MudTextField @bind-Value="RefId" Label="RefId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    </td>
-    <td>
-        <MudTextField @bind-Value="ExternalId" Label="ExternalId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    </td>
-    <td>
-        <MudTextField @bind-Value="CorrelationId" Label="CorrelationId" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    </td>
-        <td>
-            <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-        </td>
-        <td>
-        <MudTextField @bind-Value="Name" Label="Flow Name" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    </td>
-    <td>
-        <MudTextField @bind-Value="Tag" Label="Tag" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-    </td>
-        <td>
-            <MudTextField @bind-Value="Created" Label="Created" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-        </td>
-        <td>
-            <MudTextField @bind-Value="Modified" Label="Modified" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
-        </td>
-    </tr>
-</table>
+            @*     <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
  *@
-<FlowListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
-Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
-FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
+            <MudTextField Value="Query.Name" Label="Flow Name" ValueChanged="@NameChanged"
+                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudTextField Value="Query.Tag" Label="Tag" ValueChanged="@TagChanged"
+                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudDatePicker Editable=true Date="@Created" DateChanged="@CreatedChanged" Label="Created"
+                           DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+
+            <MudDatePicker Editable=true Date="@Modified" DateChanged="@ModifiedChanged" Label="Modified"
+                           DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+
+        </form>
+
+        <FlowListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
+                      Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
+                      FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
+
+
+    </MudItem>
+    <MudItem xs="3">
+        <FlowHistory Model=@SelectedModel />
+
+    </MudItem>
+</MudGrid>
+
 
 
 @code {
@@ -82,14 +71,27 @@ FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
     string DateFormat = GlobalSettings.EditFormOptions.DateFormat;
 
-    string? RefId;
-    string? ExternalId;
-    string? CorrelationId;
-    string? Status;
-    string? Name;
-    string? Tag;
     DateTime? Created;
     DateTime? Modified;
+
+    FlowStoreModel SelectedModel { get; set; } = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await using var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./timezone2.js");
+                var timeZone = await module.InvokeAsync<string>("getBrowserTimeZone");
+                LocalSettings.TimeZone = timeZone;
+                await UpdateSearchQuery();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
 
     async Task RefIdChanged(string? val)
     {
@@ -123,13 +125,21 @@ FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
     async Task CreatedChanged(DateTime? val)
     {
-        Query.CreatedFrom = val;
+        Created = val;
+
+        Query.CreatedFrom = val == null ? null 
+            : TimeZoneHelper.ConvertDateTimeToUtc(val.Value, LocalSettings.TimeZone);
+
         await UpdateSearchQuery();
     }
 
     async Task ModifiedChanged(DateTime? val)
     {
-        Query.ModifiedFrom = val;
+        Modified = val;
+
+        Query.ModifiedFrom = val == null ? null 
+            : TimeZoneHelper.ConvertDateTimeToUtc(val.Value, LocalSettings.TimeZone);
+
         await UpdateSearchQuery();
     }
 
@@ -147,5 +157,10 @@ FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
     private async Task ListFormRowClick(FormRowClickArgs args)
     {
+        var model = await _repo.GetFlowModel(args.Pk);
+        SelectedModel = model;
+
+        // var ctx = new FlowContext { CurrentTask = "Created:0", CreatedOn = DateTimeOffset.UtcNow };
+        // SelectedModel.ContextHistory.Add(ctx);
     }
 }
