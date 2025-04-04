@@ -15,16 +15,31 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
 
         await CallAsync(NotifyBookingReceived);
 
+        await CallAsync(VendorReservation);
+
         if (Model.PaymentType == PaymentType.Card)
         {
             await CallAsync(ProcessCardPayment);
-        }
 
-        await CallAsync(VendorReservation);
+            if (Model.PaymentFailed)
+            {
+                await CallAsync(VendorReservationReverse);
+
+                await CallAsync(NotifyBookingFailed);
+                
+                return;
+            }
+        }
 
         if (Model.PaymentType != PaymentType.Card)
         {
-            await WaitForSignalAsync(PaymentReceivedSignal);
+            if(!await WaitForSignalAsync(PaymentReceivedSignal, TimeSpan.FromDays(3)))
+            {
+                // timeout reached
+                await CallAsync(NotifyBookingFailed);
+
+                return;
+            }
         }
 
         await WaitForSignalAsync(ReservationConfirmedSignal);
@@ -46,13 +61,21 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     private async Task VendorReservation()
     {
     }
+    private async Task VendorReservationReverse()
+    {
+    }
     private async Task ProcessCardPayment()
     {
+        Model.PaymentFailed = true;
     }
     private async Task FinalizeBooking()
     {
+        // start booking order support flow
     }
     private async Task NotifyBookingCompleted()
+    {
+    }
+    private async Task NotifyBookingFailed()
     {
     }
 }

@@ -10,6 +10,7 @@ public class HotelBookingModel
     public DateTime From { get; set; }
     public int StayDays { get; set; }
     public PaymentType PaymentType { get; set; }
+    public bool PaymentFailed { get; set; }
     public decimal Amount { get; set; }
 
     public HotelBookingStatus Status { get; set; }

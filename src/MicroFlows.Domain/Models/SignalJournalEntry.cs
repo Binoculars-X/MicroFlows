@@ -9,7 +9,8 @@ namespace MicroFlows.Domain.Models;
 public class SignalJournalEntry
 {
     public string? Signal { get; set; }
-    public DateTime? Received { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset? Received { get; set; }
+    public DateTimeOffset? TimeoutReachedOn { get; set; }
 
     public SnapshotRecord? Record { get; set; }
 
@@ -20,6 +21,7 @@ public class SignalJournalEntry
     public SignalJournalEntry(string signal, object? payload)
     {
         Signal = signal;
+        Received = DateTime.UtcNow;
 
         if (payload != null)
         {

@@ -17,6 +17,8 @@ public class FlowStoreModel
     /// </summary>
     public string? ExternalId { get; set; } = null!;
 
+    public string? CorrelationId { get; set; } = null!;
+
     /// <summary>
     /// Flow type full name
     /// </summary>

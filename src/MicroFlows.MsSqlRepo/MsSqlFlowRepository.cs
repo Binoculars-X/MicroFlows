@@ -154,6 +154,7 @@ end
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
         ctx.ExecutionResult.ResultState = Domain.Enums.ResultStateEnum.Success;
+        ctx.CreatedOn = DateTimeOffset.UtcNow;
 
         var flowModel = new FlowStoreModel()
         {

@@ -1,5 +1,42 @@
-﻿<h3>FlowHistoryItem</h3>
+﻿@using MicroFlows.Domain.Models
+@inject FlowHistoryItemViewModel _vm
+@inject IJSRuntime JS
+
+<script>
+    window.clipboardCopy = {
+        copyText: function(text) {
+        navigator.clipboard.writeText(text).then(function () {
+        //alert("Copied to clipboard!");
+    })
+    .catch(function (error) {
+        alert(error);
+    });
+    }
+    };
+</script>
+
+<table>
+    <tr>
+        <td>Status:</td>
+        <td>@Model.ExecutionResult.FlowState.ToString()</td>
+    </tr>
+</table>
+
+<MudTextField T="string" Label="Model" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetModel()
+              Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+              OnAdornmentClick=@CopyClick />
 
 @code {
+    [Parameter]
+    public FlowContext Model { get; set; }
 
+    protected override void OnParametersSet()
+    {
+        _vm.Model = Model;
+    }
+
+    async Task CopyClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetModel());
+    }
 }

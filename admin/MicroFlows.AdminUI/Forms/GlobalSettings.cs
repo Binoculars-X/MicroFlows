@@ -57,7 +57,7 @@ public static class GlobalSettings
         UseToolBarCaption = true,
         Variant = Variant.Filled,
         DateFormat = "dd/MM/yyyy",
-        HeightPx = "680px",
+        HeightPx = "800px",
         CaptionActions = "",
         FirstActionClick = false
     };
@@ -70,7 +70,7 @@ public static class GlobalSettings
         UseToolBarCaption = true,
         Variant = Variant.Filled,
         DateFormat = "dd/MM/yyyy",
-        HeightPx = "640px",
+        HeightPx = "800px",
         CaptionActions = "",
         FirstActionClick = true
     };

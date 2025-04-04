@@ -7,6 +7,7 @@ namespace MicroFlows;
 public class SignalPayload
 {
     public object? Value { get; internal set; }
+    public DateTimeOffset? TimeoutReachedOn { get; internal set; }
     
     public T? GetValue<T>()
     {

@@ -25,6 +25,7 @@ builder.Services.AddMicroFlowsMsSqlRepo(configuration,
 // DI
 builder.Services.AddScoped<LocalSettings>();
 builder.Services.AddScoped<FlowHistoryViewModel>();
+builder.Services.AddScoped<FlowHistoryItemViewModel>();
 
 var app = builder.Build();
 

@@ -1,48 +1,138 @@
 ﻿@using MicroFlows.Domain.Models
 @inject FlowHistoryViewModel _vm
+@inject IJSRuntime JS
 
 <style>
     td {
-        padding-right: 4px;
+    padding-right: 4px;
     }
 </style>
 
+<script>
+    window.clipboardCopy = {
+    copyText: function(text) {
+    navigator.clipboard.writeText(text).then(function () {
+    //alert("Copied to clipboard!");
+    })
+    .catch(function (error) {
+    alert(error);
+    });
+    }
+    };
+</script>
+
 <h5 style="padding-top:20px">Flow Instance History</h5>
 
-<table>
-    <tr>
-        <td>RefId:</td>
-        <td>@Model.RefId</td>
-    </tr>
-    <tr>
-        <td>ExternalId:</td>
-        <td>@Model.ExternalId</td>
-    </tr>
-    <tr>
-        <td>FlowTypeName:</td>
-        <td>@Model.FlowTypeName</td>
-    </tr>
-</table>
-@* RefId: @Model.RefId
+<div id="unique_id_scroll_section" class="ma-0" style="height:800px;overflow: auto;">
+    <table>
+        <tr>
+            <td>FlowTypeName:</td>
+            <td>@Model.FlowTypeName</td>
+        </tr>
+        <tr>
+            <td>Status:</td>
+            <td>@Model.State.ToString()</td>
+        </tr>
+        <tr>
+            <td>RefId:</td>
+            <td>@Model.RefId</td>
+        </tr>
+        <tr>
+            <td>ExternalId:</td>
+            <td>@Model.ExternalId</td>
+        </tr>
+        <tr>
+            <td>CorrelationId:</td>
+            <td>@Model.CorrelationId</td>
+        </tr>
+    </table>
+
+
+
+
+    @* RefId: @Model.RefId
 <br/>
 ExternalId: @Model.ExternalId
 <br /> *@
 
-<MudExpansionPanels MultiExpansion="true">
-    @foreach (var line in _vm.GetLines())
-    {
-        <MudExpansionPanel Text=@line.Header>
-            <FlowHistoryItem></FlowHistoryItem>
+    <MudExpansionPanels @ref=_panel MultiExpansion="true">
+        <MudExpansionPanel Text=Data>
+            <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
+            Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+            OnAdornmentClick=@ParametersClick />
+
+            @if (_vm.GetFlowParametersPayload() != null)
+            {
+                <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
+                Text=@_vm.GetFlowParametersPayload()
+                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                OnAdornmentClick=@ParametersPayloadClick />
+            }
+
+            @if (_vm.GetSignals() != null)
+            {
+                <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
+                Text=@_vm.GetSignals()
+                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                OnAdornmentClick=@CopySignalsClick />
+            }
         </MudExpansionPanel>
-    }
-</MudExpansionPanels>
+
+        @foreach (var line in _vm.GetLines())
+        {
+            <MudExpansionPanel Text=@line.Header>
+                <FlowHistoryItem Model="@line.Context"></FlowHistoryItem>
+            </MudExpansionPanel>
+        }
+    </MudExpansionPanels>
+</div>
 
 @code {
+    MudExpansionPanels _panel;
+
     [Parameter]
     public FlowStoreModel Model { get; set; }
 
     protected override void OnParametersSet()
     {
         _vm.Model = Model;
+
+        if (_panel != null)
+        {
+            _panel.CollapseAllAsync();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _panel.CollapseAllAsync();
+        }
+    }
+
+    async Task ParametersClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParameters());
+
+        try
+        {
+            // https://learn.microsoft.com/en-us/answers/questions/217767/blazor-open-a-page-in-a-new-browser-tab-using-navi
+            // how to open in a new tab
+            //await JS.InvokeAsync<object>("open", "/", "_blank");
+        }
+        catch(Exception exc)
+        {
+        }
+    }
+
+    async Task ParametersPayloadClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParametersPayload());
+    }
+
+    async Task CopySignalsClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetSignals());
     }
 }

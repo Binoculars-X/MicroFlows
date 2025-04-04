@@ -13,6 +13,7 @@ using MicroFlows.Application;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Text.Json;
+using Castle.Components.DictionaryAdapter.Xml;
 
 namespace MicroFlows;
 
@@ -50,6 +51,10 @@ public abstract partial class FlowBase : IFlow
 
     [JsonIgnore]
     public string RefId { get; set; }
+
+    [JsonIgnore]
+    public DateTimeOffset? ExecutedOn { get; set; }
+
     //[JsonIgnore]
     //public string ExternalId { get; set; }
 
@@ -249,6 +254,32 @@ public abstract partial class FlowBase : IFlow
         }
 
         throw new FlowStopException("WaitForSignal");
+    }
+
+    /// <summary>
+    /// Stops flow until signal with signalName received
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// If timeoutDate reached before signal received, it passes through
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <param name="timeout"></param>
+    /// <returns>false if timeout reached</returns>
+    public virtual async Task<bool> WaitForSignalAsync(string signalName, TimeSpan timeout)
+    {
+        // If timeout reached
+        if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
+        {
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { TimeoutReachedOn = DateTimeOffset.UtcNow };
+                await _signalHandlers[signalName](payload);
+            }
+
+            return false;
+        }
+
+        await WaitForSignalAsync(signalName);
+        return true;
     }
 
     public virtual void WaitForCondition(Func<bool> action)
