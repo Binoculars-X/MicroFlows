@@ -39,7 +39,7 @@ public class SampleSignalWaitingTimeoutFlow : FlowBase
         ModelDate = date;
     }
 
-    private void Init()
+    private async Task Init()
     {
         ModelInt = 33;
     }
