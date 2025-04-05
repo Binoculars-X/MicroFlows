@@ -135,20 +135,21 @@ public partial class FlowEngineTests
         var ps = new FlowParams() { ExternalId = "ORDER-123" };
         var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingTimeoutFlow), ps);
 
-        //var flow = await _repo.GetFlowModel(ctx.RefId);
-        //Assert.Equal(3, flow.ContextHistory.Count);
-        //Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        //Assert.Equal(4, flow.ContextHistory.Count);
+        //Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         //Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
-        //Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        //Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        //Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        //engine = GetEngine();
-        //var ctx2 = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
+        await Task.Delay(1100);
+        engine = GetEngine();
+        var ctx2 = await engine.ExecuteFlow(typeof(SampleSignalWaitingTimeoutFlow), ps);
 
-        //Assert.Equal(ctx.RefId, ctx2.RefId);
+        Assert.Equal(ctx.RefId, ctx2.RefId);
 
-        //flow = await _repo.GetFlowModel(ctx.RefId);
-        //Assert.Equal(3, flow.ContextHistory.Count);
+        flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(6, flow.ContextHistory.Count);
         //Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         //Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
         //Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);

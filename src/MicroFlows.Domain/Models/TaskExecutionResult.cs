@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace MicroFlows.Domain.Models;
 public class TaskExecutionResult
@@ -20,4 +21,7 @@ public class TaskExecutionResult
     public string? ExceptionType { get; set; }
     //public Exception ExecutionException { get; set; }
     public bool IsWaitTask { get; set; }
+    public object? ReturnedValue { get; set; }
+    [JsonIgnore]
+    public object? ReturnedValueTask { get; set; }
 }

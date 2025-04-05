@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Text.Json;
 using Castle.Components.DictionaryAdapter.Xml;
+using Castle.DynamicProxy;
 
 namespace MicroFlows;
 
@@ -264,7 +265,7 @@ public abstract partial class FlowBase : IFlow
     /// <param name="signalName"></param>
     /// <param name="timeout"></param>
     /// <returns>false if timeout reached</returns>
-    public virtual async Task<bool> WaitForSignalAsync(string signalName, TimeSpan timeout)
+    public virtual async Task<bool> WaitForSignalTimeoutAsync(string signalName, TimeSpan timeout)
     {
         // If timeout reached
         if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
@@ -279,6 +280,50 @@ public abstract partial class FlowBase : IFlow
         }
 
         await WaitForSignalAsync(signalName);
+        return true;
+    }
+
+    public virtual void WaitForSignal(string signalName)
+    {
+        var entry = SignalJournal.LastOrDefault(r => r.Signal == signalName);
+
+        if (entry != null)
+        {
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+
+                Task.Run(async () => await _signalHandlers[signalName](payload))
+                    .GetAwaiter().GetResult();
+
+                //await _signalHandlers[signalName](payload);
+            }
+
+            return;
+        }
+
+        throw new FlowStopException("WaitForSignal");
+    }
+
+    public virtual bool WaitForSignal(string signalName, TimeSpan timeout)
+    {
+        // If timeout reached
+        if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
+        {
+            if (_signalHandlers.ContainsKey(signalName))
+            {
+                var payload = new SignalPayload() { TimeoutReachedOn = DateTimeOffset.UtcNow };
+
+                Task.Run(async () => await _signalHandlers[signalName](payload))
+                    .GetAwaiter().GetResult();
+                
+                //await _signalHandlers[signalName](payload);
+            }
+
+            return false;
+        }
+
+        WaitForSignal(signalName);
         return true;
     }
 

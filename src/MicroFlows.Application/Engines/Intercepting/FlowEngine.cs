@@ -244,7 +244,8 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         try
         {
             var method = GetFlowActivationMethod();
-            var task = (Task)method.Invoke(_flowProxy, null);
+            var invokeResult = method.Invoke(_flowProxy, null);
+            var task = (Task)invokeResult;
             await task;
 
             // flow executed completely

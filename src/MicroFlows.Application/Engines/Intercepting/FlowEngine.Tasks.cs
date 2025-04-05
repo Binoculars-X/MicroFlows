@@ -21,7 +21,7 @@ internal partial class FlowEngine
 {
     private readonly ImportOptions _importOptions = new ImportOptions { ExcludeStartsWith = "__" };
 
-    private async Task ProcessCallTask(string taskName, Func<Task> action)
+    private async Task<object> ProcessCallTask(string taskName, Func<Task<object>> action)
     {
         bool isNotForSkipping = false;
         _callIndex++;
@@ -62,6 +62,7 @@ internal partial class FlowEngine
         {
             // execute skip task - supply model that was on this step
             _flowProxy.SetModel(historicTaskContext.Model);
+            return historicTaskContext.ExecutionResult.ReturnedValue;
 
             // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
             //_flowProxy.SetParams(currentTaskContext.Params);
@@ -75,6 +76,8 @@ internal partial class FlowEngine
             // if flow changed model we should inherit this change
             // we make sure that model is a new instance
             _context.Model.ImportFrom(_flowProxy, _importOptions);
+            _flowProxy.ExecutedOn = _context.CreatedOn;
+            _targetFlow.ExecutedOn = _context.CreatedOn;
             var result = await ExecuteTask(action);
 
             if (result.ResultState != ResultStateEnum.Fail)
@@ -104,10 +107,12 @@ internal partial class FlowEngine
                 _logger.LogInformation("ProcessCallTask - execution stopped");
                 throw new FlowStopException();
             }
+
+            return result.ReturnedValueTask;
         }
     }
 
-    private async Task<TaskExecutionResult> ExecuteTask(Func<Task> action)
+    private async Task<TaskExecutionResult> ExecuteTask(Func<Task<object>> action)
     {
         var result = new TaskExecutionResult
         {
@@ -123,7 +128,13 @@ internal partial class FlowEngine
 
         try
         {
-            await action();
+            result.ReturnedValueTask = await action();
+            result.ReturnedValue = result.ReturnedValueTask;
+
+            if (result.ReturnedValue is Task)
+            {
+                result.ReturnedValue = result.ReturnedValue.StealValue("$.Result");
+            }
         }
         catch (AggregateException exc)
         {

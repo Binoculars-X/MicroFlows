@@ -15,15 +15,23 @@ public class SampleSignalWaitingTimeoutFlow : FlowBase
     public DateTime? Signal1PayloadDate { get; set; }
     public DateTime? ModelDate { get; set; }
     public int? ModelInt { get; set; }
+    public bool? Timeout1Reached { get; set; }
+    public bool? Timeout2Reached { get; set; }
 
     public async Task Flow()
     {
         AddSignalHandler(Signal1, Signal1Handler);
 
-        Call(Init);
+        //await CallAsync(Init);
 
-        //var payload = await WaitForSignalAsync<DateTime?>(Signal1);
-        var timeoutReached = await WaitForSignalAsync(Signal1, TimeSpan.FromSeconds(1));
+        // pass first time out
+        Timeout1Reached = await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(0));
+
+        // stop here
+        Timeout2Reached = await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(2));
+
+        //Timeout1Reached = WaitForSignal(Signal1, TimeSpan.FromSeconds(0));
+        //Timeout2Reached = WaitForSignal(Signal1, TimeSpan.FromSeconds(2));
 
         await CallAsync(async() => await Update(DateTime.Now));
     }

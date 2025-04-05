@@ -33,7 +33,7 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
 
         if (Model.PaymentType != PaymentType.Card)
         {
-            if(!await WaitForSignalAsync(PaymentReceivedSignal, TimeSpan.FromDays(3)))
+            if(!await WaitForSignalTimeoutAsync(PaymentReceivedSignal, TimeSpan.FromDays(3)))
             {
                 // timeout reached
                 await CallAsync(NotifyBookingFailed);
