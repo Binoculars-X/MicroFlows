@@ -23,6 +23,7 @@ internal class MemoryFlowRepository : IFlowRepository
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
+        ctx.CreatedOn = DateTimeOffset.UtcNow;
 
         var flowModel = new FlowStoreModel()
         {

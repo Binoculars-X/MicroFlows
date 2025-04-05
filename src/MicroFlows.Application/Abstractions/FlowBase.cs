@@ -55,6 +55,9 @@ public abstract partial class FlowBase : IFlow
     [JsonIgnore]
     public DateTimeOffset? ExecutedOn { get; set; }
 
+    [JsonIgnore]
+    public bool TimeoutOccurred { get; set; }
+
     //[JsonIgnore]
     //public string ExternalId { get; set; }
 
@@ -264,8 +267,10 @@ public abstract partial class FlowBase : IFlow
     /// <param name="signalName"></param>
     /// <param name="timeout"></param>
     /// <returns>false if timeout reached</returns>
-    public virtual async Task<bool> WaitForSignalAsync(string signalName, TimeSpan timeout)
+    public virtual async Task WaitForSignalTimeoutAsync(string signalName, TimeSpan timeout)
     {
+        TimeoutOccurred = false;
+
         // If timeout reached
         if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
         {
@@ -275,11 +280,11 @@ public abstract partial class FlowBase : IFlow
                 await _signalHandlers[signalName](payload);
             }
 
-            return false;
+            TimeoutOccurred = true;
+            return;
         }
 
         await WaitForSignalAsync(signalName);
-        return true;
     }
 
     public virtual void WaitForCondition(Func<bool> action)

@@ -20,4 +20,5 @@ public class TaskExecutionResult
     public string? ExceptionType { get; set; }
     //public Exception ExecutionException { get; set; }
     public bool IsWaitTask { get; set; }
+    public bool TimeoutOccurred { get; set; }
 }

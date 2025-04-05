@@ -13,11 +13,26 @@ using Microsoft.Extensions.Logging;
 using MicroFlows.Tests.TestSampleFlows.Fluent;
 using MicroFlows.Tests.Fluent;
 using static MicroFlows.Tests.Intercepting.ModelSnapshotTests;
+using Castle.DynamicProxy;
+using MicroFlows.Application.Engines.Interceptors;
+using MicroFlows.Domain.Interfaces;
+using Microsoft.Extensions.Logging.Abstractions;
+using MicroFlows.Tests.Intercepting;
 
 namespace MicroFlows.Tests;
 public abstract class TestBase
 {
     protected IServiceProvider _services = null!;
+
+    protected IFlowRepository _repo;
+
+    protected IFlowEngine NewEngine()
+    {
+        return new FlowEngine(new NullLogger<FlowEngine>(),
+            _services,
+            new ProxyGenerator(),
+            _repo);
+    }
 
     public TestBase()
     {
@@ -79,5 +94,6 @@ public abstract class TestBase
             .Build();
 
         _services = app.Services;
+        _repo = new MemoryFlowRepository();
     }
 }

@@ -17,6 +17,7 @@ public class FreezableProxyGenerationHook : IProxyGenerationHook
         "WaitForCondition",
         "WaitForConditionAsync",
         "WaitForSignalAsync",
+        "WaitForSignalTimeoutAsync",
         "CheckSignalReceivedAsync"
         ];
 

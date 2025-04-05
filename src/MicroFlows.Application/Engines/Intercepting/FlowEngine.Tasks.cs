@@ -124,6 +124,7 @@ internal partial class FlowEngine
         try
         {
             await action();
+            _context.ExecutionResult.TimeoutOccurred = _flowProxy.TimeoutOccurred;
         }
         catch (AggregateException exc)
         {
