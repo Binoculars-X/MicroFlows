@@ -87,7 +87,11 @@ internal partial class FlowEngine
 
         if (arguments != null && arguments.Any())
         {
-            if (arguments[0] is Func<Task>)
+            if (taskName == "WaitForSignalTimeoutAsync" || taskName == "WaitForSignalAsync")
+            {
+                taskName += $"_{arguments[0].ToString()}";
+            }    
+            else if (arguments[0] is Func<Task>)
             {
                 var parameterMethodName = ((Func<Task>)arguments[0]).Method.Name;
 

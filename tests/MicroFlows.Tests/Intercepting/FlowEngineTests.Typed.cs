@@ -27,7 +27,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task FlowEngine_Should_Support_TypedModelFlows()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleTypedModelFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -35,7 +35,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_xxx:3", flow.ContextHistory[3].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 

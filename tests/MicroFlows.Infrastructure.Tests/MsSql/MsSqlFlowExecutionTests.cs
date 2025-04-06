@@ -19,22 +19,22 @@ namespace MicroFlows.Infrastructure.Tests.MsSql;
 
 public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
 {
-    private IFlowRepository _repo;
+    //private IFlowRepository _repo;
 
-    private FlowEngine GetEngine()
-    {
-        _repo = _services.GetService<IFlowRepository>()!;
+    //private FlowEngine GetEngine()
+    //{
+    //    _repo = _services.GetService<IFlowRepository>()!;
 
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     [Fact]
     public async Task NoStorage_FluentFlow_Executed_Without_Storing_to_Db()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams();
         ps.FlowOptions.NoStorage = true;
 
@@ -50,7 +50,7 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
     [Fact]
     public async Task FluentFlow_Execution_Stored_to_Db()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams();
 
         var ctx = await engine.ExecuteFlow(typeof(LinearInlineFlow), ps);
@@ -81,7 +81,7 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
     [Fact]
     public async Task SampleFlow_Execution_Stored_to_Db()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams();
 
         var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);
@@ -115,7 +115,7 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
     public async Task Can_Search_Flow_After_Run()
     {
         var repo = _services.GetService<IFlowRepository>() as MsSqlFlowRepository;
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams() { ExternalId = "my ID", Tag = "my tag" };
 
         var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);

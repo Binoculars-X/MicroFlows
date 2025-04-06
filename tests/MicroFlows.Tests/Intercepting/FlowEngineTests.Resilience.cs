@@ -27,7 +27,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task FlowEngine_Should_Be_Rerunnable_AfterExceptionInFlowBody()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleWithExceptionInBodyFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -46,7 +46,7 @@ public partial class FlowEngineTests
         Assert.Equal("id:test", last.Model.Records["$.Id"].Deserialize());
         Assert.Equal(33, last.Model.Records["$.ModelInt"].Deserialize());
 
-        engine = GetEngine();
+        engine = NewEngine();
         var ctx2 = await engine.ExecuteFlow(typeof(SampleWithExceptionInBodyFlow), new FlowParams { RefId = ctx.RefId });
         flow = await _repo.GetFlowModel(ctx2.RefId);
         last = flow.ContextHistory.Last();
@@ -65,7 +65,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task FlowEngine_Should_Be_Rerunnable_AfterExceptionInDelegate()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleWithExceptionInDelegateFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -85,7 +85,7 @@ public partial class FlowEngineTests
         Assert.Equal("id:test", last.Model.Records["$.Id"].Deserialize());
         Assert.Equal(33, last.Model.Records["$.ModelInt"].Deserialize());
 
-        engine = GetEngine();
+        engine = NewEngine();
         var ctx2 = await engine.ExecuteFlow(typeof(SampleWithExceptionInDelegateFlow), new FlowParams { RefId = ctx.RefId });
         flow = await _repo.GetFlowModel(ctx2.RefId);
 

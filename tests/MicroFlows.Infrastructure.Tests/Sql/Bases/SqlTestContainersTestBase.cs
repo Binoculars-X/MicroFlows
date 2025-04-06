@@ -40,7 +40,8 @@ public class SqlTestContainersTestBase : IAsyncLifetime
         return new FlowEngine(new NullLogger<FlowEngine>(),
             _services,
             new ProxyGenerator(),
-            _repo);
+            _repo,
+            new IntegrationFlowTestEnvironment());
     }
 
     public async Task InitializeAsync()

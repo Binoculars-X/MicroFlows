@@ -14,18 +14,18 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SampleSignalWaitingFlow_CanBeCreated_AndResumed_ByExternalId()
 	{
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams() { ExternalId = "ORDER-123" };
         var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        engine = GetEngine();
+        engine = NewEngine();
         ps = new FlowParams() { ExternalId = "ORDER-123" };
         var ctx2 = await engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps);
 
@@ -39,18 +39,18 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SampleSignalWaitingFlow_Second_Run_Doesnot_Increase_History()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams() { ExternalId = "ORDER-123" };
         var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        engine = GetEngine();
+        engine = NewEngine();
         var ctx2 = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
 
         Assert.Equal(ctx.RefId, ctx2.RefId);
@@ -58,7 +58,7 @@ public partial class FlowEngineTests
         flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
     }
@@ -66,7 +66,7 @@ public partial class FlowEngineTests
     [Fact]
 	public async Task SampleSignalWaitingFlow_ShouldStop_and_RerunOnSignal()
 	{
-		var engine = GetEngine();
+		var engine = NewEngine();
 		var date = new DateTime(1974,10,15);
 		var ctx = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), null);
 		var flow = await _repo.GetFlowModel(ctx.RefId);
@@ -75,18 +75,18 @@ public partial class FlowEngineTests
 		Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 		Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         var ps = new FlowParams() { RefId = ctx.RefId };
 		ctx = await engine.SendSignal(typeof(SampleSignalWaitingFlow), SampleSignalWaitingFlow.Signal1, ps, date);
 		flow = await _repo.GetFlowModel(ctx.RefId);
 
 		Assert.Equal(6, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[3].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
         Assert.Equal("End:4", flow.ContextHistory[5].CurrentTask);
@@ -97,7 +97,7 @@ public partial class FlowEngineTests
 	[Fact]
 	public async Task SampleTwoSignalsWaitingFlow_ShouldStop_and_RerunOnSignals()
 	{
-		var engine = GetEngine();
+		var engine = NewEngine();
 		var date = new DateTime(1974, 10, 15);
 		var ctx = await engine.ExecuteFlow(typeof(SampleTwoSignalsWaitingFlow), null);
 		var flow = await _repo.GetFlowModel(ctx.RefId);
@@ -107,7 +107,7 @@ public partial class FlowEngineTests
 		Assert.Equal(3, flow.ContextHistory.Count);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         var ps = new FlowParams() { RefId = ctx.RefId };
 		
 		var signals = new Dictionary<string, object?> { { SampleTwoSignalsWaitingFlow.Signal1, date },
@@ -121,10 +121,10 @@ public partial class FlowEngineTests
 		Assert.Equal(FlowStateEnum.Finished, ctx.ExecutionResult.FlowState);
 		//Assert.Equal(date, DateTime.Parse(ctx.Model.Values["$.ModelDate"]));
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[3].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:4", flow.ContextHistory[5].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_signal2:4", flow.ContextHistory[5].CurrentTask);
         Assert.Equal("End:5", flow.ContextHistory[6].CurrentTask);
     }
 }

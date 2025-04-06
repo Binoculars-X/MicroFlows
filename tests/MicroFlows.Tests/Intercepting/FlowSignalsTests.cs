@@ -21,8 +21,8 @@ public partial class FlowSignalsTests : TestBase
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
-        Assert.Equal("WaitForSignalTimeoutAsync:1", flow.ContextHistory[1].CurrentTask);
-        Assert.Equal("WaitForSignalTimeoutAsync:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
         await Task.Delay(1100);
@@ -33,7 +33,7 @@ public partial class FlowSignalsTests : TestBase
 
         flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(6, flow.ContextHistory.Count);
-        Assert.Equal("WaitForSignalTimeoutAsync:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[3].CurrentTask);
         Assert.Equal("CallAsync_Anonymous:3", flow.ContextHistory[4].CurrentTask);
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
         
@@ -63,5 +63,85 @@ public partial class FlowSignalsTests : TestBase
         flow.ContextHistory[4].Model.ExportTo(m5);
         Assert.True(m5.Timeout1);
         Assert.True(m5.Timeout2);
+    }
+
+    [Fact]
+    public async Task WaitingFlow_Passes_ToUpdate_On_Signal()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams() { ExternalId = "ORDER-1234" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleWaitingFlow1), ps);
+
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+
+        var ctx2 = await engine.SendSignal(typeof(SampleWaitingFlow1), SampleWaitingFlow1.Signal2, ps);
+        flow = await _repo.GetFlowModel(ctx2.RefId);
+        Assert.Equal(6, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("CallAsync_Update:3", flow.ContextHistory[4].CurrentTask);
+        Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
+    }
+
+    [Fact]
+    public async Task WaitingFlow_Goes_ToCancel_On_Timeout()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams() { ExternalId = "ORDER-1234" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleWaitingFlow1), ps);
+
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+
+        // provoke timeout
+        await Task.Delay(1100);
+
+        var ctx2 = await engine.SendSignal(typeof(SampleWaitingFlow1), SampleWaitingFlow1.Signal2, ps);
+        flow = await _repo.GetFlowModel(ctx2.RefId);
+        Assert.Equal(6, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("CallAsync_Cancel:3", flow.ContextHistory[4].CurrentTask);
+        Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
+    }
+
+    public class SampleWaitingFlow1 : FlowBase
+    {
+        // signals
+        public const string Signal1 = "Signal1";
+        public const string Signal2 = "Signal2";
+
+        public bool? Timeout1 { get; set; }
+
+        public async Task Flow()
+        {
+            // pass first time out
+            await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(0));
+            Timeout1 = TimeoutOccurred;
+
+            // stop here
+            await WaitForSignalTimeoutAsync(Signal2, TimeSpan.FromSeconds(1));
+            
+            if (TimeoutOccurred == true)
+            {
+                await CallAsync(Cancel);
+                return;
+            }
+
+            await CallAsync(Update);
+        }
+
+        private async Task Update()
+        {
+        }
+
+        private async Task Cancel()
+        {
+        }
     }
 }

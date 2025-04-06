@@ -18,20 +18,25 @@ using MicroFlows.Application.Engines.Interceptors;
 using MicroFlows.Domain.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 using MicroFlows.Tests.Intercepting;
+using static MicroFlows.Tests.Intercepting.FlowSignalsTests;
+using MicroFlows.Tests.Bases;
 
 namespace MicroFlows.Tests;
+
 public abstract class TestBase
 {
     protected IServiceProvider _services = null!;
 
-    protected IFlowRepository _repo;
+    //protected IFlowRepository _repo;
+    internal MemoryFlowRepository _repo;
 
     protected IFlowEngine NewEngine()
     {
         return new FlowEngine(new NullLogger<FlowEngine>(),
             _services,
             new ProxyGenerator(),
-            _repo);
+            _repo,
+            new IntegrationFlowTestEnvironment());
     }
 
     public TestBase()
@@ -69,6 +74,7 @@ public abstract class TestBase
                     .RegisterFlow<SampleSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleTwoSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleSignalWaitingTimeoutFlow>()
+                    .RegisterFlow<SampleWaitingFlow1>()
 
                     .RegisterFlow<SampleCheckSignalFlow>()
                     .RegisterFlow<SampleNonPublicFieldsFlow>()

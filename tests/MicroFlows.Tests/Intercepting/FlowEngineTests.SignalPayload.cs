@@ -20,7 +20,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SignalPayload_ShouldBe_DeliveredToFlow()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var date = new DateTime(1970,12,13);
         var ps = new FlowParams() { ExternalId = "ORDER-123-4" };
         var ctx = await engine.ExecuteFlow(typeof(SampleSignalPayloadWaitingFlow), ps);
@@ -34,7 +34,7 @@ public partial class FlowEngineTests
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
-        engine = GetEngine();
+        engine = NewEngine();
         var ps2 = new FlowParams() { ExternalId = "ORDER-123-4" };
 
         var ctx2 = await engine.SendSignal(typeof(SampleSignalPayloadWaitingFlow), SampleSignalPayloadWaitingFlow.Signal1, ps2,
@@ -50,7 +50,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SignalPayload_Should_WaitForTwoSignals()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var date = new DateTime(1970, 12, 13);
         var text = "payload text";
         
@@ -61,7 +61,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
         // send Signal1
-        engine = GetEngine();
+        engine = NewEngine();
         var ps2 = new FlowParams() { ExternalId = "ORDER-123-5" };
 
         var ctx2 = await engine.SendSignal(typeof(SampleTwoSignalPayloadWaitingFlow), 
@@ -73,7 +73,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
 
         // send Signal2
-        engine = GetEngine();
+        engine = NewEngine();
         var ps3 = new FlowParams() { ExternalId = "ORDER-123-5" };
 
         var ctx3 = await engine.SendSignal(typeof(SampleTwoSignalPayloadWaitingFlow),
@@ -89,7 +89,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SignalPayload_Should_WaitForTwoSignals_ReversedOrder()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var date = new DateTime(1970, 12, 13);
         var text = "payload text";
 
@@ -102,7 +102,7 @@ public partial class FlowEngineTests
 
         // send Signal2
         // the flow waiting for Signal1, so it will not proceed until receives Signal1
-        engine = GetEngine();
+        engine = NewEngine();
         var ps2 = new FlowParams() { ExternalId = "ORDER-123-6" };
 
         var ctx2 = await engine.SendSignal(typeof(SampleTwoSignalPayloadWaitingFlow),
@@ -116,7 +116,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
 
         // send Signal1
-        engine = GetEngine();
+        engine = NewEngine();
         var ps3 = new FlowParams() { ExternalId = "ORDER-123-6" };
 
         var ctx3 = await engine.SendSignal(typeof(SampleTwoSignalPayloadWaitingFlow),
@@ -132,7 +132,7 @@ public partial class FlowEngineTests
     [Fact]
     public async Task SignalPayload_Should_TriggerSignalHandler_WhenCheckSignalReceived()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var date = DateTime.UtcNow.Date;
         var ps = new FlowParams() { ExternalId = "ORDER-123-67" };
         var ctx = await engine.ExecuteFlow(typeof(SampleCheckSignalFlow), ps);
@@ -142,7 +142,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
 
         // send Cancel, flow should still be blocked by OrderAcceptedSignal 
-        engine = GetEngine();
+        engine = NewEngine();
 
         var ctx2 = await engine.SendSignal(typeof(SampleCheckSignalFlow),
             SampleCheckSignalFlow.OrderCancelledSignal, ps, date);
@@ -153,7 +153,7 @@ public partial class FlowEngineTests
         Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
 
         // send OrderAcceptedSignal, it should unblock flow and Cancel the order
-        engine = GetEngine();
+        engine = NewEngine();
         var ctx3 = await engine.SendSignal(typeof(SampleCheckSignalFlow), SampleCheckSignalFlow.OrderAcceptedSignal, ps);
 
         var flow3 = await _repo.GetFlowModel(ctx.RefId);

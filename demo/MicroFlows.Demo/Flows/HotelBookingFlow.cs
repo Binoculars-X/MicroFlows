@@ -10,11 +10,11 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
 
     public async Task Flow()
     {
+        AddSignalHandler(ReservationConfirmedSignal, ReservationReceivedHandler);
+
         // use Call or CallAsync to avoid extra execution when replaying
         Call(Init);
-
         await CallAsync(NotifyBookingReceived);
-
         await CallAsync(VendorReservation);
 
         if (Model.PaymentType == PaymentType.Card)
@@ -24,29 +24,42 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
             if (Model.PaymentFailed)
             {
                 await CallAsync(VendorReservationReverse);
-
+                await CallAsync(NotifyPaymentFailed);
                 await CallAsync(NotifyBookingFailed);
-                
                 return;
             }
         }
-
-        if (Model.PaymentType != PaymentType.Card)
+        else
         {
-            if(!await WaitForSignalAsync(PaymentReceivedSignal, TimeSpan.FromDays(3)))
+            await WaitForSignalTimeoutAsync(PaymentReceivedSignal, TimeSpan.FromDays(3));
+
+            if (TimeoutOccurred)
             {
                 // timeout reached
+                await CallAsync(NotifyPaymentFailed);
                 await CallAsync(NotifyBookingFailed);
-
                 return;
             }
         }
 
-        await WaitForSignalAsync(ReservationConfirmedSignal);
+        await WaitForSignalTimeoutAsync(ReservationConfirmedSignal, TimeSpan.FromDays(1));
+
+        if (TimeoutOccurred || Model.ReservationFailed)
+        {
+            await CallAsync(RevertPayment);
+            await CallAsync(NotifyBookingFailed);
+            return;
+        }
 
         await CallAsync(FinalizeBooking);
-
         await CallAsync(NotifyBookingCompleted);
+    }
+
+    private Task ReservationReceivedHandler(SignalPayload payload)
+    {
+        Model.ReservationPayload = payload.GetValue<ReservationReceivedPayload>();
+        Model.ReservationFailed = !Model.ReservationPayload.Success;
+        return Task.CompletedTask;
     }
 
     private void Init()
@@ -54,7 +67,6 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
         LoadModelFromParams();
         Model.Status = HotelBookingStatus.Created;
     }
-
     private async Task NotifyBookingReceived()
     {
     }
@@ -68,6 +80,10 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     {
         Model.PaymentFailed = true;
     }
+    private async Task RevertPayment()
+    {
+        Model.PaymentFailed = true;
+    }
     private async Task FinalizeBooking()
     {
         // start booking order support flow
@@ -76,6 +92,9 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     {
     }
     private async Task NotifyBookingFailed()
+    {
+    }
+    private async Task NotifyPaymentFailed()
     {
     }
 }

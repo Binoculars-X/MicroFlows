@@ -11,6 +11,8 @@ public class HotelBookingModel
     public int StayDays { get; set; }
     public PaymentType PaymentType { get; set; }
     public bool PaymentFailed { get; set; }
+    public bool ReservationFailed { get; set; }
+    public ReservationReceivedPayload? ReservationPayload { get; set; }
     public decimal Amount { get; set; }
 
     public HotelBookingStatus Status { get; set; }

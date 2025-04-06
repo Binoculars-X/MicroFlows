@@ -20,33 +20,33 @@ namespace MicroFlows.Tests.Intercepting;
 
 public partial class FlowEngineTests : TestBase
 {
-    readonly MemoryFlowRepository _repo;
+    //readonly MemoryFlowRepository _repo;
 
-    public FlowEngineTests()
-    {
-        _repo = new MemoryFlowRepository();
-    }
+    //public FlowEngineTests()
+    //{
+    //    _repo = new MemoryFlowRepository();
+    //}
 
-    private FlowEngine GetEngine()
-    {
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //private FlowEngine GetEngine()
+    //{
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     [Fact]
     public async Task Engine_Should_ThrowException_ForNotRegisteredFlow()
     {
         //var name = SampleFlow.Name();
-        var engine = GetEngine();
+        var engine = NewEngine();
         await Assert.ThrowsAsync<FlowValidationException>(async () => await engine.ExecuteFlow(this.GetType(), null));
     }
 
     [Fact]
     public async Task SampleFlow_Run_And_Stopped()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams();
         ps["flag"] = "stop";
         var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);
@@ -70,7 +70,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task Flow_Stops_When_ConditionFalse()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleWaitingFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -104,13 +104,13 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_Not_Logging_WhenResumed()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
 
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
         // resume
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleLoggingFlow), ps);
@@ -120,7 +120,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
@@ -133,7 +133,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[1].CurrentTask);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -148,7 +148,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode_LastStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
@@ -161,7 +161,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[4].CurrentTask);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -176,7 +176,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleExceptionInActionFlow_Should_SaveFailedStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleExceptionInActionFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -203,7 +203,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleExceptionFlow_Should_SaveFailedStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleExceptionFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -234,7 +234,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("testtest", flow.ContextHistory[3].Model.Records["$.ModelString"].Deserialize());
 
         // resume
-        engine = GetEngine();
+        engine = NewEngine();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleExceptionFlow), ps);
         flow = await _repo.GetFlowModel(ctx.RefId);

@@ -23,13 +23,13 @@ public class ModelSnapshotTests : TestBase
         _repo = new MemoryFlowRepository();
     }
 
-    private FlowEngine GetEngine()
-    {
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //private FlowEngine GetEngine()
+    //{
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     [Fact]
     public async Task SeModelFromParams_Sets_Model_Successfully()
@@ -39,7 +39,7 @@ public class ModelSnapshotTests : TestBase
 
         Assert.NotNull(ps?.Payload);
 
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(TypedModelFlow), ps);
 
         Assert.NotNull(ctx);
@@ -61,7 +61,7 @@ public class ModelSnapshotTests : TestBase
 
         Assert.NotNull(ps?.Payload);
 
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(TypedModelInlineFlow), ps);
 
         Assert.NotNull(ctx);
@@ -83,7 +83,7 @@ public class ModelSnapshotTests : TestBase
 
         Assert.NotNull(ps?.Payload);
 
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(UntypedModelInlineFlow), ps);
 
         Assert.NotNull(ctx);

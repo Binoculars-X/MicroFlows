@@ -14,6 +14,7 @@ using MicroFlows.Application.Exceptions;
 using System.Data;
 using System.Threading.Tasks;
 using MicroFlows.Application.Services;
+using MicroFlows.Application.Engines.Intercepting;
 
 namespace MicroFlows;
 
@@ -41,6 +42,7 @@ public static class MicroFlowsConfigurationServices
 
     public static IServiceCollection AddMicroFlows(this IServiceCollection services)
     {
+        services.AddSingleton<IFlowTestEnvironment, BlockedFlowTestEnvironment>();
         services.AddSingleton<IProxyGenerator, ProxyGenerator>();
         services.AddTransient<IFlowProvider, FlowProvider>();
         services.AddTransient<IFlowEngine, FlowEngine>();

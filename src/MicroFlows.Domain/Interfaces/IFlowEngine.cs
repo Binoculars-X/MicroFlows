@@ -9,6 +9,7 @@ public interface IFlowEngine
 {
     Task<FlowContext> CreateFlow(Type flowType, FlowParams? flowParams = null);
     Task<FlowContext> ExecuteFlow(Type flowType, FlowParams? flowParams = null);
+    Task<FlowContext> ExecuteFluentFlow(FlowParams? runParameters);
     Task EnsureFlowExists(FlowParams flowParams);
     Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null);
     Task<FlowContext> SendSignals(Type flowType, IDictionary<string, object?> signals, FlowParams? flowParams = null);

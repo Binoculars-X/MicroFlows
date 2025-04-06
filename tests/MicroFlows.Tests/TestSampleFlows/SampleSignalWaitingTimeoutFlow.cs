@@ -9,7 +9,8 @@ namespace MicroFlows.Tests.TestSampleFlows;
 public class SampleSignalWaitingTimeoutFlow : FlowBase
 {
     // signals
-    public const string Signal1 = "signal1";
+    public const string Signal1 = "Signal1";
+    public const string Signal2 = "Signal2";
 
     // model consists of all public serializable properties
     public DateTime? Signal1PayloadDate { get; set; }
@@ -29,7 +30,7 @@ public class SampleSignalWaitingTimeoutFlow : FlowBase
         Timeout1 = TimeoutOccurred;
 
         // stop here
-        await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(1));
+        await WaitForSignalTimeoutAsync(Signal2, TimeSpan.FromSeconds(1));
         Timeout2 = TimeoutOccurred;
 
         await CallAsync(async () => await Update(DateTime.Now));

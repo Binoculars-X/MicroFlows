@@ -30,6 +30,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     private readonly IServiceProvider _services;
     private readonly IProxyGenerator _proxyGenerator;
     private readonly IFlowRepository _flowRepository;
+    private readonly IFlowTestEnvironment _flowTestEnvironment;
 
     // running flow state
     private FlowBase? _targetFlow;
@@ -49,12 +50,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
         IProxyGenerator proxyGenerator,
-        IFlowRepository flowRepository)
+        IFlowRepository flowRepository,
+        IFlowTestEnvironment flowTestEnvironment)
     {
         _logger = logger;
         _services = serviceProvider;
         _proxyGenerator = proxyGenerator;
         _flowRepository = flowRepository;
+        _flowTestEnvironment = flowTestEnvironment;
     }
 
     public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
