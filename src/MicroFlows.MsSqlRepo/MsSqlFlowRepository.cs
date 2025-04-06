@@ -58,15 +58,16 @@ public partial class MsSqlFlowRepository : IFlowRepository
         CheckDbTablesExist();
     }
 
-    public record FlowRecord(string RefId, string? ExternalId, string FlowName, string Status, 
-        FlowStateEnum? StatusEnum, string? LastTask);
+    public record FlowRecord(string RefId, string? ExternalId, string? CorrelationId, string FlowName, 
+        string Status, FlowStateEnum? StatusEnum, string? LastTask);
 
     private FlowRecord GetFlowRecord(FlowStoreModel m)
     {
         var statusEnum = m.ContextHistory.Last().ExecutionResult.FlowState;
         var status = statusEnum.ToString();
         var task = m.ContextHistory.Last().CurrentTask;
-        return new FlowRecord(m.RefId, m.ExternalId, m.FlowTypeName, status, statusEnum, task);
+        var correlationId = m.ContextHistory.First().Params.CorrelationId;
+        return new FlowRecord(m.RefId, m.ExternalId, correlationId, m.FlowTypeName, status, statusEnum, task);
     }
 
     private string GetTableNameOnly()
@@ -173,8 +174,8 @@ end
             var rec = GetFlowRecord(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name, exec_task)
-SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7;
+INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name, exec_task, correlation_id)
+SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8;
 ";
 
             using (SqlConnection connection = new SqlConnection(_connectionString))
@@ -188,6 +189,7 @@ SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7;
                 cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
                 cmd.Parameters.AddWithValue("p6", rec.FlowName);
                 cmd.Parameters.AddWithValue("p7", ((object)rec.LastTask) ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("p8", ((object)rec.CorrelationId) ?? DBNull.Value);
                 await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
             }

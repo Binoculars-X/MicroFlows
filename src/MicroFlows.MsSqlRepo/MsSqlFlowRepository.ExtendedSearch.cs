@@ -66,6 +66,12 @@ from {_tableName}
                 cmd.Parameters.AddWithValue("p3", query.Tag);
             }
 
+            if (!string.IsNullOrEmpty(query.CorrelationId))
+            {
+                q += " and correlation_id = @p4";
+                cmd.Parameters.AddWithValue("p4", query.CorrelationId);
+            }
+
             cmd.CommandText = q;
             await connection.OpenAsync();
             var reader = await cmd.ExecuteReaderAsync();

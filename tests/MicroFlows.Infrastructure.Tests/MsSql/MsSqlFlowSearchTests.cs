@@ -49,4 +49,22 @@ public class MsSqlFlowSearchTests : SqlTestContainersTestBase
         Assert.Equal(typeof(LinearInlineFlow).FullName, result.Lines[0].Name);
         Assert.NotNull(result.Lines[0].Model);
     }
+
+    [Fact]
+    public async Task ExtendedSearch_Finds_By_CorrelationsId()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams() { CorrelationId = "123" };
+        var ctx = await engine.ExecuteFlow(typeof(LinearInlineFlow), ps);
+        var ps2 = new FlowParams() { CorrelationId = "1234" };
+        var ctx2 = await engine.ExecuteFlow(typeof(LinearInlineFlow), ps2);
+
+        var result = await _repo.ExtendedSearch(
+            new FlowExtendedSearchQuery { CorrelationId = ps.CorrelationId });
+
+        Assert.NotNull(result);
+        Assert.Single(result.Lines);
+        Assert.Equal(typeof(LinearInlineFlow).FullName, result.Lines[0].Name);
+        Assert.Equal(ps.CorrelationId, result.Lines[0].CorrelationId);
+    }
 }
