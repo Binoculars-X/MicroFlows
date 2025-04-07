@@ -156,6 +156,7 @@ end
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
         ctx.ExecutionResult.ResultState = Domain.Enums.ResultStateEnum.Success;
         ctx.CreatedOn = DateTimeOffset.UtcNow;
+        ctx.CurrentTask = "Begin:0";
 
         var flowModel = new FlowStoreModel()
         {

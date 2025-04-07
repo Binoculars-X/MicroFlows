@@ -9,6 +9,7 @@ using MicroFlows.Application.Helpers;
 using FluentResults;
 using System.Collections.Concurrent;
 using JsonPathToModel;
+using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.Tests.Intercepting;
 
@@ -22,7 +23,7 @@ internal class MemoryFlowRepository : IFlowRepository
         ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
         ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
-        ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
+        ctx.ExecutionResult.FlowState = FlowStateEnum.Start;
         ctx.CreatedOn = DateTimeOffset.UtcNow;
 
         var flowModel = new FlowStoreModel()

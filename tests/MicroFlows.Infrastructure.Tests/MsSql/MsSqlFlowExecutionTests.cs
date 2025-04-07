@@ -101,6 +101,7 @@ public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
         Assert.NotNull(flowModel);
 
         var lastCtx = flowModel.ContextHistory.Last();
+        Assert.Equal("Begin:0", flowModel.ContextHistory[0].CurrentTask);
         Assert.Equal(FlowStateEnum.Finished, lastCtx.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Success, lastCtx.ExecutionResult.ResultState);
         

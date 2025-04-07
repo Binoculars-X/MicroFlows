@@ -78,7 +78,7 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     }
     private async Task ProcessCardPayment()
     {
-        Model.PaymentFailed = true;
+        Model.PaymentFailed = false;
     }
     private async Task RevertPayment()
     {

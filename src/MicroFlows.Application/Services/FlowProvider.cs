@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using MicroFlows.Application.Helpers;
 using MicroFlows.Application.Exceptions;
 using System.Threading;
+using System.Linq;
 
 namespace MicroFlows.Application.Services;
 
@@ -16,6 +17,7 @@ public class FlowProvider : IFlowProvider
 {
     //private readonly Logger<FlowsProvider> _logger;
     private readonly IServiceProvider _services;
+    private readonly IFlowRepository _flowRepository;
 
     public FlowProvider(
         //Logger<FlowsProvider> logger, 
@@ -23,6 +25,7 @@ public class FlowProvider : IFlowProvider
     {
         //_logger = logger;
         _services = services;
+        _flowRepository = _services.GetService<IFlowRepository>()!;
     }
 
     public async Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null)
@@ -88,5 +91,20 @@ public class FlowProvider : IFlowProvider
         }
 
         return interceptEngine;
+    }
+
+    public async Task SendSignalJson(string refId, string signal, string? payloadJson = null)
+    {
+        var model = await _flowRepository.GetFlowModel(refId);
+        var journal = model.SignalJournal.FirstOrDefault(j => j.Signal == signal);
+
+        if (journal == null)
+        {
+            journal = new SignalJournalEntry { Signal = signal };
+            model.SignalJournal.Add(journal);
+        }
+
+        journal.Record = new JsonPathToModel.SnapshotRecord(SignalPayload.JsonType, payloadJson);
+        await _flowRepository.UpdateFlowModel(model);
     }
 }

@@ -50,6 +50,23 @@ namespace MicroFlows.Demo.Controllers
             return Ok(ctx.RefId);
         }
 
+        // sample json: "{\"Id\":3,\"Column1\":\"data\"}"
+        // sample json: "{\"Success\":true}"
+        /*
+{
+  "refId": "78DA3286-FC58-4475-B09E-64BEA5E65B86",
+  "signal": "ReservationConfirmed",
+  "json": "{\"Success\":true}"
+} 
+        */
+        [HttpPost("send-signal")]
+        public async Task<ActionResult> PostPaymentReceivedAsync([FromBody] SendSignalRequest req,
+            CancellationToken cancellationToken)
+        {
+            await _flowProvider.SendSignalJson(req.RefId, req.Signal, req.Json);
+            return Ok();
+        }
+
         [HttpPost("payment-received")]
         public async Task<ActionResult> PostPaymentReceivedAsync([FromBody] PaymentReceivedRequest req, 
             CancellationToken cancellationToken)

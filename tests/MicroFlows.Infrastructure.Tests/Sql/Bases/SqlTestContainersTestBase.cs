@@ -62,6 +62,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
             {
                 services.AddMicroFlows(configuration)
                     .RegisterFlow<LinearInlineFlow>()
+                    .RegisterFlow<LinearInlineFlow2>()
                     .RegisterFlow<SampleFlow>()
                     ;
 

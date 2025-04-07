@@ -226,7 +226,8 @@ public abstract partial class FlowBase : IFlow
         {
             if (_signalHandlers.ContainsKey(signalName))
             {
-                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                //var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                var payload = new SignalPayload() { Record = entry.Record };
                 await _signalHandlers[signalName](payload);
             }
 
@@ -249,7 +250,8 @@ public abstract partial class FlowBase : IFlow
         {
             if (_signalHandlers.ContainsKey(signalName))
             {
-                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                //var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                var payload = new SignalPayload() { Record = entry.Record };
                 await _signalHandlers[signalName](payload);
             }
 

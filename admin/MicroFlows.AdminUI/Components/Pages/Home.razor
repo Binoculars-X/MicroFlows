@@ -23,35 +23,62 @@
 <MudGrid>
     <MudItem xs="9">
         <form>
+            <MudToggleIconButton @bind-Toggled="LiveOn"
+                                 Icon="@Icons.Material.Filled.HideSource"
+            Color="@Color.Error"
+            ToggledIcon="@Icons.Material.Filled.RadioButtonChecked"
+            ToggledColor="@Color.Success"
+            title="@(LiveOn ? "Live update" : "Live update Off")">
+            </MudToggleIconButton>
+            @* <span>@(LiveOn ? "Live" : "Off")</span> *@
+
+            @if (!LiveOn)
+            {
+                @* <MudButton Variant="Variant.Text" EndIcon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Primary"></MudButton> *@
+
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Success" title="Refresh" />
+            }
+
+
             <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
-                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
             <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
-                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
             <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
-                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
 
             @*     <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
  *@
+
+            <MudSelect T="string" Label="Status" MultiSelection="true" Style="width: 200px;"
+            SelectedValuesChanged="@StatusChanged" SelectAll="true" Variant="Variant.Text">
+                @foreach (var status in Enum.GetValues<MicroFlows.Domain.Enums.FlowStateEnum>())
+                {
+                    <MudSelectItem T="string" Value="@status.ToString()">@status.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+
             <MudTextField Value="Query.Name" Label="Flow Name" ValueChanged="@NameChanged"
-                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
             <MudTextField Value="Query.Tag" Label="Tag" ValueChanged="@TagChanged"
-                          Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
 
-            <MudDatePicker Editable=true Date="@Created" DateChanged="@CreatedChanged" Label="Created"
-                           DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+            <MudDatePicker Editable=true Date="@Created" DateChanged="@CreatedChanged" Label="Created after"
+            DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
 
-            <MudDatePicker Editable=true Date="@Modified" DateChanged="@ModifiedChanged" Label="Modified"
-                           DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+            <MudDatePicker Editable=true Date="@Modified" DateChanged="@ModifiedChanged" Label="Updated after"
+            DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
 
         </form>
 
         <FlowListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
-                      Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
-                      FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
+        Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
+        FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
 
     </MudItem>
@@ -75,6 +102,14 @@
     DateTime? Modified;
 
     FlowStoreModel SelectedModel { get; set; } = new();
+
+    bool _liveOn;
+
+    bool LiveOn
+    {
+        get { return _liveOn; }
+        set { _liveOn = value; }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -114,6 +149,19 @@
     async Task NameChanged(string? val)
     {
         Query.Name = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task StatusChanged(IEnumerable<string?> values)
+    {
+        if (values.Any())
+        {
+            Query.Status = string.Join(' ', values);
+        }
+        else
+        {
+            Query.Status = null;
+        }
         await UpdateSearchQuery();
     }
 

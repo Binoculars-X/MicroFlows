@@ -72,6 +72,18 @@ from {_tableName}
                 cmd.Parameters.AddWithValue("p4", query.CorrelationId);
             }
 
+            if (!string.IsNullOrEmpty(query.Name))
+            {
+                q += " and flow_name like @p5";
+                cmd.Parameters.AddWithValue("p5", '%' + query.Name + '%');
+            }
+
+            if (!string.IsNullOrEmpty(query.Status))
+            {
+                var statuses = '\'' + query.Status.Replace(" ", "\',\'") + '\'';
+                q += $" and exec_status in ({statuses})";
+            }
+
             cmd.CommandText = q;
             await connection.OpenAsync();
             var reader = await cmd.ExecuteReaderAsync();

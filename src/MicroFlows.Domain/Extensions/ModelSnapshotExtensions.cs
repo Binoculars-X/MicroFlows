@@ -14,6 +14,25 @@ public static class ModelSnapshotExtensions
         return modelSnapshot.Records["$.Model"].Deserialize() as T;
     }
 
+    /// <summary>
+    /// Deserializes to a target type, supports restoring type from json 
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    /// <exception cref="NotImplementedException"></exception>
+    public static T? Deserialize<T>(this SnapshotRecord record)
+    {
+        if (record.Type == SignalPayload.JsonType)
+        {
+            return JsonSerializer.Deserialize<T?>(record.Json);
+        }
+
+        return (T?)record.Deserialize();
+    }
+
+    
+
     public static string ToJson(this ModelSnapshot modelSnapshot)
     {
         var sb = new StringBuilder();

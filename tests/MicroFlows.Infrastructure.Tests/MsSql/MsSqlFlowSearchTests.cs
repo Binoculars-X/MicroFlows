@@ -51,7 +51,7 @@ public class MsSqlFlowSearchTests : SqlTestContainersTestBase
     }
 
     [Fact]
-    public async Task ExtendedSearch_Finds_By_CorrelationsId()
+    public async Task ExtendedSearch_Finds_By_CorrelationId()
     {
         var engine = NewEngine();
         var ps = new FlowParams() { CorrelationId = "123" };
@@ -66,5 +66,35 @@ public class MsSqlFlowSearchTests : SqlTestContainersTestBase
         Assert.Single(result.Lines);
         Assert.Equal(typeof(LinearInlineFlow).FullName, result.Lines[0].Name);
         Assert.Equal(ps.CorrelationId, result.Lines[0].CorrelationId);
+    }
+
+    [Fact]
+    public async Task ExtendedSearch_Finds_By_Name()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams() { CorrelationId = "123" };
+        var ctx = await engine.ExecuteFlow(typeof(LinearInlineFlow), ps);
+        var ps2 = new FlowParams() { CorrelationId = "1234" };
+        var ctx2 = await engine.ExecuteFlow(typeof(LinearInlineFlow2), ps2);
+
+        var result = await _repo.ExtendedSearch(
+            new FlowExtendedSearchQuery { Name = "LinearInlineFlow2" });
+
+        Assert.NotNull(result);
+        Assert.Single(result.Lines);
+        Assert.Equal(typeof(LinearInlineFlow2).FullName, result.Lines[0].Name);
+
+        result = await _repo.ExtendedSearch(
+            new FlowExtendedSearchQuery { Name = "Flow2" });
+
+        Assert.NotNull(result);
+        Assert.Single(result.Lines);
+        Assert.Equal(typeof(LinearInlineFlow2).FullName, result.Lines[0].Name);
+
+        result = await _repo.ExtendedSearch(
+            new FlowExtendedSearchQuery { Name = "LinearInline" });
+
+        Assert.NotNull(result);
+        Assert.Equal(2, result.Lines.Count);
     }
 }

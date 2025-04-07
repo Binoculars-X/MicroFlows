@@ -74,7 +74,7 @@ public record FlowExtendedSearchQuery()
     public string? RefId { get; set; }
     public string? ExternalId { get; set; }
     public string? CorrelationId { get; set; }
-    public FlowStateEnum? Status { get; set; }
+    public string? Status { get; set; }
     public string? Name { get; set; }
     public string? Tag { get; set; }
     public DateTimeOffset? CreatedFrom { get; set; }
@@ -89,7 +89,7 @@ public record FlowExtendedSearchQuery()
     public bool IsNotEmpty()
     {
         return !string.IsNullOrEmpty(RefId) || !string.IsNullOrEmpty(ExternalId) || !string.IsNullOrEmpty(CorrelationId)
-            || !string.IsNullOrEmpty(Tag) || Status != null || string.IsNullOrEmpty(Name)
+            || !string.IsNullOrEmpty(Tag) || Status != null || !string.IsNullOrEmpty(Name)
             || CreatedFrom != null || ModifiedFrom != null;
     }
 

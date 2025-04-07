@@ -20,6 +20,7 @@ public partial class FlowEngineTests
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
+        Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
