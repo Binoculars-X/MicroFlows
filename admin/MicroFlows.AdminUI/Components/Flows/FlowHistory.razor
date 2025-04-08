@@ -2,6 +2,8 @@
 @using Domain.Enums;
 @inject FlowHistoryViewModel _vm
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <style>
     td {
@@ -28,101 +30,102 @@
 }
 else
 {
-<table>
-    <tr>
-        <td>
-            <h5 style="padding-top:20px; width: 200px;">Flow Instance History</h5>
-        </td>
-        <td style="width: 100%; text-align: right;">
-            <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
-            title="Run from the last step" Disabled=@_vm.RunDisabled />
-
-            <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
-            title="Run from the last step" Disabled=@_vm.StopDisabled />
-
-            <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success" title="Send signal" />
-            <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" title="Change Instance" />
-        </td>
-    </tr>
-</table>
-
-<div id="unique_id_scroll_section" class="ma-0" style="height:800px;overflow: auto;">
     <table>
         <tr>
-            <td>FlowTypeName:</td>
-            <td>@Model.FlowTypeName</td>
-        </tr>
-        <tr>
-            <td>Status:</td>
-            <td>@Model.State.ToString()</td>
-        </tr>
-        <tr>
-            <td>RefId:</td>
-            <td>@Model.RefId</td>
-        </tr>
-        <tr>
-            <td>ExternalId:</td>
-            <td>@Model.ExternalId</td>
-        </tr>
-        <tr>
-            <td>CorrelationId:</td>
-            <td>@Model.CorrelationId</td>
+            <td>
+                <h5 style="padding-top:20px; width: 200px;">Flow Instance History</h5>
+            </td>
+            <td style="width: 100%; text-align: right;">
+                <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
+                title="Run from the last step" Disabled=@_vm.RunDisabled />
+
+                <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
+                title="Run from the last step" Disabled=@_vm.StopDisabled />
+
+                <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
+                @onclick="SendSignal" title="Send signal" />
+                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" title="Change Instance" />
+            </td>
         </tr>
     </table>
 
+    <div id="unique_id_scroll_section" class="ma-0" style="height:800px;overflow: auto;">
+        <table>
+            <tr>
+                <td>FlowTypeName:</td>
+                <td>@Model.FlowTypeName</td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td>@Model.State.ToString()</td>
+            </tr>
+            <tr>
+                <td>RefId:</td>
+                <td>@Model.RefId</td>
+            </tr>
+            <tr>
+                <td>ExternalId:</td>
+                <td>@Model.ExternalId</td>
+            </tr>
+            <tr>
+                <td>CorrelationId:</td>
+                <td>@Model.CorrelationId</td>
+            </tr>
+        </table>
 
 
 
-    @* RefId: @Model.RefId
+
+        @* RefId: @Model.RefId
 <br/>
 ExternalId: @Model.ExternalId
 <br /> *@
 
-    <CascadingValue Value="_vm">
-        <MudExpansionPanels @ref=_panel MultiExpansion="true">
-            <MudExpansionPanel Text=Data>
-                <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
-                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-                OnAdornmentClick=@ParametersClick />
-
-                @if (_vm.GetFlowParametersPayload() != null)
-                {
-                    <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
-                    Text=@_vm.GetFlowParametersPayload()
+        <CascadingValue Value="_vm">
+            <MudExpansionPanels @ref=_panel MultiExpansion="true">
+                <MudExpansionPanel Text=Data>
+                    <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
                     Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-                    OnAdornmentClick=@ParametersPayloadClick />
-                }
+                    OnAdornmentClick=@ParametersClick />
 
-                @if (_vm.GetSignals() != null)
-                {
-                    <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
-                    Text=@_vm.GetSignals()
-                    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-                    OnAdornmentClick=@CopySignalsClick />
-                }
-            </MudExpansionPanel>
+                    @if (_vm.GetFlowParametersPayload() != null)
+                    {
+                        <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
+                        Text=@_vm.GetFlowParametersPayload()
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                        OnAdornmentClick=@ParametersPayloadClick />
+                    }
 
-            @{
-                var lines = _vm.GetLines();
-            }
-            @for (int i = 1; i < lines.Count(); i++)
-            {
-                var index = i;
-                var line = lines[index];
-
-                <MudExpansionPanel Text=@line.Header>
-                    <FlowHistoryItem Model="@line.Context" Index="@index"></FlowHistoryItem>
+                    @if (_vm.GetSignals() != null)
+                    {
+                        <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
+                        Text=@_vm.GetSignals()
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                        OnAdornmentClick=@CopySignalsClick />
+                    }
                 </MudExpansionPanel>
-            }
-        @*    @foreach (var line in _vm.GetLines())
+
+                @{
+                    var lines = _vm.GetLines();
+                }
+                @for (int i = 1; i < lines.Count(); i++)
+                {
+                    var index = i;
+                    var line = lines[index];
+
+                    <MudExpansionPanel Text=@line.Header>
+                        <FlowHistoryItem Model="@line.Context" Index="@index"></FlowHistoryItem>
+                    </MudExpansionPanel>
+                }
+                @*    @foreach (var line in _vm.GetLines())
          {
             <MudExpansionPanel Text=@line.Header>
                 <FlowHistoryItem Model="@line.Context"></FlowHistoryItem>
             </MudExpansionPanel>
         } *@
-        </MudExpansionPanels>
-    </CascadingValue>
-</div>
+            </MudExpansionPanels>
+        </CascadingValue>
+    </div>
 }
 @code {
     MudExpansionPanels _panel;
@@ -148,6 +151,27 @@ ExternalId: @Model.ExternalId
             {
                 await _panel.CollapseAllAsync();
             }
+        }
+    }
+
+    private async Task SendSignal()
+    {
+        var parameters = new DialogParameters<SendSignalDialog>
+        {
+            { x => x.RefId, Model.RefId },
+        };
+
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, 
+            MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<SendSignalDialog>("Send", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //_vm.DeleteSteps();
+            var data = (SignalDetails)result.Data;
+            Snackbar.Add("Signal has been sent", Severity.Success);
         }
     }
 

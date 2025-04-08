@@ -19,7 +19,7 @@ public class FlowHistoryItemViewModel
     public string GetDeleteMessage()
     {
         var num = Parent.Model.ContextHistory.Count - Index;
-        return $"Are you sure you want to delete {num} step(s) from the execution history?";
+        return $"Are you sure you want to delete the last {num} step(s) from the execution history?";
     }
 
     public async Task DeleteSteps()

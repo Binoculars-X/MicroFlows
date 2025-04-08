@@ -1,0 +1,49 @@
+﻿@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Send signal
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" >
+            <MudTextField T="string" Label="RefId" Variant="Variant.Outlined" @bind-Value="RefId"
+            Required="true" RequiredError="RefId is required!" />
+
+            <MudTextField T="string" Label="Signal" Variant="Variant.Outlined" @bind-Value="Signal"
+            Required="true" RequiredError="Signal is required!" />
+
+            <MudTextField T="string" Label="Payload" Lines="10" Variant="Variant.Outlined" @bind-Value="Payload" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Yes</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string RefId { get; set; }
+
+    MudForm form;
+
+    public string Signal { get; set; }
+    public string Payload { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Ok()
+    {
+        form.Validate();
+
+        if (form.IsValid)
+        {
+            MudDialog.Close(DialogResult.Ok(new SignalDetails(RefId, Signal, Payload)));
+        }
+    }
+}
