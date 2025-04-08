@@ -23,17 +23,17 @@
 
 <style>
     .pz-table {
-        margin-top: 40px;
+    margin-top: 40px;
     }
 
     .pz-ref-button {
-        margin-left: 1rem;
-        margin-top: 0.5rem;
-        width: auto;
+    margin-left: 1rem;
+    margin-top: 0.5rem;
+    width: auto;
     }
 
     th.mud-table-cell {
-        background-color: lightgray !important;
+    background-color: lightgray !important;
     }
 
 </style>
@@ -56,10 +56,11 @@
         }
 
         <MudTable T="string[]" Items=ItemsData Hover="true" Breakpoint="Breakpoint.Sm" Dense="true" @ref="TableRef"
-                  ToolBarContent=ToolBar PagerContent=Pager ServerData=GetServerDataDelegate()
-                  OnRowClick="@(async (args) => await @RowClickEvent(args))" Height=@GetHeight()
-                  Virtualize=@(Options.DataOptimization == DataOptimization.Virtualization)
-                  FixedHeader=@(Options.DataOptimization == DataOptimization.Virtualization)>
+        ToolBarContent=ToolBar PagerContent=Pager ServerData=GetServerDataDelegate()
+        OnRowClick="@(async (args) => await @RowClickEvent(args))" Height=@GetHeight()
+        RowStyleFunc="@((item, idx) => TblRowStyle(item, idx))"
+        Virtualize=@(Options.DataOptimization == DataOptimization.Virtualization)
+        FixedHeader=@(Options.DataOptimization == DataOptimization.Virtualization)>
 
             <HeaderContent>
                 @if (ViewModel.VisibleColumns != null)
@@ -524,9 +525,29 @@
         }
     }
 
+    string[]? _selectedRow;
+
     private async Task RowClickEvent(TableRowClickEventArgs<string[]> args)
     {
+        if (Options.FirstActionClick)
+        {
+            _selectedRow = args.Item;
+        }
+
         await RowOnClick(args.Item[0]);
+    }
+
+    // row selection https://github.com/MudBlazor/MudBlazor/discussions/1858
+    private string TblRowStyle(string[] thing, int index)
+    {
+        if (_selectedRow != null && thing[0] == _selectedRow[0])
+        {
+            return $"background: #F5F5F5";
+        }
+        else
+        {
+            return "";
+        }
     }
 
     private async Task RowOnClick(string pk)

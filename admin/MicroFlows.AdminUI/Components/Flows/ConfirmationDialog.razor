@@ -1,0 +1,31 @@
+﻿@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Confirmation
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle1">@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Yes</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public string Message { get; set; }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Ok()
+    {
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

@@ -1,6 +1,7 @@
 ﻿using JsonPathToModel;
 using MicroFlows.AdminUI.Forms;
 using MicroFlows.Application.Helpers;
+using MicroFlows.Domain.Enums;
 using MicroFlows.Domain.Models;
 using Microsoft.AspNetCore.Components.Web;
 using System.Text.Json;
@@ -62,6 +63,24 @@ public class FlowHistoryViewModel
         return null;
     }
 
+    public bool RunDisabled 
+    {
+        get
+        {
+            return Model.State != FlowStateEnum.Failed && Model.State != FlowStateEnum.Finished
+                && Model.State != FlowStateEnum.Halt;
+        }
+    }
+
+    public bool StopDisabled
+    {
+        get
+        {
+            return Model.State != FlowStateEnum.Stop && Model.State != FlowStateEnum.Waiting
+                && Model.State != FlowStateEnum.Start && Model.State != FlowStateEnum.Continue;
+        }
+    }
+
     public string? GetSignals()
     {
         if (Model.SignalJournal.Any())
@@ -96,19 +115,3 @@ public class FlowHistoryViewModel
 
 public record FlowHistoryLine(string Header, FlowContext Context);
 
-public class FlowHistoryItemViewModel
-{
-    private readonly LocalSettings _localSettings;
-
-    public FlowContext Model { get; set; } = new();
-
-    public FlowHistoryItemViewModel(LocalSettings localSettings)
-    {
-        _localSettings = localSettings;
-    }
-
-    public string GetModel()
-    {
-        return Model.Model.ToJson();
-    }
-}

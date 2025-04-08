@@ -135,9 +135,19 @@ internal partial class FlowEngine
             LogException(exc);
             var innerExc = exc.InnerException;
 
-            if (innerExc != null)
+            if (innerExc is FlowStopException)
+            {
+                // FlowStopException
+                result.ResultState = ResultStateEnum.Success;
+                result.FlowState = FlowStateEnum.Stop;
+                result.ExceptionMessage = innerExc.Message;
+                result.ExceptionStackTrace = innerExc.StackTrace;
+                result.ExceptionType = innerExc.GetType().Name;
+            }
+            else if (innerExc != null)
             {
                 result.ResultState = ResultStateEnum.Fail;
+                result.FlowState = FlowStateEnum.Failed;
                 result.ExceptionMessage = exc.Message;
                 result.ExceptionStackTrace = exc.StackTrace;
                 result.ExceptionType = exc.GetType().Name;
@@ -150,6 +160,7 @@ internal partial class FlowEngine
 
             if (innerExc != null)
             {
+                // FlowStopException
                 result.ResultState = ResultStateEnum.Success;
                 result.FlowState = FlowStateEnum.Stop;
                 result.ExceptionMessage = innerExc.Message;
@@ -174,7 +185,8 @@ internal partial class FlowEngine
         {
             LogException(exc);
             result.ResultState = ResultStateEnum.Fail;
-            result.FlowState = FlowStateEnum.Stop;
+            //result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Failed;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;
@@ -183,7 +195,8 @@ internal partial class FlowEngine
         {
             LogException(exc);
             result.ResultState = ResultStateEnum.Fail;
-            result.FlowState = FlowStateEnum.Stop;
+            //result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Failed;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;

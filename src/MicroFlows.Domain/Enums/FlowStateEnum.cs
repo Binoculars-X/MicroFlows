@@ -10,9 +10,12 @@ public enum FlowStateEnum
     Stop = 0,
     Start,
     Continue,
+    Waiting,
     Finished,
+    // exception
     Failed,
-    Waiting
+    // stopped manually
+    Halt
 }
 
 public enum ResultStateEnum

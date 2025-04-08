@@ -1,4 +1,5 @@
 ﻿@using MicroFlows.Domain.Models
+@using Domain.Enums;
 @inject FlowHistoryViewModel _vm
 @inject IJSRuntime JS
 
@@ -21,7 +22,29 @@
     };
 </script>
 
-<h5 style="padding-top:20px">Flow Instance History</h5>
+@if (Model == null)
+{
+    <div style="line-height: 600px; text-align: center;">Select a flow</div>
+}
+else
+{
+<table>
+    <tr>
+        <td>
+            <h5 style="padding-top:20px; width: 200px;">Flow Instance History</h5>
+        </td>
+        <td style="width: 100%; text-align: right;">
+            <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
+            title="Run from the last step" Disabled=@_vm.RunDisabled />
+
+            <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
+            title="Run from the last step" Disabled=@_vm.StopDisabled />
+
+            <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success" title="Send signal" />
+            <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" title="Change Instance" />
+        </td>
+    </tr>
+</table>
 
 <div id="unique_id_scroll_section" class="ma-0" style="height:800px;overflow: auto;">
     <table>
@@ -55,38 +78,52 @@
 ExternalId: @Model.ExternalId
 <br /> *@
 
-    <MudExpansionPanels @ref=_panel MultiExpansion="true">
-        <MudExpansionPanel Text=Data>
-            <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
-            Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-            OnAdornmentClick=@ParametersClick />
-
-            @if (_vm.GetFlowParametersPayload() != null)
-            {
-                <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
-                Text=@_vm.GetFlowParametersPayload()
+    <CascadingValue Value="_vm">
+        <MudExpansionPanels @ref=_panel MultiExpansion="true">
+            <MudExpansionPanel Text=Data>
+                <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
                 Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-                OnAdornmentClick=@ParametersPayloadClick />
-            }
+                OnAdornmentClick=@ParametersClick />
 
-            @if (_vm.GetSignals() != null)
+                @if (_vm.GetFlowParametersPayload() != null)
+                {
+                    <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
+                    Text=@_vm.GetFlowParametersPayload()
+                    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                    OnAdornmentClick=@ParametersPayloadClick />
+                }
+
+                @if (_vm.GetSignals() != null)
+                {
+                    <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
+                    Text=@_vm.GetSignals()
+                    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                    OnAdornmentClick=@CopySignalsClick />
+                }
+            </MudExpansionPanel>
+
+            @{
+                var lines = _vm.GetLines();
+            }
+            @for (int i = 1; i < lines.Count(); i++)
             {
-                <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
-                Text=@_vm.GetSignals()
-                Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
-                OnAdornmentClick=@CopySignalsClick />
-            }
-        </MudExpansionPanel>
+                var index = i;
+                var line = lines[index];
 
-        @foreach (var line in _vm.GetLines())
-        {
+                <MudExpansionPanel Text=@line.Header>
+                    <FlowHistoryItem Model="@line.Context" Index="@index"></FlowHistoryItem>
+                </MudExpansionPanel>
+            }
+        @*    @foreach (var line in _vm.GetLines())
+         {
             <MudExpansionPanel Text=@line.Header>
                 <FlowHistoryItem Model="@line.Context"></FlowHistoryItem>
             </MudExpansionPanel>
-        }
-    </MudExpansionPanels>
+        } *@
+        </MudExpansionPanels>
+    </CascadingValue>
 </div>
-
+}
 @code {
     MudExpansionPanels _panel;
 
@@ -107,7 +144,10 @@ ExternalId: @Model.ExternalId
     {
         if (firstRender)
         {
-            await _panel.CollapseAllAsync();
+            if (_panel != null)
+            {
+                await _panel.CollapseAllAsync();
+            }
         }
     }
 

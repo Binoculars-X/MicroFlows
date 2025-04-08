@@ -24,7 +24,7 @@
     <MudItem xs="9">
         <form>
             <MudToggleIconButton @bind-Toggled="LiveOn"
-                                 Icon="@Icons.Material.Filled.HideSource"
+            Icon="@Icons.Material.Filled.HideSource"
             Color="@Color.Error"
             ToggledIcon="@Icons.Material.Filled.RadioButtonChecked"
             ToggledColor="@Color.Success"
@@ -101,7 +101,7 @@
     DateTime? Created;
     DateTime? Modified;
 
-    FlowStoreModel SelectedModel { get; set; } = new();
+    FlowStoreModel? SelectedModel { get; set; }
 
     bool _liveOn;
 
@@ -201,6 +201,12 @@
 
     private async Task ListFormDataChanged(FormSubmittedArgs args)
     {
+        var model = args.Model as FlowListModel;
+
+        if (model?.Data?.Any(m => m.RefId == SelectedModel?.RefId) != true)
+        {
+            SelectedModel = null;
+        }
     }
 
     private async Task ListFormRowClick(FormRowClickArgs args)

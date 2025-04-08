@@ -4,6 +4,11 @@ namespace MicroFlows.Demo.Flows;
 
 public class HotelBookingFlow: FlowBase<HotelBookingModel>
 {
+    // Model
+    public string StringModel { get; set; }
+    public int IntModel { get; set; }
+    //public DateTimeOffset DateTimeOffsetModel { get; set; }
+
     // signals
     public const string PaymentReceivedSignal = "PaymentReceived";
     public const string ReservationConfirmedSignal = "ReservationConfirmed";
@@ -66,6 +71,10 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     {
         LoadModelFromParams();
         Model.Status = HotelBookingStatus.Created;
+
+        StringModel = "started";
+        IntModel = 17;
+        //DateTimeOffsetModel = DateTimeOffset.Now;
     }
     private async Task NotifyBookingReceived()
     {
