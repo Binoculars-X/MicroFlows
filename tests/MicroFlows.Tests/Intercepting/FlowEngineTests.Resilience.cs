@@ -36,7 +36,7 @@ public partial class FlowEngineTests
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Fail, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, ctx.ExecutionResult.FlowState);
 
         var last = flow.ContextHistory.Last();
         Assert.Null(last.CurrentTask);
@@ -53,7 +53,7 @@ public partial class FlowEngineTests
 
         Assert.Equal(5, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx2.ExecutionResult.FlowState);
         Assert.Equal("WaitForCondition:3", last.CurrentTask);
         Assert.Equal("WaitForCondition", last.ExecutionResult.ExceptionMessage);
         Assert.Equal("FlowStopException", last.ExecutionResult.ExceptionType);
@@ -74,7 +74,7 @@ public partial class FlowEngineTests
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Fail, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, ctx.ExecutionResult.FlowState);
 
         var last = flow.ContextHistory.Last();
         Assert.Equal("CallAsync_CheckStatus:3", last.CurrentTask);

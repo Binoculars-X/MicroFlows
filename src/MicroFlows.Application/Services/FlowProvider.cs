@@ -100,7 +100,7 @@ public class FlowProvider : IFlowProvider
 
         if (journal == null)
         {
-            journal = new SignalJournalEntry { Signal = signal };
+            journal = new SignalJournalEntry { Signal = signal, Received = DateTimeOffset.UtcNow };
             model.SignalJournal.Add(journal);
         }
 

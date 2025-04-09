@@ -230,7 +230,7 @@
         StateHasChanged();
     }
 
-    private async Task Reload()
+    public async Task Reload()
     {
         try
         {
@@ -241,6 +241,7 @@
 
             await ViewModel.LoadListForm(FlowType, PK, flowParams, true);
 
+            TableRef.ReloadServerData();
             StateHasChanged();
         }
         catch (Exception exc)

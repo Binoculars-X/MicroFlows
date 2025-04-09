@@ -67,8 +67,8 @@ public class FlowHistoryViewModel
     {
         get
         {
-            return Model.State != FlowStateEnum.Failed && Model.State != FlowStateEnum.Finished
-                && Model.State != FlowStateEnum.Halt;
+            return Model.State != FlowStateEnum.Finished && Model.State != FlowStateEnum.Failed 
+                && Model.State != FlowStateEnum.Stop && Model.State != FlowStateEnum.Halt;
         }
     }
 
@@ -76,7 +76,7 @@ public class FlowHistoryViewModel
     {
         get
         {
-            return Model.State != FlowStateEnum.Stop && Model.State != FlowStateEnum.Waiting
+            return Model.State != FlowStateEnum.Waiting
                 && Model.State != FlowStateEnum.Start && Model.State != FlowStateEnum.Continue;
         }
     }

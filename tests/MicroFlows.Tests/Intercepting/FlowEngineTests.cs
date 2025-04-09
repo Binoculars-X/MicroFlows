@@ -53,7 +53,7 @@ public partial class FlowEngineTests : TestBase
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(4, flow.ContextHistory.Count);
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory.Last().ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, flow.ContextHistory.Last().ExecutionResult.FlowState);
         Assert.Equal("FlowStopException", flow.ContextHistory.Last().ExecutionResult.ExceptionType);
         //Assert.Equal("CallAsync<Flow>b__17_1:2", flow.ContextHistory.Last().CurrentTask);
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
@@ -94,7 +94,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(false, flow.ContextHistory[2].Model.Records["$.InvoiceSent"].Deserialize());
         Assert.NotNull(flow.ContextHistory[2].Model.Records["$.SentOrderId"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal("WaitForCondition:3", flow.ContextHistory[3].CurrentTask);
         Assert.NotNull(flow.ContextHistory[3].Model.Records["$.OrderId"].Deserialize());
         Assert.Equal(false, flow.ContextHistory[3].Model.Records["$.InvoiceSent"].Deserialize());
@@ -192,7 +192,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(33, flow.ContextHistory[1].Model.Records["$.ModelInt"].Deserialize());
         Assert.Equal("test", flow.ContextHistory[1].Model.Records["$.ModelString"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[2].ExecutionResult.ExceptionType);
         Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
@@ -226,7 +226,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(33, flow.ContextHistory[2].Model.Records["$.ModelInt"].Deserialize());
         Assert.Equal("testtest", flow.ContextHistory[2].Model.Records["$.ModelString"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[3].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[3].ExecutionResult.ExceptionType);
         Assert.Null(flow.ContextHistory[3].CurrentTask);
@@ -243,7 +243,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(5, flow.ContextHistory.Count);
 
         var context = flow.ContextHistory[3];
-        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, context.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);
@@ -251,7 +251,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("testtest", context.Model.Records["$.ModelString"].Deserialize());
 
         context = flow.ContextHistory[4];
-        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, context.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);

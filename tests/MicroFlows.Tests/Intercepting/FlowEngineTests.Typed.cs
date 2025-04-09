@@ -37,7 +37,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync_xxx:3", flow.ContextHistory[3].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         var last = flow.ContextHistory.Last();
         Assert.Single(last.Model.Records);

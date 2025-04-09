@@ -32,7 +32,7 @@ public partial class FlowEngineTests
         }
 
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         engine = NewEngine();
         var ps2 = new FlowParams() { ExternalId = "ORDER-123-4" };
@@ -58,7 +58,7 @@ public partial class FlowEngineTests
         var ctx = await engine.ExecuteFlow(typeof(SampleTwoSignalPayloadWaitingFlow), ps);
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         // send Signal1
         engine = NewEngine();
@@ -70,7 +70,7 @@ public partial class FlowEngineTests
         var flow2 = await _repo.GetFlowModel(ctx2.RefId);
         Assert.Equal(date, ctx2.Model.Records["$.Signal1PayloadDate"].Deserialize());
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx2.ExecutionResult.FlowState);
 
         // send Signal2
         engine = NewEngine();
@@ -98,7 +98,7 @@ public partial class FlowEngineTests
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         // send Signal2
         // the flow waiting for Signal1, so it will not proceed until receives Signal1
@@ -113,7 +113,7 @@ public partial class FlowEngineTests
         Assert.Null(ctx2.Model.Records["$.Signal1PayloadDate"].Deserialize());
         Assert.Null(ctx2.Model.Records["$.Signal2PayloadText"].Deserialize());
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx2.ExecutionResult.FlowState);
 
         // send Signal1
         engine = NewEngine();
@@ -139,7 +139,7 @@ public partial class FlowEngineTests
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(4, flow.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         // send Cancel, flow should still be blocked by OrderAcceptedSignal 
         engine = NewEngine();
@@ -150,7 +150,7 @@ public partial class FlowEngineTests
         var flow2 = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(4, flow2.ContextHistory.Count);
         Assert.Equal(ResultStateEnum.Success, ctx2.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx2.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx2.ExecutionResult.FlowState);
 
         // send OrderAcceptedSignal, it should unblock flow and Cancel the order
         engine = NewEngine();

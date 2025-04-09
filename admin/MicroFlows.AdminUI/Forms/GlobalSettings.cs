@@ -6,8 +6,7 @@ namespace MicroFlows.AdminUI.Forms;
 
 public static class GlobalSettings
 {
-    public const int TIMER_REFRESH_SEC = 10;
-    public const int TIMER_SBUS_REFRESH_SEC = 30;
+    public const int TIMER_REFRESH_SEC = 3;
 
     public static readonly string DateTimeFormat = "dd/MM/yyyy HH:mm";
 

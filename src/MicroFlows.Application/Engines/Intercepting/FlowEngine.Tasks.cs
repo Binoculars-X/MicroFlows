@@ -139,7 +139,7 @@ internal partial class FlowEngine
             {
                 // FlowStopException
                 result.ResultState = ResultStateEnum.Success;
-                result.FlowState = FlowStateEnum.Stop;
+                result.FlowState = FlowStateEnum.Waiting;
                 result.ExceptionMessage = innerExc.Message;
                 result.ExceptionStackTrace = innerExc.StackTrace;
                 result.ExceptionType = innerExc.GetType().Name;
@@ -162,7 +162,7 @@ internal partial class FlowEngine
             {
                 // FlowStopException
                 result.ResultState = ResultStateEnum.Success;
-                result.FlowState = FlowStateEnum.Stop;
+                result.FlowState = FlowStateEnum.Waiting;
                 result.ExceptionMessage = innerExc.Message;
                 result.ExceptionStackTrace = innerExc.StackTrace;
                 result.ExceptionType = innerExc.GetType().Name;
@@ -175,7 +175,7 @@ internal partial class FlowEngine
         catch (FlowStopException exc)
         {
             result.ResultState = ResultStateEnum.Success;
-            result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Waiting;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;

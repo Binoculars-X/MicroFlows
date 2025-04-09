@@ -24,7 +24,7 @@ public partial class FlowEngineTests
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         engine = NewEngine();
         ps = new FlowParams() { ExternalId = "ORDER-123" };
@@ -49,7 +49,7 @@ public partial class FlowEngineTests
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         engine = NewEngine();
         var ctx2 = await engine.ExecuteFlow(typeof(SampleSignalWaitingFlow), ps);
@@ -61,7 +61,7 @@ public partial class FlowEngineTests
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public partial class FlowEngineTests
 		var flow = await _repo.GetFlowModel(ctx.RefId);
 
 		Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-		Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+		Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 		Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("Call_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalAsync_signal1:2", flow.ContextHistory[2].CurrentTask);
@@ -104,7 +104,7 @@ public partial class FlowEngineTests
 		var flow = await _repo.GetFlowModel(ctx.RefId);
 
 		Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-		Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+		Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 		Assert.Equal(3, flow.ContextHistory.Count);
 
         // resume and catch exception

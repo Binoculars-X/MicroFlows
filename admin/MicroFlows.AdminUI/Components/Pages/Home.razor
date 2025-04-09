@@ -2,10 +2,13 @@
 
 @using MicroFlows.Application.Helpers
 @using MicroFlows.Domain.Models
+@using System.Timers
 
 @inject IJSRuntime JSRuntime
 @inject LocalSettings LocalSettings
 @inject MicroFlows.IFlowRepository _repo
+
+@implements IDisposable
 
 <style>
     form {
@@ -37,7 +40,8 @@
                 @* <MudButton Variant="Variant.Text" EndIcon="@Icons.Material.Filled.Refresh"
                            Color="Color.Primary"></MudButton> *@
 
-                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Success" title="Refresh" />
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Success" 
+                title="Refresh" OnClick="@Refresh"/>
             }
 
 
@@ -76,7 +80,7 @@
 
         </form>
 
-        <FlowListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
+        <FlowListForm @ref=ListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
         Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
         FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
 
@@ -91,6 +95,7 @@
 
 
 @code {
+    FlowListForm ListForm;
     FlowParamsGeneric Params = new();
     FlowParamsGeneric SearchParams = new FlowParamsGeneric();
 
@@ -108,7 +113,39 @@
     bool LiveOn
     {
         get { return _liveOn; }
-        set { _liveOn = value; }
+        set 
+        { 
+            _liveOn = value; 
+            _timer.Enabled = _liveOn; 
+        }
+    }
+
+    private System.Timers.Timer _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _timer = new();
+        _timer.Interval = GlobalSettings.TIMER_REFRESH_SEC * 1000;
+
+        _timer.Elapsed += async (object? sender, ElapsedEventArgs e) => await OnTimerCallback();
+    }
+
+    private async Task OnTimerCallback()
+    {
+        try
+        {
+            await InvokeAsync(ListForm.Reload);
+            StateHasChanged();
+        }
+        catch (Exception exc)
+        {
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        _timer.Enabled = false;
+        _timer.Dispose();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -126,6 +163,11 @@
             {
             }
         }
+    }
+
+    async Task Refresh()
+    {
+        await UpdateSearchQuery();        
     }
 
     async Task RefIdChanged(string? val)
@@ -196,6 +238,7 @@
         var json = JsonSerializer.Serialize(Query);
         Params = new();
         Params[FlowInstanceListFlow.SEARCH] = json;
+        Params["LastSecond"] = DateTimeOffset.UtcNow.Second.ToString();
         StateHasChanged();
     }
 

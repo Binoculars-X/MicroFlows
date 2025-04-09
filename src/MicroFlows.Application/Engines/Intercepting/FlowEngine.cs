@@ -262,8 +262,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
             if (innerExc != null)
             {
+                // FlowStopException
                 _context.ExecutionResult.ResultState = ResultStateEnum.Success;
-                _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+                _context.ExecutionResult.FlowState = FlowStateEnum.Waiting;
                 _context.ExecutionResult.ExceptionMessage = innerExc.Message;
                 _context.ExecutionResult.ExceptionStackTrace = innerExc.StackTrace;
                 _context.ExecutionResult.ExceptionType = innerExc.GetType().Name;
@@ -276,7 +277,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (FlowStopException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Success;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Waiting;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
@@ -286,7 +287,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (FlowTaskFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             // preserve original exception details
             //_context.ExecutionResult.ExceptionMessage = exc.Message;
             //_context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
@@ -299,7 +300,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (FlowFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
@@ -318,7 +319,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (Exception exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
@@ -376,7 +377,8 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     {
         foreach (var signal in _signals)
         {
-            _flowProxy!.SignalJournal.Add(new SignalJournalEntry(signal.Key, signal.Value));
+            _flowProxy!.SignalJournal.Add(
+                new SignalJournalEntry(signal.Key, signal.Value) { Received = DateTimeOffset.UtcNow });
         }
 
         var flowStoreModel = await _flowRepository.UpdateFlow(_flowProxy!);

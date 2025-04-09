@@ -23,7 +23,7 @@ public partial class FlowSignalsTests : TestBase
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         await Task.Delay(1100);
         engine = NewEngine();
@@ -44,7 +44,7 @@ public partial class FlowSignalsTests : TestBase
 
         var m2 = new SampleSignalWaitingTimeoutFlow();
         flow.ContextHistory[2].Model.ExportTo(m2);
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.True(m2.Timeout1);
         Assert.Null(m2.Timeout2);
 
@@ -76,7 +76,7 @@ public partial class FlowSignalsTests : TestBase
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         var ctx2 = await engine.SendSignal(typeof(SampleWaitingFlow1), SampleWaitingFlow1.Signal2, ps);
         flow = await _repo.GetFlowModel(ctx2.RefId);
@@ -97,7 +97,7 @@ public partial class FlowSignalsTests : TestBase
         Assert.Equal(3, flow.ContextHistory.Count);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("WaitForSignalTimeoutAsync_Signal2:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         // provoke timeout
         await Task.Delay(1100);
