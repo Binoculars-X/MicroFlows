@@ -8,13 +8,13 @@
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" >
-            <MudTextField T="string" Label="RefId" Variant="Variant.Outlined" @bind-Value="RefId"
+            <MudTextField T="string" Label="RefId" Variant="Variant.Outlined" @bind-Value="RefId" ShrinkLabel
             Required="true" RequiredError="RefId is required!" />
 
-            <MudTextField T="string" Label="Signal" Variant="Variant.Outlined" @bind-Value="Signal"
+            <MudTextField T="string" Label="Signal" Variant="Variant.Outlined" @bind-Value="Signal" ShrinkLabel
             Required="true" RequiredError="Signal is required!" />
 
-            <MudTextField T="string" Label="Payload" Lines="10" Variant="Variant.Outlined" @bind-Value="Payload" />
+            <MudTextField T="string" Label="Payload" Lines="10" Variant="Variant.Outlined" @bind-Value="Payload" ShrinkLabel />
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -25,7 +25,7 @@
 
 @code {
     [CascadingParameter]
-    private MudDialogInstance MudDialog { get; set; }
+    private IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public string RefId { get; set; }

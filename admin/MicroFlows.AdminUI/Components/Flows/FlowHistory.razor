@@ -40,7 +40,7 @@ else
                 title="Run from the last step" Disabled=@_vm.RunDisabled />
 
                 <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
-                title="Run from the last step" Disabled=@_vm.StopDisabled />
+                title="Halt" Disabled=@_vm.StopDisabled />
 
                 <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
                 @onclick="SendSignal" title="Send signal" />
@@ -135,22 +135,23 @@ ExternalId: @Model.ExternalId
 
     protected override void OnParametersSet()
     {
-        _vm.Model = Model;
 
-        if (_panel != null)
+        if (_panel != null && _vm.Model?.RefId != Model?.RefId)
         {
             _panel.CollapseAllAsync();
         }
+
+        _vm.Model = Model;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            if (_panel != null)
-            {
-                await _panel.CollapseAllAsync();
-            }
+            // if (_panel != null)
+            // {
+            //     await _panel.CollapseAllAsync();
+            // }
         }
     }
 
@@ -161,7 +162,7 @@ ExternalId: @Model.ExternalId
             { x => x.RefId, Model.RefId },
         };
 
-        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, 
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, BackdropClick = false,
             MaxWidth = MaxWidth.Medium, FullWidth = true };
 
         var dialog = await DialogService.ShowAsync<SendSignalDialog>("Send", parameters, options);
@@ -178,6 +179,7 @@ ExternalId: @Model.ExternalId
     async Task ParametersClick()
     {
         await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParameters());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
 
         try
         {
@@ -193,10 +195,12 @@ ExternalId: @Model.ExternalId
     async Task ParametersPayloadClick()
     {
         await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParametersPayload());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
     }
 
     async Task CopySignalsClick()
     {
         await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetSignals());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
     }
 }

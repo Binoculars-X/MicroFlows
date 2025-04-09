@@ -24,7 +24,10 @@
         </td>
         <td style="width: 100%; text-align: right;">
             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" title="View" />
-            <MudIconButton Icon="@Icons.Material.Filled.EditNote" Color="Color.Success" title="Edit model" />
+
+            <MudIconButton Icon="@Icons.Material.Filled.EditNote" Color="Color.Success"
+                           @onclick="EditModel" title="Edit model" />
+
             <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Color="Color.Error" 
             @onclick="Delete" title="Delete history from here" />
         </td>
@@ -62,11 +65,33 @@ OnAdornmentClick=@CopyClick />
     async Task CopyClick()
     {
         await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetModel());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
     }
 
     async Task CopyExceptionClick()
     {
         await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetModel());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+    }
+
+    private async Task EditModel()
+    {
+        var parameters = new DialogParameters<UpdateModelDialog>
+        {
+            { x => x.Model, _vm.GetModelDetails() },
+        };
+
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true,  BackdropClick = false,
+            MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<UpdateModelDialog>("Edit", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await _vm.UpdateModel((List<EditModelDetails>)result.Data);
+            Snackbar.Add("Model has been updated", Severity.Success);
+        }
     }
 
     private async Task Delete()
@@ -76,13 +101,13 @@ OnAdornmentClick=@CopyClick />
             { x => x.Message, _vm.GetDeleteMessage() },
         };
 
-        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large };
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium };
         var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Delete", parameters, options);
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
-            _vm.DeleteSteps();
+            await _vm.DeleteSteps();
             Snackbar.Add("Execution history step(s) deleted", Severity.Success);
         }
     }

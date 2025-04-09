@@ -1,5 +1,7 @@
 ﻿using MicroFlows.AdminUI.Forms;
+using MicroFlows.AdminUI.Models;
 using MicroFlows.Domain.Models;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace MicroFlows.AdminUI.Components.Flows;
 
@@ -16,6 +18,19 @@ public class FlowHistoryItemViewModel
         _localSettings = localSettings;
     }
 
+    public List<EditModelDetails> GetModelDetails()
+    {
+        var details = Model.Model.Records.Select(r => new EditModelDetails 
+        { 
+            Key = r.Key,
+            Name = r.Key.Split('.').Last(),
+            Type = r.Value.Type,
+            Value = r.Key == "$.Model"? r.Value.Json.JsonPrettify() : r.Value.Json
+        }).ToList();
+
+        return details;
+    }
+
     public string GetDeleteMessage()
     {
         var num = Parent.Model.ContextHistory.Count - Index;
@@ -23,6 +38,10 @@ public class FlowHistoryItemViewModel
     }
 
     public async Task DeleteSteps()
+    { 
+    }
+
+    public async Task UpdateModel(List<EditModelDetails> data)
     { 
     }
 

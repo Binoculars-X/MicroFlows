@@ -44,7 +44,7 @@
     public string Message { get; set; } 
 
     [CascadingParameter] 
-    MudDialogInstance MudDialog { get; set; }
+    IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public string CancelName { get; set; }

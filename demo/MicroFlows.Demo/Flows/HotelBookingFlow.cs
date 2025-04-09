@@ -7,6 +7,8 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     // Model
     public string StringModel { get; set; }
     public int IntModel { get; set; }
+    public bool? BoolModel { get; set; } = true;
+    public DateTime? DateTimeModel { get; set; } = DateTime.Now;
     //public DateTimeOffset DateTimeOffsetModel { get; set; }
 
     // signals

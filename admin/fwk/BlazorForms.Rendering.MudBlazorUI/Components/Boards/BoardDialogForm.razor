@@ -75,7 +75,7 @@
     protected FormOptions FormOptions { get { return EditFormOptions; } }
 
     [CascadingParameter] 
-    MudDialogInstance MudDialog { get; set; }
+    IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public BoardDialogViewModel DialogViewModel { get; set; }
@@ -105,7 +105,7 @@
     {
         //MudDialog.Options.CloseOnEscapeKey = true;
         //MudDialog.Options.MaxWidth = MaxWidth.ExtraExtraLarge;
-        MudDialog.SetOptions(new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraExtraLarge, BackdropClick = false });
+        //MudDialog.SetOptions(new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.ExtraExtraLarge, BackdropClick = false });
     }
 
     protected override async Task OnParametersSetAsync()
@@ -131,7 +131,7 @@
         {
             // prevent close by escape if model changed
             var options = new DialogOptions { CloseOnEscapeKey = false, MaxWidth = MaxWidth.ExtraExtraLarge, BackdropClick = false };
-            MudDialog.SetOptions(options);
+            //MudDialog.SetOptions(options);
         }
 
         await ModelActionChanged.InvokeAsync(args);

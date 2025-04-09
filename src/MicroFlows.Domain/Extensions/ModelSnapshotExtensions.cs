@@ -52,7 +52,13 @@ public static class ModelSnapshotExtensions
         return pretty;
     }
 
-    public static string JsonPrettify(string json)
+    //public static string JsonPrettify(string json)
+    //{
+    //    using var jDoc = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true });
+    //    return JsonSerializer.Serialize(jDoc, new JsonSerializerOptions { WriteIndented = true, IndentSize = 2 });
+    //}
+
+    public static string JsonPrettify(this string json)
     {
         using var jDoc = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true });
         return JsonSerializer.Serialize(jDoc, new JsonSerializerOptions { WriteIndented = true, IndentSize = 2 });

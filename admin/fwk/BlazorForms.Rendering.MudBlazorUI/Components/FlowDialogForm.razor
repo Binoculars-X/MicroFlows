@@ -80,7 +80,7 @@
     protected FormOptions FormOptions { get { return Options; } }
 
     [CascadingParameter] 
-    MudDialogInstance MudDialog { get; set; }
+    IMudDialogInstance MudDialog { get; set; }
 
     [Parameter]
     public IDialogFormViewModel DialogViewModel { get; set; }
