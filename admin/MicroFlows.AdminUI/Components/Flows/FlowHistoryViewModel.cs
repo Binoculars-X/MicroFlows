@@ -13,18 +13,47 @@ public class FlowHistoryViewModel
 {
     private static LocalSettings __localSettings;
     private readonly LocalSettings _localSettings;
+    private readonly IFlowRepository _flowRepository;
+    private readonly IFlowAdminProvider _flowAdminProvider;
 
-    public FlowStoreModel Model { get; set; } = new();
+    public FlowStoreModel? Model { get; set; } = null;
 
-    public FlowHistoryViewModel(LocalSettings localSettings)
+    public FlowHistoryViewModel(LocalSettings localSettings, IFlowRepository flowRepository,
+        IFlowAdminProvider flowAdminProvider)
     {
         _localSettings = localSettings;
         __localSettings = localSettings;
+        _flowRepository = flowRepository;
+        _flowAdminProvider = flowAdminProvider;
+    }
+
+    public async Task ReloadModel(string? refId)
+    {
+        if (refId == null)
+        {
+            Model = null;
+        }
+        else
+        {
+            Model = await _flowRepository.GetFlowModel(refId);
+        }
+    }
+
+    public async Task RestartFlow()
+    {
+        await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Rerun);
+        await ReloadModel(Model.RefId);
+    }
+
+    public async Task StopFlow()
+    {
+        await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Halt);
+        await ReloadModel(Model.RefId);
     }
 
     public List<FlowHistoryLine> GetLines()
     {
-        return Model.ContextHistory.Select(c => new FlowHistoryLine(
+        return Model?.ContextHistory.Select(c => new FlowHistoryLine(
             $"{_localSettings.ToLocalDateTime(c.CreatedOn)
                 ?.ToString(GlobalSettings.DateTimeFormat)} {c.CurrentTask ?? "<Start>"}",
             c
@@ -33,7 +62,7 @@ public class FlowHistoryViewModel
 
     public string? GetFlowParameters()
     {
-        var ps = Model.ContextHistory.FirstOrDefault()?.Params;
+        var ps = Model?.ContextHistory.FirstOrDefault()?.Params;
 
         if (ps == null)
         {
@@ -52,7 +81,7 @@ public class FlowHistoryViewModel
 
     public string? GetFlowParametersPayload()
     {
-        var payload = Model.ContextHistory.FirstOrDefault()?.Params?.Payload;
+        var payload = Model?.ContextHistory.FirstOrDefault()?.Params?.Payload;
 
         if (payload != null)
         {

@@ -16,6 +16,8 @@ builder.Services.AddServerSideBlazorForms();
 builder.Services.AddBlazorFormsMudBlazorUI();
 builder.Services.AddBlazorFormsServerModelAssemblyTypes(typeof(FlowInstanceListFlow));
 
+builder.Services.AddMicroFlowsAdmin();
+
 builder.Services.AddMicroFlowsMsSqlRepo(configuration,
     new MsSqlFlowRepositorySettings
     {

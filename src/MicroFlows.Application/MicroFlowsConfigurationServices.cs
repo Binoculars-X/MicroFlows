@@ -49,6 +49,12 @@ public static class MicroFlowsConfigurationServices
         return services;
     }
 
+    public static IServiceCollection AddMicroFlowsAdmin(this IServiceCollection services)
+    {
+        services.AddSingleton<IFlowAdminProvider, FlowAdminProvider>();
+        return services;
+    }
+
     public static IServiceCollection AddMicroFlowsServer(this IServiceCollection services)
     {
         services.AddConfigOptions<FlowProcessingServiceSettings>();

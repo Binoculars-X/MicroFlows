@@ -27,7 +27,7 @@
     <MudItem xs="9">
         <form>
             <MudToggleIconButton @bind-Toggled="LiveOn"
-            Icon="@Icons.Material.Filled.HideSource"
+            Icon="@Icons.Material.Filled.StopCircle"
             Color="@Color.Error"
             ToggledIcon="@Icons.Material.Filled.RadioButtonChecked"
             ToggledColor="@Color.Success"
@@ -87,7 +87,7 @@
 
     </MudItem>
     <MudItem xs="3">
-        <FlowHistory Model=@SelectedModel />
+        <FlowHistory RefId=@SelectedRefId />
 
     </MudItem>
 </MudGrid>
@@ -106,7 +106,7 @@
     DateTime? Created;
     DateTime? Modified;
 
-    FlowStoreModel? SelectedModel { get; set; }
+    string? SelectedRefId { get; set; }
 
     bool _liveOn;
 
@@ -245,16 +245,16 @@
     {
         var model = args.Model as FlowListModel;
 
-        if (model?.Data?.Any(m => m.RefId == SelectedModel?.RefId) != true)
+        if (model?.Data?.Any(m => m.RefId == SelectedRefId) != true)
         {
-            SelectedModel = null;
+            SelectedRefId = null;
         }
     }
 
     private async Task ListFormRowClick(FormRowClickArgs args)
     {
-        var model = await _repo.GetFlowModel(args.Pk);
-        SelectedModel = model;
+        //var model = await _repo.GetFlowModel(args.Pk);
+        SelectedRefId = args.Pk;
 
         // var ctx = new FlowContext { CurrentTask = "Created:0", CreatedOn = DateTimeOffset.UtcNow };
         // SelectedModel.ContextHistory.Add(ctx);

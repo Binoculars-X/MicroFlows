@@ -14,6 +14,8 @@ public enum FlowStateEnum
     Finished,
     // exception
     Failed,
+    //
+    Rerun,
     // stopped manually
     Halt
 }

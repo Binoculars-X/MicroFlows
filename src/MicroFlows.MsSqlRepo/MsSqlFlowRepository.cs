@@ -63,7 +63,8 @@ public partial class MsSqlFlowRepository : IFlowRepository
 
     private FlowRecord GetFlowRecord(FlowStoreModel m)
     {
-        var statusEnum = m.ContextHistory.Last().ExecutionResult.FlowState;
+        //var statusEnum = m.ContextHistory.Last().ExecutionResult.FlowState;
+        var statusEnum = m.State;
         var status = statusEnum.ToString();
         var task = m.ContextHistory.Last().CurrentTask;
         var correlationId = m.ContextHistory.First().Params.CorrelationId;
@@ -93,8 +94,10 @@ END
             }
         }
 
+        var use = _settings?.DatabaseName == null ? "" : $"use [{_settings?.DatabaseName}];";
+
         var q = @$"
-use [{_settings?.DatabaseName ?? "master"}];
+{use}
 if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
 begin
     create table {_tableName} (
@@ -212,7 +215,15 @@ SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8;
         if (ctx != null)
         {
             flowModel.Result = ctx.ExecutionResult.ResultState;
-            flowModel.State = ctx.ExecutionResult.FlowState;
+
+            // Rerun status should be transformed to Continue, Halt to Stop
+            flowModel.State = flowModel.State switch
+            {
+                FlowStateEnum.Rerun => FlowStateEnum.Continue,
+                FlowStateEnum.Halt => FlowStateEnum.Stop,
+                _ => ctx.ExecutionResult.FlowState
+            };
+
             flowModel.ExceptionMessage = ctx.ExecutionResult.ExceptionMessage;
             flowModel.Tag = ctx.Params.Tag;
             flowModel.ExternalId = ctx.Params.ExternalId;

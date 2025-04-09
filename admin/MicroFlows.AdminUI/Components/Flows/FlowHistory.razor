@@ -24,7 +24,7 @@
     };
 </script>
 
-@if (Model == null)
+@if (_vm.Model == null)
 {
     <div style="line-height: 600px; text-align: center;">Select a flow</div>
 }
@@ -37,14 +37,18 @@ else
             </td>
             <td style="width: 100%; text-align: right;">
                 <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
-                title="Run from the last step" Disabled=@_vm.RunDisabled />
+                title="Run from the last step" Disabled=@_vm.RunDisabled 
+                OnClick="@RestartFlow"/>
 
                 <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
-                title="Halt" Disabled=@_vm.StopDisabled />
+                title="Halt" Disabled=@_vm.StopDisabled
+                OnClick="@StopFlow" />
 
                 <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
                 @onclick="SendSignal" title="Send signal" />
-                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" title="Change Instance" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" 
+                title="Change Instance" />
             </td>
         </tr>
     </table>
@@ -53,23 +57,23 @@ else
         <table>
             <tr>
                 <td>FlowTypeName:</td>
-                <td>@Model.FlowTypeName</td>
+                <td>@_vm.Model.FlowTypeName</td>
             </tr>
             <tr>
                 <td>Status:</td>
-                <td>@Model.State.ToString()</td>
+                <td>@_vm.Model.State.ToString()</td>
             </tr>
             <tr>
                 <td>RefId:</td>
-                <td>@Model.RefId</td>
+                <td>@_vm.Model.RefId</td>
             </tr>
             <tr>
                 <td>ExternalId:</td>
-                <td>@Model.ExternalId</td>
+                <td>@_vm.Model.ExternalId</td>
             </tr>
             <tr>
                 <td>CorrelationId:</td>
-                <td>@Model.CorrelationId</td>
+                <td>@_vm.Model.CorrelationId</td>
             </tr>
         </table>
 
@@ -131,17 +135,19 @@ ExternalId: @Model.ExternalId
     MudExpansionPanels _panel;
 
     [Parameter]
-    public FlowStoreModel Model { get; set; }
+    public string? RefId{ get; set; }
 
-    protected override void OnParametersSet()
+    //public FlowStoreModel Model { get; set; }
+
+    protected override async Task OnParametersSetAsync()
     {
 
-        if (_panel != null && _vm.Model?.RefId != Model?.RefId)
+        if (_panel != null && _vm.Model?.RefId != RefId)
         {
-            _panel.CollapseAllAsync();
+            await _panel.CollapseAllAsync();
         }
 
-        _vm.Model = Model;
+        await _vm.ReloadModel(RefId);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -155,11 +161,25 @@ ExternalId: @Model.ExternalId
         }
     }
 
+    private async Task RestartFlow()
+    {
+        await _vm.RestartFlow();
+        Snackbar.Add("Flow has been sent restarted", Severity.Success);
+        //await _vm.ReloadModel(RefId);
+    }
+
+    private async Task StopFlow()
+    {
+        await _vm.StopFlow();
+        Snackbar.Add("Flow has been stopped", Severity.Success);
+        //await _vm.ReloadModel(RefId);
+    }
+
     private async Task SendSignal()
     {
         var parameters = new DialogParameters<SendSignalDialog>
         {
-            { x => x.RefId, Model.RefId },
+            { x => x.RefId, RefId },
         };
 
         var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, BackdropClick = false,
