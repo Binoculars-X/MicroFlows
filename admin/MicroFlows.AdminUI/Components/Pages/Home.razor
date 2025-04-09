@@ -134,8 +134,7 @@
     {
         try
         {
-            await InvokeAsync(ListForm.Reload);
-            StateHasChanged();
+            await InvokeAsync(ListForm.ReloadServerData);
         }
         catch (Exception exc)
         {

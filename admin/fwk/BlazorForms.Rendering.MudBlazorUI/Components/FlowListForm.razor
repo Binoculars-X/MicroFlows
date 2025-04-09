@@ -230,6 +230,12 @@
         StateHasChanged();
     }
 
+    public async Task ReloadServerData()
+    {
+        await TableRef.ReloadServerData();
+        StateHasChanged();
+    }
+
     public async Task Reload()
     {
         try
@@ -240,8 +246,6 @@
             ViewModel.QueryOptions.AllowSort = Options.ShowSorting;
 
             await ViewModel.LoadListForm(FlowType, PK, flowParams, true);
-
-            TableRef.ReloadServerData();
             StateHasChanged();
         }
         catch (Exception exc)

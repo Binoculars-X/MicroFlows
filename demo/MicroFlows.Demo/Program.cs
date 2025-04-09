@@ -59,7 +59,7 @@ app.Services.UseScheduler(s =>
         await mfServer.ExecuteIteration();
         Console.WriteLine("It's alive!"); 
     })
-    .EverySecond()
+    .EveryFiveSeconds()
     .PreventOverlapping(Guid.NewGuid().ToString());
 });
 
