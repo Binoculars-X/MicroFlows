@@ -126,18 +126,23 @@ internal class MemoryFlowRepository : IFlowRepository
         throw new NotImplementedException();
     }
 
-    public async Task<bool> LockFlow(FlowInstanceDetails instance, int timeLock)
+    public async Task<byte[]?> UnlockFlow(FlowInstanceDetails instance)
     {
-        return true;
-    }
-
-    public async Task<bool> UnlockFlow(FlowInstanceDetails instance)
-    {
-        return true;
+        return [];
     }
 
     public Task<FlowExtendedSearchResult> ExtendedSearch(FlowExtendedSearchQuery query)
     {
         throw new NotImplementedException();
+    }
+ 
+    public async Task<byte[]?> LockFlow(FlowInstanceDetails instance, int timeLock)
+    {
+        return [];
+    }
+
+    public async Task<byte[]?> AcquireFlowExlusiveLock(FlowInstanceDetails instance, int timeLock)
+    {
+        return [];
     }
 }

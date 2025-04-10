@@ -18,6 +18,9 @@ namespace MicroFlows.MsSqlRepo;
 
 public partial class MsSqlFlowRepository : IFlowRepository
 {
+    public const int DEFAULT_TIME_LOCK_MILLISECONDS = 1000;
+    public const int TIME_LOCK_ATTEMPTS = 3;
+
     public const string CONNECTION_STRING_KEY = "MsSqlFlowRepositoryConnectionString";
     public const string TABLE_NAME = "flow_run";
 
@@ -524,8 +527,11 @@ order by ver, exec_status ";
 
         foreach (var record in list)
         {
-            if (await LockFlow(record, timeLock))
+            var ver = await LockFlow(record, timeLock);
+
+            if (ver != null)
             {
+                var r2 = record with { Version = ver };
                 resultList.Add(record);
             }
         }
@@ -533,11 +539,15 @@ order by ver, exec_status ";
         return resultList;
     }
 
-    public async Task<bool> LockFlow(FlowInstanceDetails instance, int timeLock)
+    public async Task<byte[]?> LockFlow(FlowInstanceDetails instance, int timeLock)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
-            var uq = $"update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3 and (time_lock is null or time_lock < @p4)";
+            var uq = $@"
+update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3 and (time_lock is null or time_lock < @p4);
+declare @count int = @@ROWCOUNT;
+select @count, ver from flow_run where id=@p2;
+";
             SqlCommand cmd = new SqlCommand(uq, connection);
             cmd.CommandType = System.Data.CommandType.Text;
             cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow.AddMicroseconds(timeLock));
@@ -545,24 +555,80 @@ order by ver, exec_status ";
             cmd.Parameters.AddWithValue("p3", instance.Version);
             cmd.Parameters.AddWithValue("p4", DateTimeOffset.UtcNow);
             await connection.OpenAsync();
-            var result = await cmd.ExecuteNonQueryAsync();
-            return result == 1;
+            var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) != 1)
+                {
+                    return null;
+                }
+
+                return reader.GetValue(1) as byte[];
+            }
+            else
+            {
+                return null;
+            }
         }
     }
 
-    public async Task<bool> UnlockFlow(FlowInstanceDetails instance)
+    public async Task<byte[]?> UnlockFlow(FlowInstanceDetails instance)
     {
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
-            var uq = $"update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3";
+            var uq = @$"
+update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3;
+declare @count int = @@ROWCOUNT;
+select @count, ver from flow_run where id=@p2;
+";
             SqlCommand cmd = new SqlCommand(uq, connection);
             cmd.CommandType = System.Data.CommandType.Text;
             cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow);
             cmd.Parameters.AddWithValue("p2", instance.RefId);
             cmd.Parameters.AddWithValue("p3", instance.Version);
             await connection.OpenAsync();
-            var result = await cmd.ExecuteNonQueryAsync();
-            return result == 1;
+            var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) != 1)
+                {
+                    return null;
+                }
+
+                return reader.GetValue(1) as byte[];
+            }
+            else
+            {
+                return null;
+            }
         }
+    }
+
+    public async Task<byte[]?> AcquireFlowExlusiveLock(FlowInstanceDetails instance, int timeLock = 0)
+    {
+        if (timeLock == 0)
+        {
+            timeLock = DEFAULT_TIME_LOCK_MILLISECONDS;
+        }
+
+        var i = 1;
+        byte[]? ver;
+
+        do
+        {
+            i++;
+
+            if (i > TIME_LOCK_ATTEMPTS)
+            {
+                throw new FlowLockException(
+                    $"Cannot acquire an exclusive lock on flow {instance.FlowName} with RefId {instance.RefId}");
+            }
+
+            ver = await LockFlow(instance, timeLock);
+        } while (ver == null);
+
+        return ver;
     }
 }

@@ -338,6 +338,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             if (_flowParams.FlowOptions.NoStorage == false)
             {
                 await _flowRepository.SaveContextHistory(_contextHistory);
+                var model = await _flowRepository.GetFlowModel(_context.RefId);
+                var instance = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
+                await _flowRepository.UnlockFlow(instance);
             }
 
             // it should be refreshed from database next time
@@ -407,19 +410,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             {
                 var model = models.First();
                 var flow = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
-                int i = 0;
-
-                while (!await _flowRepository.LockFlow(flow, TIME_LOCK_MILLISECONDS))
-                {
-                    i++;
-
-                    if (i > TIME_LOCK_ATTEMPTS)
-                    {
-                        throw new FlowExecutionException($"Cannot acquire an exclusive lock on flow {model.FlowTypeName} with RefId {model.RefId}");
-                    }
-
-                    await Task.Delay(TIME_LOCK_MILLISECONDS);
-                }
+                await _flowRepository.AcquireFlowExlusiveLock(flow, TIME_LOCK_MILLISECONDS);
             }
 
             MergeContextFlowParams();

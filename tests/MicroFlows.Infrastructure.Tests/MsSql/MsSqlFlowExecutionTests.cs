@@ -19,18 +19,6 @@ namespace MicroFlows.Infrastructure.Tests.MsSql;
 
 public class MsSqlFlowExecutionTests : SqlTestContainersTestBase
 {
-    //private IFlowRepository _repo;
-
-    //private FlowEngine GetEngine()
-    //{
-    //    _repo = _services.GetService<IFlowRepository>()!;
-
-    //    return new FlowEngine(new NullLogger<FlowEngine>(),
-    //        _services,
-    //        new ProxyGenerator(),
-    //        _repo);
-    //}
-
     [Fact]
     public async Task NoStorage_FluentFlow_Executed_Without_Storing_to_Db()
     {

@@ -41,13 +41,15 @@ public class FlowHistoryViewModel
 
     public async Task RestartFlow()
     {
-        await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Rerun);
+        //await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Rerun);
+        await _flowAdminProvider.RerunFlow(Model.RefId);
         await ReloadModel(Model.RefId);
     }
 
     public async Task StopFlow()
     {
-        await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Halt);
+        //await _flowAdminProvider.UpdateFlowStatus(Model.RefId, FlowStateEnum.Halt);
+        await _flowAdminProvider.HaltFlow(Model.RefId);
         await ReloadModel(Model.RefId);
     }
 

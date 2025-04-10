@@ -33,6 +33,8 @@ public class FlowStoreModel
     /// 
     /// </summary>
     public List<SignalJournalEntry> SignalJournal { get; set; } = [];
+    
+    public FlowParams Params { get; set; } = new();
 
     /// <summary>
     /// Use Tag to mark and retreive flows

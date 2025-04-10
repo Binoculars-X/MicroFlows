@@ -14,6 +14,7 @@ using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
 using Microsoft.Extensions.Logging.Abstractions;
 using MicroFlows.Domain.Interfaces;
+using MicroFlows.Infrastructure.Tests.MsSql;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -34,6 +35,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
     }
 
     protected IFlowRepository _repo;
+    protected IFlowAdminProvider _admin;
 
     protected IFlowEngine NewEngine()
     {
@@ -64,9 +66,10 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                     .RegisterFlow<LinearInlineFlow>()
                     .RegisterFlow<LinearInlineFlow2>()
                     .RegisterFlow<SampleFlow>()
+                    .RegisterFlow<FlowAdminProviderTests.WithExceptionStepFlow>()
                     ;
 
-                
+                services.AddMicroFlowsAdmin();
 
                 //services.TryAddScoped<IRepository, Repository>();
 
@@ -82,6 +85,7 @@ public class SqlTestContainersTestBase : IAsyncLifetime
 
         _services = host.Services;
         _repo = _services.GetService<IFlowRepository>()!;
+        _admin = _services.GetService<IFlowAdminProvider>()!;
         //_context = _services.GetService<MyDbContext>()!;
         //_repo = _services.GetService<IRepository>()!;
     }
