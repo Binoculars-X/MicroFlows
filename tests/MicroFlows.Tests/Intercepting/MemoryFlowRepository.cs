@@ -21,7 +21,7 @@ internal class MemoryFlowRepository : IFlowRepository
     {
         var ctx = new FlowContext();
         ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
-        ctx.Params = flowParams;
+        //ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = FlowStateEnum.Start;
         ctx.CreatedOn = DateTimeOffset.UtcNow;
@@ -33,6 +33,7 @@ internal class MemoryFlowRepository : IFlowRepository
             FlowTypeName = flow.GetType().FullName!,
             ContextHistory = [ctx],
             SignalJournal = flow.SignalJournal!,
+            Params = flowParams
         };
 
         _flowModelDictionary[ctx.RefId] = flowModel;

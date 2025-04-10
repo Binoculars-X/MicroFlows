@@ -366,10 +366,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
     }
 
-    private void MergeContextFlowParams()
+    private void MergeContextFlowParams(FlowParams modelParams)
     {
+        // ToDo: do we need that?
         var inputParams = _flowParams;
-        _flowParams = _context.Params;
+        _flowParams = modelParams;
         _flowParams.FlowType = _flowParams.FlowType ?? inputParams?.FlowType;
         _flowParams.RefId = _flowParams.RefId ?? inputParams?.RefId!;
         _flowParams.ExternalId = _flowParams.ExternalId ?? inputParams?.ExternalId!;
@@ -413,7 +414,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
                 await _flowRepository.AcquireFlowExlusiveLock(flow, TIME_LOCK_MILLISECONDS);
             }
 
-            MergeContextFlowParams();
+            MergeContextFlowParams(models.First().Params);
         }
 
         return _context.RefId;

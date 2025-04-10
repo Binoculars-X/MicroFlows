@@ -64,7 +64,7 @@ public class FlowHistoryViewModel
 
     public string? GetFlowParameters()
     {
-        var ps = Model?.ContextHistory.FirstOrDefault()?.Params;
+        var ps = Model?.Params;
 
         if (ps == null)
         {
@@ -83,7 +83,7 @@ public class FlowHistoryViewModel
 
     public string? GetFlowParametersPayload()
     {
-        var payload = Model?.ContextHistory.FirstOrDefault()?.Params?.Payload;
+        var payload = Model?.Params?.Payload;
 
         if (payload != null)
         {

@@ -85,7 +85,10 @@ namespace MicroFlows.Demo.Controllers
             var ps = new FlowParams();
             ps.FlowName = typeof(HotelBookingFlow).FullName!;
             ps.ExternalId = req.BookingId;
-            await _flowProvider.SendSignal(ps, HotelBookingFlow.ReservationConfirmedSignal);
+            
+            await _flowProvider.SendSignal(ps, HotelBookingFlow.ReservationConfirmedSignal, 
+                new ReservationReceivedPayload(true));
+            
             return Ok();
         }
     }

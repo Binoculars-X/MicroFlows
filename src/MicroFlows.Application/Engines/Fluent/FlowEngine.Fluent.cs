@@ -69,6 +69,7 @@ internal partial class FlowEngine
 
     public virtual async Task<FlowContext> ExecuteFluentFlow(FlowParams? runParameters)
     {
+        _flowParams = _flowParams ?? runParameters;
         var flowType = runParameters.FlowType;
         var refId = runParameters.RefId;
         //var parameters = runParameters.FlowParameters;
@@ -143,7 +144,7 @@ internal partial class FlowEngine
         var index = context.CurrentTaskLine;
         context.ExecutionResult.FlowState = FlowStateEnum.Continue;
         context.ExecutionResult.ResultState = ResultStateEnum.Success;
-        flow.SetParams(context.Params);
+        flow.SetParams(_flowParams);
         flow.SetModel(context.Model);
 
         await RunFlowTasks(index, flow, context, flowBuilder);

@@ -70,7 +70,7 @@ public partial class MsSqlFlowRepository : IFlowRepository
         var statusEnum = m.State;
         var status = statusEnum.ToString();
         var task = m.ContextHistory.Last().CurrentTask;
-        var correlationId = m.ContextHistory.First().Params.CorrelationId;
+        var correlationId = m.Params.CorrelationId;
         return new FlowRecord(m.RefId, m.ExternalId, correlationId, m.FlowTypeName, status, statusEnum, task);
     }
 
@@ -157,7 +157,7 @@ end
     {
         var ctx = new FlowContext();
         ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
-        ctx.Params = flowParams;
+        //ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
         ctx.ExecutionResult.ResultState = Domain.Enums.ResultStateEnum.Success;
@@ -171,6 +171,7 @@ end
             FlowTypeName = flow.GetType().FullName!,
             ContextHistory = [ctx],
             SignalJournal = flow.SignalJournal!,
+            Params = flowParams
         };
 
         RefreshFlowStoreModelRoot(flowModel);
@@ -228,8 +229,8 @@ SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8;
             };
 
             flowModel.ExceptionMessage = ctx.ExecutionResult.ExceptionMessage;
-            flowModel.Tag = ctx.Params.Tag;
-            flowModel.ExternalId = ctx.Params.ExternalId;
+            flowModel.Tag = flowModel.Params.Tag;
+            flowModel.ExternalId = flowModel.Params.ExternalId;
         }
     }
 
@@ -546,7 +547,7 @@ order by ver, exec_status ";
             var uq = $@"
 update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3 and (time_lock is null or time_lock < @p4);
 declare @count int = @@ROWCOUNT;
-select @count, ver from flow_run where id=@p2;
+select @count, ver from {_tableName} where id=@p2;
 ";
             SqlCommand cmd = new SqlCommand(uq, connection);
             cmd.CommandType = System.Data.CommandType.Text;
@@ -580,7 +581,7 @@ select @count, ver from flow_run where id=@p2;
             var uq = @$"
 update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3;
 declare @count int = @@ROWCOUNT;
-select @count, ver from flow_run where id=@p2;
+select @count, ver from {_tableName} where id=@p2;
 ";
             SqlCommand cmd = new SqlCommand(uq, connection);
             cmd.CommandType = System.Data.CommandType.Text;
