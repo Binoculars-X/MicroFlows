@@ -70,7 +70,7 @@ OnAdornmentClick=@CopyClick />
 
     async Task CopyExceptionClick()
     {
-        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetModel());
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetException());
         Snackbar.Add("Copied to clipboard", Severity.Success);
     }
 

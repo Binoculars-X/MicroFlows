@@ -47,8 +47,8 @@ else
                 <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
                 @onclick="SendSignal" title="Send signal" />
 
-                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary" 
-                title="Change Instance" />
+                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary"
+                @onclick="ChangeSignals" title="Change Signal Journal" />
             </td>
         </tr>
     </table>
@@ -57,23 +57,38 @@ else
         <table>
             <tr>
                 <td>FlowTypeName:</td>
-                <td>@_vm.Model.FlowTypeName</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.FlowTypeName 
+                    ReadOnly=true/>
+                </td>
             </tr>
             <tr>
                 <td>Status:</td>
-                <td>@_vm.Model.State.ToString()</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.State.ToString()
+                                  ReadOnly=true />
+                </td>
             </tr>
             <tr>
                 <td>RefId:</td>
-                <td>@_vm.Model.RefId</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.RefId
+                                  ReadOnly=true />
+                </td>
             </tr>
             <tr>
                 <td>ExternalId:</td>
-                <td>@_vm.Model.ExternalId</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.ExternalId
+                                  ReadOnly=true />
+                </td>
             </tr>
             <tr>
                 <td>CorrelationId:</td>
-                <td>@_vm.Model.CorrelationId</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.CorrelationId
+                                  ReadOnly=true />
+                </td>
             </tr>
         </table>
 
@@ -173,6 +188,33 @@ ExternalId: @Model.ExternalId
         await _vm.StopFlow();
         Snackbar.Add("Flow has been stopped", Severity.Success);
         //await _vm.ReloadModel(RefId);
+    }
+
+    private async Task ChangeSignals()
+    {
+        var parameters = new DialogParameters<UpdateJournalDialog>
+        {
+            { x => x.Model, _vm.Model.SignalJournal.Select(x => new SignalJournalEntryDetails(x)).ToList() },
+        };
+
+        var options = new DialogOptions()
+            {
+                CloseButton = true,
+                CloseOnEscapeKey = true,
+                BackdropClick = false,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+
+        var dialog = await DialogService.ShowAsync<UpdateJournalDialog>("Signals", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //_vm.DeleteSteps();
+            var data = (List<SignalJournalEntryDetails>)result.Data;
+            Snackbar.Add("Signal journal has been updated", Severity.Success);
+        }
     }
 
     private async Task SendSignal()

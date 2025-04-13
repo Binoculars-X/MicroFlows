@@ -43,6 +43,7 @@ public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, 
 /// </summary>
 public abstract partial class FlowBase : IFlow
 {
+    public const string TIMEOUT_HANDLER = "TIMEOUT_HANDLER";
     //public static string Name() 
     //{
     //    var method = MethodBase.GetCurrentMethod();
@@ -196,6 +197,11 @@ public abstract partial class FlowBase : IFlow
         _signalHandlers[signal] = handler;
     }
 
+    public virtual void AddSignalTimeoutHandler(Func<SignalPayload, Task> handler)
+    {
+        AddSignalHandler(FlowBase.TIMEOUT_HANDLER, handler);
+    }
+
     public virtual void Call(Action action)
     {
         action();
@@ -276,10 +282,15 @@ public abstract partial class FlowBase : IFlow
         // If timeout reached
         if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
         {
-            if (_signalHandlers.ContainsKey(signalName))
+            if (_signalHandlers.ContainsKey(TIMEOUT_HANDLER))
             {
-                var payload = new SignalPayload() { TimeoutReachedOn = DateTimeOffset.UtcNow };
-                await _signalHandlers[signalName](payload);
+                var payload = new SignalPayload() 
+                { 
+                    TimeoutReachedOn = DateTimeOffset.UtcNow,
+                    Signal = signalName,
+                };
+
+                await _signalHandlers[TIMEOUT_HANDLER](payload);
             }
 
             TimeoutOccurred = true;

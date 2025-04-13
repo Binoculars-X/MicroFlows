@@ -110,6 +110,35 @@ public partial class FlowSignalsTests : TestBase
         Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
     }
 
+    [Fact]
+    public async Task WaitingFlow_Handles_Timeout()
+    {
+        var engine = NewEngine();
+        var ps = new FlowParams() { ExternalId = "ORDER-1234" };
+        var ctx = await engine.ExecuteFlow(typeof(SampleHandlingTimeoutFlow1), ps);
+
+        var flow = await _repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(2, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[1].CurrentTask);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
+
+        // provoke timeout
+        await Task.Delay(1100);
+
+        var ctx2 = await engine.SendSignal(typeof(SampleHandlingTimeoutFlow1), SampleHandlingTimeoutFlow1.Signal1, ps);
+        flow = await _repo.GetFlowModel(ctx2.RefId);
+        Assert.Equal(5, flow.ContextHistory.Count);
+        Assert.Equal("WaitForSignalTimeoutAsync_Signal1:1", flow.ContextHistory[2].CurrentTask);
+        Assert.Equal("CallAsync_Update:2", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal(FlowStateEnum.Finished, ctx2.ExecutionResult.FlowState);
+
+        var model = new SampleHandlingTimeoutFlow1();
+        flow.ContextHistory.Last().Model.ExportTo(model);
+        Assert.True(model.Timeout1);
+        Assert.NotNull(model.TimeoutReachedOn);
+        Assert.Equal(SampleHandlingTimeoutFlow1.Signal1, model.TimeoutReachedOnSignal);
+    }
+
     public class SampleWaitingFlow1 : FlowBase
     {
         // signals
@@ -144,4 +173,37 @@ public partial class FlowSignalsTests : TestBase
         {
         }
     }
+
+    public class SampleHandlingTimeoutFlow1 : FlowBase
+    {
+        // signals
+        public const string Signal1 = "Signal1";
+        public DateTimeOffset? TimeoutReachedOn;
+        public string? TimeoutReachedOnSignal;
+
+        public bool? Timeout1 { get; set; }
+
+        public async Task Flow()
+        {
+            AddSignalTimeoutHandler(SignalTimeoutHandler);
+
+            // stop here
+            await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(1));
+            Timeout1 = TimeoutOccurred;
+
+            await CallAsync(Update);
+        }
+
+        private async Task Update()
+        {
+        }
+
+        private Task SignalTimeoutHandler(SignalPayload payload)
+        {
+            TimeoutReachedOn = payload.TimeoutReachedOn;
+            TimeoutReachedOnSignal = payload.Signal;
+            return Task.CompletedTask;
+        }
+    }
+
 }

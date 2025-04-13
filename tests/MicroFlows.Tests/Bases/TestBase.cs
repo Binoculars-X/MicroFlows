@@ -75,6 +75,7 @@ public abstract class TestBase
                     .RegisterFlow<SampleTwoSignalPayloadWaitingFlow>()
                     .RegisterFlow<SampleSignalWaitingTimeoutFlow>()
                     .RegisterFlow<SampleWaitingFlow1>()
+                    .RegisterFlow<SampleHandlingTimeoutFlow1>()
 
                     .RegisterFlow<SampleCheckSignalFlow>()
                     .RegisterFlow<SampleNonPublicFieldsFlow>()

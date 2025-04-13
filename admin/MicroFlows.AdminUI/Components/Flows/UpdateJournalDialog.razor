@@ -1,0 +1,72 @@
+﻿@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Update signal journal
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" >
+            @for (int i = 0; i < Model.Count(); i++)
+            {
+                var index = i;
+                var m = Model[i];
+
+                if (!m.Deleted)
+                {
+                    <MudTextField T="string" Label="@GetLabel(index)" Variant="Variant.Outlined" 
+                    HelperText=@m.Entry.Record.ToString() 
+                    ShrinkLabel 
+                    @bind-Value="m.Entry.Signal" @bind-Value:after="() => Changed(index)"
+                    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Delete"
+                    OnAdornmentClick="() => DeleteSignalClick(index)" />
+                }
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Apply</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<SignalJournalEntryDetails> Model { get; set; }
+
+    MudForm form;
+
+    public string Signal { get; set; }
+    public string Payload { get; set; }
+
+    public string GetLabel(int index)
+    {
+        return $"Received on {Model[index].Entry.Received?.ToString()}";
+    }
+
+    private void Changed(int index)
+    {
+        Model[index].Changed = true;
+    }
+
+    public void DeleteSignalClick(int index)
+    {
+        Model[index].Deleted = true;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Ok()
+    {
+        form.Validate();
+
+        if (form.IsValid)
+        {
+            MudDialog.Close(DialogResult.Ok(Model));
+        }
+    }
+}

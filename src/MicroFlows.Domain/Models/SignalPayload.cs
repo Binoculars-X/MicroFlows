@@ -12,6 +12,7 @@ public class SignalPayload
     public SnapshotRecord? Record { get; internal set; }
 
     public object? Value { get; internal set; }
+    public string? Signal { get; internal set; }
     public DateTimeOffset? TimeoutReachedOn { get; internal set; }
     
     public T? GetValue<T>()
