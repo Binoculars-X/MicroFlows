@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  docker-microflows-adminui-app:
+    container_name: microflows-adminui-container
+    image: microflows-adminui:latest
+    environment:
+      ConnectionStrings__MicroFlowsSql: "Server=docker-sqlserver,1433;Database=master;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
+    ports:
+      - "5000:8080"
+    depends_on:
+      - docker-sqlserver   
+  docker-sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    container_name: docker-admin-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserverdata:/var/opt/mssql
+
+volumes:
+  sqlserverdata:
+    

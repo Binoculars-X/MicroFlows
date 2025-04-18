@@ -6,6 +6,7 @@ using MicroFlows.AdminUI.Components.Flows;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
+configuration.AddEnvironmentVariables();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -21,7 +22,9 @@ builder.Services.AddMicroFlowsAdmin();
 builder.Services.AddMicroFlowsMsSqlRepo(configuration,
     new MsSqlFlowRepositorySettings
     {
-        ConnectionString = configuration.GetConnectionString("MicroFlowsSql")
+        ConnectionString = configuration.GetConnectionString("MicroFlowsSql"),
+        CreateDatabase = true,
+        DatabaseName = "MicroFlowsDB"
     });
 
 // DI
