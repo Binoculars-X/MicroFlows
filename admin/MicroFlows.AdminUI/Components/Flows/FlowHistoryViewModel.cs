@@ -1,5 +1,6 @@
 ﻿using JsonPathToModel;
 using MicroFlows.AdminUI.Forms;
+using MicroFlows.AdminUI.Models;
 using MicroFlows.Application.Helpers;
 using MicroFlows.Domain.Enums;
 using MicroFlows.Domain.Models;
@@ -127,6 +128,13 @@ public class FlowHistoryViewModel
         }
 
         return null;
+    }
+
+    public async Task SaveSignalChanges(List<SignalJournalEntryDetails> details)
+    {
+        var newList = details.Where(x => x.Deleted == false).Select(x => x.Entry).ToList();
+        await _flowAdminProvider.UpdateFlowSignals(Model.RefId, newList);
+        await ReloadModel(Model.RefId);
     }
 
     public class CustomDateTimeOffsetConverter : JsonConverter<DateTimeOffset>

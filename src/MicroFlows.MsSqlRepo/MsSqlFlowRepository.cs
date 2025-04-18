@@ -504,8 +504,8 @@ from {_tableName}
         var q = $@"
 select top {batchSize} id, flow_name, ver 
 from {_tableName} 
-where (exec_status = '{FlowStateEnum.Start}' or exec_status = '{FlowStateEnum.Stop}' 
-    or exec_status = '{FlowStateEnum.Continue}' or exec_status = '{FlowStateEnum.Waiting}') 
+where (exec_status = '{FlowStateEnum.Start}' or exec_status = '{FlowStateEnum.Continue}' 
+or exec_status = '{FlowStateEnum.Waiting}') 
 and (time_lock is null or time_lock < @p1)
 order by ver, exec_status ";
 

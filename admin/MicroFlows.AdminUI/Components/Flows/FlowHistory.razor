@@ -47,7 +47,7 @@ else
                 <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
                 @onclick="SendSignal" title="Send signal" />
 
-                <MudIconButton Icon="@Icons.Material.Filled.ManageHistory" Color="Color.Primary"
+                <MudIconButton Icon="@Icons.Material.Filled.Subject" Color="Color.Primary"
                 @onclick="ChangeSignals" title="Change Signal Journal" />
             </td>
         </tr>
@@ -209,10 +209,10 @@ ExternalId: @Model.ExternalId
         var dialog = await DialogService.ShowAsync<UpdateJournalDialog>("Signals", parameters, options);
         var result = await dialog.Result;
 
-        if (!result.Canceled)
+        if (result?.Canceled != true)
         {
-            //_vm.DeleteSteps();
-            var data = (List<SignalJournalEntryDetails>)result.Data;
+            var data = (List<SignalJournalEntryDetails>)result.Data!;
+            await _vm.SaveSignalChanges(data);
             Snackbar.Add("Signal journal has been updated", Severity.Success);
         }
     }
