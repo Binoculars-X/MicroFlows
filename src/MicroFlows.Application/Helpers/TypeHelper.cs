@@ -5,11 +5,29 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
+using MicroFlows.Domain.Interfaces;
 
 namespace MicroFlows.Application.Helpers;
 
 public static class TypeHelper
 {
+    public static Type ResolveTypeEx(string name)
+    {
+        var type = Assembly.GetExecutingAssembly().GetType(name);
+
+        if (type == null)
+        {
+            type = MicroFlowsConfigurationServices.GetFlowType(name);
+        }
+
+        if (type == null)
+        {
+            throw new InvalidDependencyException($"Type '{name}' is not registered");
+        }
+
+        return type;
+    }
+
     public static Type ResolveType(string name)
     {
         var type = Assembly.GetExecutingAssembly().GetType(name);

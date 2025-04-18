@@ -66,28 +66,28 @@ else
                 <td>Status:</td>
                 <td>
                     <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.State.ToString()
-                                  ReadOnly=true />
+                    ReadOnly=true />
                 </td>
             </tr>
             <tr>
                 <td>RefId:</td>
                 <td>
                     <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.RefId
-                                  ReadOnly=true />
+                    ReadOnly=true />
                 </td>
             </tr>
             <tr>
                 <td>ExternalId:</td>
                 <td>
                     <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.ExternalId
-                                  ReadOnly=true />
+                    ReadOnly=true />
                 </td>
             </tr>
             <tr>
                 <td>CorrelationId:</td>
                 <td>
                     <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.CorrelationId
-                                  ReadOnly=true />
+                    ReadOnly=true />
                 </td>
             </tr>
         </table>
@@ -133,7 +133,7 @@ ExternalId: @Model.ExternalId
                     var line = lines[index];
 
                     <MudExpansionPanel Text=@line.Header>
-                        <FlowHistoryItem Model="@line.Context" Index="@index"></FlowHistoryItem>
+                        <FlowHistoryItem Model="@line.Context" Index="@index" Panel="@_panel"></FlowHistoryItem>
                     </MudExpansionPanel>
                 }
                 @*    @foreach (var line in _vm.GetLines())

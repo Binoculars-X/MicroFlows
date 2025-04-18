@@ -1,4 +1,5 @@
 ﻿using JsonPathToModel;
+using JsonPathToModel.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,6 +10,23 @@ namespace MicroFlows;
 
 public static class ModelSnapshotExtensions
 {
+    public static void UpdateRecordFromJson(this ModelSnapshot snapshot, string key, string json)
+    {
+        var record = snapshot.Records[key];
+
+        if (key == "$.Model")
+        {
+            using var jDoc = JsonDocument.Parse(json, new JsonDocumentOptions { AllowTrailingCommas = true });
+            var value = JsonSerializer.Serialize(jDoc);
+            snapshot.Records[key] = snapshot.Records[key] with { Json = value };
+        }
+        else
+        {
+            var value = JsonSerializerEx.Deserialize(json, record.Type);
+            snapshot.Records[key] = new SnapshotRecord(value);
+        }
+    }
+
     public static T? Deserialize<T>(this ModelSnapshot modelSnapshot) where T: class
     {
         return modelSnapshot.Records["$.Model"].Deserialize() as T;

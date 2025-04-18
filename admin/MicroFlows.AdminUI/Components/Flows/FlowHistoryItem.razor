@@ -26,7 +26,7 @@
             <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" title="View" />
 
             <MudIconButton Icon="@Icons.Material.Filled.EditNote" Color="Color.Success"
-                           @onclick="EditModel" title="Edit model" />
+            @onclick="EditModel" title="Edit model" />
 
             <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Color="Color.Error" 
             @onclick="Delete" title="Delete history from here" />
@@ -48,6 +48,9 @@ OnAdornmentClick=@CopyClick />
 @code {
     [Parameter]
     public FlowContext Model { get; set; }
+
+    [Parameter]
+    public MudExpansionPanels Panel { get; set; }
 
     [Parameter]
     public int Index { get; set; }
@@ -109,6 +112,8 @@ OnAdornmentClick=@CopyClick />
         {
             await _vm.DeleteSteps();
             Snackbar.Add("Execution history step(s) deleted", Severity.Success);
+            await Panel.UpdateAllAsync();
+            StateHasChanged();
         }
     }
 }
