@@ -23,7 +23,15 @@ public static class ModelSnapshotExtensions
         else
         {
             var value = JsonSerializerEx.Deserialize(json, record.Type);
-            snapshot.Records[key] = new SnapshotRecord(value);
+
+            if (value != null)
+            {
+                snapshot.Records[key] = new SnapshotRecord(value);
+            }
+            else
+            {
+                snapshot.Records[key] = snapshot.Records[key] with { Json = JsonSerializer.Serialize(value) };
+            }
         }
     }
 
