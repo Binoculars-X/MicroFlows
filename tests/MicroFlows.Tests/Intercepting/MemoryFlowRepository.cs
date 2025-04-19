@@ -142,7 +142,7 @@ internal class MemoryFlowRepository : IFlowRepository
         return [];
     }
 
-    public async Task<byte[]?> AcquireFlowExlusiveLock(FlowInstanceDetails instance, int timeLock)
+    public async Task<byte[]?> AcquireFlowExclusiveLock(FlowInstanceDetails instance, int timeLock)
     {
         return [];
     }

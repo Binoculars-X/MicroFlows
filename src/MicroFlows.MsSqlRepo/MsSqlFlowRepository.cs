@@ -607,7 +607,7 @@ select @count, ver from {_tableName} where id=@p2;
         }
     }
 
-    public async Task<byte[]?> AcquireFlowExlusiveLock(FlowInstanceDetails instance, int timeLock = 0)
+    public async Task<byte[]?> AcquireFlowExclusiveLock(FlowInstanceDetails instance, int timeLock = 0)
     {
         if (timeLock == 0)
         {

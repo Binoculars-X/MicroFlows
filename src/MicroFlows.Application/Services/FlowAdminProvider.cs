@@ -28,7 +28,7 @@ public class FlowAdminProvider : IFlowAdminProvider
         // Flow can be locked, we need to wait until it is released
         try
         {
-            model.Timestamp = await _flowRepository.AcquireFlowExlusiveLock(flow);
+            model.Timestamp = await _flowRepository.AcquireFlowExclusiveLock(flow);
             await _flowRepository.UpdateFlowModel(model);
         }
         finally
@@ -71,7 +71,7 @@ public class FlowAdminProvider : IFlowAdminProvider
         // Flow can be locked, we need to wait until it is released
         try
         {
-            model.Timestamp = await _flowRepository.AcquireFlowExlusiveLock(flow);
+            model.Timestamp = await _flowRepository.AcquireFlowExclusiveLock(flow);
             await _flowRepository.UpdateFlowModel(model);
         }
         finally

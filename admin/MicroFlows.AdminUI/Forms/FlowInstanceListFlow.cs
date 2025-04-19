@@ -49,6 +49,8 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
         if (Params.DynamicInput.ContainsKey(SEARCH))
         {
             var query = JsonSerializer.Deserialize<FlowExtendedSearchQuery>(Params[SEARCH]);
+            SetSorting(query, queryOptions);
+
             var data = await _flowRepository.ExtendedSearch(query);
 
             return new FlowListModel
@@ -65,6 +67,27 @@ public class FlowInstanceListFlow : ListFlowBase<FlowListModel, FormFlowList>
         else
         {
             return new FlowListModel();
+        }
+    }
+
+    private void SetSorting(FlowExtendedSearchQuery? query, QueryOptions queryOptions)
+    {
+        if (!string.IsNullOrEmpty(queryOptions.SortColumn))
+        {
+            query.Sort = queryOptions.SortColumn switch 
+            { 
+                "ShortName" => FlowSearchSortOrder.Name,
+                "CreatedOn" => FlowSearchSortOrder.Created,
+                "UpdatedOn" => FlowSearchSortOrder.Modified,
+                _ => Enum.Parse<FlowSearchSortOrder>(queryOptions.SortColumn)
+            };
+
+            query.Ascending = queryOptions.SortDirection switch
+            {
+                BlazorForms.Shared.SortDirectionType.Asc => true,
+                BlazorForms.Shared.SortDirectionType.Desc => false,
+                _ => null
+            };
         }
     }
 

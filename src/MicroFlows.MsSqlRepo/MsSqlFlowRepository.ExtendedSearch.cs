@@ -84,6 +84,11 @@ from {_tableName}
                 q += $" and exec_status in ({statuses})";
             }
 
+            if (query.Sort != null)
+            {
+                q += $" order by {GetOrderColumn(query)}";
+            }
+
             cmd.CommandText = q;
             await connection.OpenAsync();
             var reader = await cmd.ExecuteReaderAsync();
@@ -113,6 +118,22 @@ from {_tableName}
 
         // ToDo: populate count
         var result = new FlowExtendedSearchResult(list, 0);
+        return result;
+    }
+
+    private string GetOrderColumn(FlowExtendedSearchQuery query)
+    {
+        string result = query.Sort switch 
+        { 
+            //FlowSearchSortOrder.RefId => 0,
+           _ => (1+(int)query.Sort).ToString(),
+        };
+
+        if (query.Ascending == false)
+        {
+            result += " desc";
+        }
+
         return result;
     }
 }

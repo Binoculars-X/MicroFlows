@@ -411,7 +411,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             {
                 var model = models.First();
                 var flow = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
-                await _flowRepository.AcquireFlowExlusiveLock(flow, TIME_LOCK_MILLISECONDS);
+                await _flowRepository.AcquireFlowExclusiveLock(flow, TIME_LOCK_MILLISECONDS);
             }
 
             MergeContextFlowParams(models.First().Params);
