@@ -13,9 +13,8 @@ public class TimeZoneHelperTests
     public void TimeZoneHelper_Converts_Utc_To_Sydney()
     {
         var timeZone = "Australia/Sydney";
-        var dateTime = DateTime.Now;
-        var utc = DateTimeOffset.UtcNow;
-        var local = TimeZoneHelper.ConvertToTimeZone(utc, timeZone);
+        var dateTime = DateTime.Parse("2025-04-19 16:34:04");
+        var local = TimeZoneHelper.ConvertDateTimeToDateTimeOffset(dateTime, timeZone);
         var converted = local.Value.DateTime;
 
         Assert.Equal(dateTime.Date, converted.Date);
@@ -29,9 +28,10 @@ public class TimeZoneHelperTests
     {
         var utcTimezone = "Etc/UTC";
         var timeZone = "Australia/Sydney";
-        var dateTime = DateTime.Now;
-        var utc = DateTimeOffset.UtcNow;
+        var dateTime = DateTime.Parse("2025-04-19 16:34:04");
         var local = TimeZoneHelper.ConvertDateTimeToDateTimeOffset(dateTime, timeZone);
+        var utcHours = 16 - local.Value.Offset.Hours;
+        var utc = DateTimeOffset.Parse($"2025-04-19T{utcHours:D2}:34:04.0000000+00:00");
         var utcConverted = TimeZoneHelper.ConvertToTimeZone(local, utcTimezone);
 
         Assert.Equal(utc.Date, utcConverted.Value.Date);
@@ -44,8 +44,10 @@ public class TimeZoneHelperTests
     public void TimeZoneHelper_ConvertDateTimeToUtc_Returns_Utc()
     {
         var timeZone = "Australia/Sydney";
-        var dateTime = DateTime.Now;
-        var utc = DateTimeOffset.UtcNow;
+        var dateTime = DateTime.Parse("2025-04-19 16:34:04");
+        var local = TimeZoneHelper.ConvertDateTimeToDateTimeOffset(dateTime, timeZone);
+        var utcHours = 16 - local.Value.Offset.Hours;
+        var utc = DateTimeOffset.Parse($"2025-04-19T{utcHours:D2}:34:04.0000000+00:00");
         var converted = TimeZoneHelper.ConvertDateTimeToUtc(dateTime, timeZone);
 
         Assert.Equal(utc.Date, converted.Value.Date);
