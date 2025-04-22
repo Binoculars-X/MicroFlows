@@ -49,7 +49,7 @@ public static class FluentFlowDefinition
         return flow; 
     }
 
-    public static F WaitForSignalTimeout<F>(this F flow, string signal) where F : class, IFlowBuilder
+    public static F WaitForSignalTimeout<F>(this F flow, string signal, TimeSpan timeSpan) where F : class, IFlowBuilder
     {
         // ToDo: implement
         return flow;

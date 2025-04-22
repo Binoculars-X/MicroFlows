@@ -66,6 +66,9 @@ public class OrderFlow : FlowBase
 
 **Release Notes**
 
+**1.1.0+**
+- Demo and adminUI server
+
 **1.0.0+**
 - Added MsSqlFlowRepository
 - Added Fluent Flows

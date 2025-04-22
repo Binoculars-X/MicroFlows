@@ -22,7 +22,8 @@ public class SampleFlowTest : TestBase
         return new FlowEngine(new NullLogger<FlowEngine>(),
             _services,
             new ProxyGenerator(),
-            _repo);
+            _repo,
+            null);
     }
 
     [Fact]
