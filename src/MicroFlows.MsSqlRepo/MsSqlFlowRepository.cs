@@ -614,7 +614,7 @@ select @count, ver from {_tableName} where id=@p2;
             timeLock = DEFAULT_TIME_LOCK_MILLISECONDS;
         }
 
-        var i = 1;
+        var i = 0;
         byte[]? ver;
 
         do
@@ -628,6 +628,11 @@ select @count, ver from {_tableName} where id=@p2;
             }
 
             ver = await LockFlow(instance, timeLock);
+
+            if (ver == null)
+            {
+                await Task.Delay(timeLock);
+            }
         } while (ver == null);
 
         return ver;

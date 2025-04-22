@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Text.Json;
 using Castle.Components.DictionaryAdapter.Xml;
+using MicroFlows.Application.Abstractions;
 
 namespace MicroFlows;
 
@@ -56,8 +57,14 @@ public abstract partial class FlowBase : IFlow
     [JsonIgnore]
     public DateTimeOffset? ExecutedOn { get; set; }
 
+    //[JsonIgnore]
+    //public bool TimeoutOccurred { get; set; }
+
     [JsonIgnore]
-    public bool TimeoutOccurred { get; set; }
+    public IFlowEnvironment Environment => _environment;
+
+    [JsonIgnore]
+    internal FlowEnvironment _environment = new();
 
     //[JsonIgnore]
     //public string ExternalId { get; set; }
@@ -188,6 +195,17 @@ public abstract partial class FlowBase : IFlow
     }
 
     /// <summary>
+    /// Override to set all signal handlers
+    /// </summary>
+    public virtual void SetSignalHandlers()
+    {
+        // Example:
+        //AddSignalHandler(signal1, handler1);
+        //AddSignalHandler(signal2, handler2);
+        //AddSignalTimeoutHandler(timeoutHandler);
+    }
+
+    /// <summary>
     /// Saves SignalHandler delegate for trigerring when a signal comes
     /// </summary>
     /// <param name="signal"></param>
@@ -277,7 +295,7 @@ public abstract partial class FlowBase : IFlow
     /// <returns>false if timeout reached</returns>
     public virtual async Task WaitForSignalTimeoutAsync(string signalName, TimeSpan timeout)
     {
-        TimeoutOccurred = false;
+        _environment.TimeoutOccurred = false;
 
         // If timeout reached
         if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
@@ -293,7 +311,7 @@ public abstract partial class FlowBase : IFlow
                 await _signalHandlers[TIMEOUT_HANDLER](payload);
             }
 
-            TimeoutOccurred = true;
+            _environment.TimeoutOccurred = true;
             return;
         }
 

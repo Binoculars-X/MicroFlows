@@ -39,6 +39,22 @@ public static class FluentFlowDefinition
     public static F EndIf<F>(this F flow) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, TaskDefTypes.EndIf, "EndIf", null); return flow; }
     public static F Wait<F>(this F flow, Func<bool> condition) where F : class, IFlowBuilder { RegisterWait(flow.Tasks, condition); return flow; }
 
+    // new approach
+    public static F Call<F>(this F flow, Func<Task> action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
+    public static F Call<F>(this F flow, Action action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
+
+    public static F WaitForSignal<F>(this F flow, string signal) where F : class, IFlowBuilder 
+    { 
+        // ToDo: implement
+        return flow; 
+    }
+
+    public static F WaitForSignalTimeout<F>(this F flow, string signal) where F : class, IFlowBuilder
+    {
+        // ToDo: implement
+        return flow;
+    }
+
     private static void RegisterTask(List<TaskDetails> tasks, TaskDefTypes type, string name, Func<Task> action)
     {
         tasks.Add(new TaskDetails { Action = action, Name = name, Type = type });

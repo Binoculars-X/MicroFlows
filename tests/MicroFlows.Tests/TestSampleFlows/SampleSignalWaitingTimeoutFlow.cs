@@ -27,11 +27,11 @@ public class SampleSignalWaitingTimeoutFlow : FlowBase
 
         // pass first time out
         await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(0));
-        Timeout1 = TimeoutOccurred;
+        Timeout1 = Environment.TimeoutOccurred;
 
         // stop here
         await WaitForSignalTimeoutAsync(Signal2, TimeSpan.FromSeconds(1));
-        Timeout2 = TimeoutOccurred;
+        Timeout2 = Environment.TimeoutOccurred;
 
         await CallAsync(async () => await Update(DateTime.Now));
     }

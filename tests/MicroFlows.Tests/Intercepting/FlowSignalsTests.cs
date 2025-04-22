@@ -151,12 +151,12 @@ public partial class FlowSignalsTests : TestBase
         {
             // pass first time out
             await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(0));
-            Timeout1 = TimeoutOccurred;
+            Timeout1 = Environment.TimeoutOccurred;
 
             // stop here
             await WaitForSignalTimeoutAsync(Signal2, TimeSpan.FromSeconds(1));
             
-            if (TimeoutOccurred == true)
+            if (Environment.TimeoutOccurred == true)
             {
                 await CallAsync(Cancel);
                 return;
@@ -189,7 +189,7 @@ public partial class FlowSignalsTests : TestBase
 
             // stop here
             await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(1));
-            Timeout1 = TimeoutOccurred;
+            Timeout1 = Environment.TimeoutOccurred;
 
             await CallAsync(Update);
         }

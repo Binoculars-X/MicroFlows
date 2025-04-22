@@ -21,6 +21,8 @@ public class TaskDetails
     public Func<bool> Condition { get; set; }
     public int GotoIndex { get; set; }
     public int Index { get; set; }
+    public string? Signal { get; set; }
+    public TimeSpan? Timeout { get; set; }
     //public string CallbackTask { get; set; }
     //public bool PreloadTableData { get; set; }
 }
@@ -37,5 +39,7 @@ public enum TaskDefTypes
     If,
     Else,
     EndIf,
-    Wait = 51
+    Wait = 51,
+    WaitSignal,
+    WaitSignalTimeout
 }

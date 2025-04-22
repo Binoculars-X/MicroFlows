@@ -146,6 +146,7 @@ internal partial class FlowEngine
         context.ExecutionResult.ResultState = ResultStateEnum.Success;
         flow.SetParams(_flowParams);
         flow.SetModel(context.Model);
+        flow.SetSignalHandlers();
 
         await RunFlowTasks(index, flow, context, flowBuilder);
         return context;
@@ -263,6 +264,14 @@ internal partial class FlowEngine
                         i++;
                     }
 
+                    continue;
+
+                case TaskDefTypes.WaitSignal:
+                    await flow.WaitForSignalAsync(task.Signal);
+                    continue;
+
+                case TaskDefTypes.WaitSignalTimeout:
+                    await flow.WaitForSignalTimeoutAsync(task.Signal, task.Timeout.Value);
                     continue;
 
                 // ToDo: add Form task case when enable forms

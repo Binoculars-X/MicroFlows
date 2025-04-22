@@ -40,7 +40,7 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
         {
             await WaitForSignalTimeoutAsync(PaymentReceivedSignal, TimeSpan.FromDays(3));
 
-            if (TimeoutOccurred)
+            if (Environment.TimeoutOccurred)
             {
                 // timeout reached
                 await CallAsync(NotifyPaymentFailed);
@@ -51,7 +51,7 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
 
         await WaitForSignalTimeoutAsync(ReservationConfirmedSignal, TimeSpan.FromDays(1));
 
-        if (TimeoutOccurred || Model.ReservationFailed)
+        if (Environment.TimeoutOccurred || Model.ReservationFailed)
         {
             await CallAsync(RevertPayment);
             await CallAsync(NotifyBookingFailed);

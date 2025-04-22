@@ -62,7 +62,7 @@ internal partial class FlowEngine
         {
             // execute skip task - supply model that was on this step
             _flowProxy.SetModel(historicTaskContext.Model);
-            _flowProxy.TimeoutOccurred = _context.ExecutionResult.TimeoutOccurred;
+            _flowProxy._environment.TimeoutOccurred = _context.ExecutionResult.TimeoutOccurred;
 
             // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
             //_flowProxy.SetParams(currentTaskContext.Params);
@@ -127,8 +127,8 @@ internal partial class FlowEngine
         try
         {
             await action();
-            result.TimeoutOccurred = _targetFlow.TimeoutOccurred;
-            _flowProxy.TimeoutOccurred = result.TimeoutOccurred;
+            result.TimeoutOccurred = _targetFlow._environment.TimeoutOccurred;
+            _flowProxy._environment.TimeoutOccurred = result.TimeoutOccurred;
         }
         catch (AggregateException exc)
         {
