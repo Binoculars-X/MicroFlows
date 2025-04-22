@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using JsonPathToModel;
 using MicroFlows.Domain.Interfaces;
 
 namespace MicroFlows;
+
 public class FlowParams : IFlowParams
 {
     public Dictionary<string, string> DynamicInput { get; set; } = [];
 
     public string RefId { get; set; } = null!;
     public string ExternalId { get; set; } = null!;
+    public string? Payload { get; set; } = null!;
     public string CorrelationId { get; set; } = null!;
     public string FlowName { get; set; } = null!;
     
@@ -23,6 +27,15 @@ public class FlowParams : IFlowParams
 
     // ToDo: do we need all them Item id and key?
     public string ItemId { get; set; } = null!;
+
+    public static FlowParams CreateWithPayload(object model)
+    {
+        var ps = new FlowParams();
+        var snapshot = new ModelSnapshot();
+        snapshot.ImportFrom(model);
+        ps.Payload = JsonSerializer.Serialize(snapshot);
+        return ps;
+    }
 
     public bool ItemKeyAboveZero
     {

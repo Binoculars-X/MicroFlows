@@ -20,39 +20,40 @@ namespace MicroFlows.Tests.Intercepting;
 
 public partial class FlowEngineTests : TestBase
 {
-    readonly MemoryFlowRepository _repo;
+    //readonly MemoryFlowRepository _repo;
 
-    public FlowEngineTests()
-    {
-        _repo = new MemoryFlowRepository();
-    }
+    //public FlowEngineTests()
+    //{
+    //    _repo = new MemoryFlowRepository();
+    //}
 
-    private FlowEngine GetEngine()
-    {
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //private FlowEngine GetEngine()
+    //{
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     [Fact]
     public async Task Engine_Should_ThrowException_ForNotRegisteredFlow()
     {
-        var engine = GetEngine();
+        //var name = SampleFlow.Name();
+        var engine = NewEngine();
         await Assert.ThrowsAsync<FlowValidationException>(async () => await engine.ExecuteFlow(this.GetType(), null));
     }
 
     [Fact]
     public async Task SampleFlow_Run_And_Stopped()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ps = new FlowParams();
         ps["flag"] = "stop";
         var ctx = await engine.ExecuteFlow(typeof(SampleFlow), ps);
 
         var flow = await _repo.GetFlowModel(ctx.RefId);
         Assert.Equal(4, flow.ContextHistory.Count);
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory.Last().ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, flow.ContextHistory.Last().ExecutionResult.FlowState);
         Assert.Equal("FlowStopException", flow.ContextHistory.Last().ExecutionResult.ExceptionType);
         //Assert.Equal("CallAsync<Flow>b__17_1:2", flow.ContextHistory.Last().CurrentTask);
         Assert.Equal(FlowStateEnum.Continue, flow.ContextHistory[1].ExecutionResult.FlowState);
@@ -69,7 +70,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task Flow_Stops_When_ConditionFalse()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleWaitingFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -93,7 +94,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(false, flow.ContextHistory[2].Model.Records["$.InvoiceSent"].Deserialize());
         Assert.NotNull(flow.ContextHistory[2].Model.Records["$.SentOrderId"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal("WaitForCondition:3", flow.ContextHistory[3].CurrentTask);
         Assert.NotNull(flow.ContextHistory[3].Model.Records["$.OrderId"].Deserialize());
         Assert.Equal(false, flow.ContextHistory[3].Model.Records["$.InvoiceSent"].Deserialize());
@@ -103,13 +104,13 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_Not_Logging_WhenResumed()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
 
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
         // resume
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleLoggingFlow), ps);
@@ -119,7 +120,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
@@ -132,7 +133,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[1].CurrentTask);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -147,7 +148,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleLoggingFlow_ShouldThrowException_WhenResumedWithWrongHistoryOrCode_LastStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleLoggingFlow), null);
         Assert.Equal(3, SampleLoggingFlow.Log.Count);
 
@@ -160,7 +161,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("CallAsync_Anonymous:1", flow.ContextHistory[4].CurrentTask);
 
         // resume and catch exception
-        engine = GetEngine();
+        engine = NewEngine();
         SampleLoggingFlow.Log.Clear();
         var ps = new FlowParams() { RefId = ctx.RefId };
 
@@ -175,7 +176,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleExceptionInActionFlow_Should_SaveFailedStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleExceptionInActionFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -191,7 +192,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(33, flow.ContextHistory[1].Model.Records["$.ModelInt"].Deserialize());
         Assert.Equal("test", flow.ContextHistory[1].Model.Records["$.ModelString"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[2].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, flow.ContextHistory[2].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[2].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[2].ExecutionResult.ExceptionType);
         Assert.Equal("CallAsync_Anonymous:2", flow.ContextHistory[2].CurrentTask);
@@ -202,7 +203,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task SampleExceptionFlow_Should_SaveFailedStep()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleExceptionFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -225,7 +226,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(33, flow.ContextHistory[2].Model.Records["$.ModelInt"].Deserialize());
         Assert.Equal("testtest", flow.ContextHistory[2].Model.Records["$.ModelString"].Deserialize());
 
-        Assert.Equal(FlowStateEnum.Stop, flow.ContextHistory[3].ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, flow.ContextHistory[3].ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, flow.ContextHistory[3].ExecutionResult.ResultState);
         Assert.Equal("Exception", flow.ContextHistory[3].ExecutionResult.ExceptionType);
         Assert.Null(flow.ContextHistory[3].CurrentTask);
@@ -233,7 +234,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("testtest", flow.ContextHistory[3].Model.Records["$.ModelString"].Deserialize());
 
         // resume
-        engine = GetEngine();
+        engine = NewEngine();
         var ps = new FlowParams() { RefId = ctx.RefId };
         await engine.ExecuteFlow(typeof(SampleExceptionFlow), ps);
         flow = await _repo.GetFlowModel(ctx.RefId);
@@ -242,7 +243,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal(5, flow.ContextHistory.Count);
 
         var context = flow.ContextHistory[3];
-        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, context.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);
@@ -250,7 +251,7 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("testtest", context.Model.Records["$.ModelString"].Deserialize());
 
         context = flow.ContextHistory[4];
-        Assert.Equal(FlowStateEnum.Stop, context.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Failed, context.ExecutionResult.FlowState);
         Assert.Equal(ResultStateEnum.Fail, context.ExecutionResult.ResultState);
         Assert.Equal("Exception", context.ExecutionResult.ExceptionType);
         Assert.Null(context.CurrentTask);

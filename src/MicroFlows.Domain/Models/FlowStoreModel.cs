@@ -17,6 +17,8 @@ public class FlowStoreModel
     /// </summary>
     public string? ExternalId { get; set; } = null!;
 
+    public string? CorrelationId { get; set; } = null!;
+
     /// <summary>
     /// Flow type full name
     /// </summary>
@@ -31,6 +33,8 @@ public class FlowStoreModel
     /// 
     /// </summary>
     public List<SignalJournalEntry> SignalJournal { get; set; } = [];
+    
+    public FlowParams Params { get; set; } = new();
 
     /// <summary>
     /// Use Tag to mark and retreive flows
@@ -40,4 +44,6 @@ public class FlowStoreModel
     public ResultStateEnum Result { get; set; }
     public FlowStateEnum State { get; set; }
     public string? ExceptionMessage { get; set; }
+
+    public byte[] Timestamp { get; set; }
 }

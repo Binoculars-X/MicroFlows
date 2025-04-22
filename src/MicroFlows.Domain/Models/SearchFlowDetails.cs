@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 
 namespace MicroFlows;
 
-public record SearchFlowDetails(string RefId, string? ExternalId, string? Tag, FlowStateEnum? State, 
+public record SearchFlowDetails(string RefId, string? ExternalId, string? Tag, FlowStateEnum? Status, 
     ResultStateEnum? Result
     );

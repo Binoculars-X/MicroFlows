@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+	  
+	  <AssemblyVersion>2.0.0</AssemblyVersion>
+	  <PackageVersion>2.0.0</PackageVersion>
+	  <PackageLicenseExpression>MIT</PackageLicenseExpression>
+	  <Description>BlazorForms.Rendering.MudBlazorUI is a rendering library for BlazorForms framework that helps to create flows, forms and rules</Description>
+	  <PackageTags>blazor;flow;dynamic;form;forms;rule;framework</PackageTags>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--<PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.12" />-->
+    <PackageReference Include="MudBlazor" Version="8.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlazorForms.Rendering\BlazorForms.Rendering.csproj" />
+  </ItemGroup>
+
+</Project>

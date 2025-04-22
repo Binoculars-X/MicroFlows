@@ -9,6 +9,7 @@ using MicroFlows.Application.Helpers;
 using FluentResults;
 using System.Collections.Concurrent;
 using JsonPathToModel;
+using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.Tests.Intercepting;
 
@@ -20,9 +21,10 @@ internal class MemoryFlowRepository : IFlowRepository
     {
         var ctx = new FlowContext();
         ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
-        ctx.Params = flowParams;
+        //ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
-        ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
+        ctx.ExecutionResult.FlowState = FlowStateEnum.Start;
+        ctx.CreatedOn = DateTimeOffset.UtcNow;
 
         var flowModel = new FlowStoreModel()
         {
@@ -31,6 +33,7 @@ internal class MemoryFlowRepository : IFlowRepository
             FlowTypeName = flow.GetType().FullName!,
             ContextHistory = [ctx],
             SignalJournal = flow.SignalJournal!,
+            Params = flowParams
         };
 
         _flowModelDictionary[ctx.RefId] = flowModel;
@@ -82,9 +85,25 @@ internal class MemoryFlowRepository : IFlowRepository
         return Task.CompletedTask;
     }
 
-    public Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
+    public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
-        throw new NotImplementedException();
+        var result = new List<FlowStoreModel>();
+        FlowStoreModel? model = null;
+
+        if (query.RefId != null)
+        {
+            model = await GetFlowModel(query.RefId);
+        }
+
+        if (query.ExternalId != null)
+        {
+            model = _flowModelDictionary.Values.FirstOrDefault(f => f.ExternalId == query.ExternalId);
+        }
+
+        var clone = TypeHelper.CloneObject(model);
+        result.Add(clone);
+
+        return result;
     }
 
     public Task UpdateFlowModel(FlowStoreModel flowModel)
@@ -101,5 +120,30 @@ internal class MemoryFlowRepository : IFlowRepository
     public async Task<List<SearchFlowDetails>> SearchFlow(FlowSearchQuery query)
     {
         throw new NotImplementedException();
+    }
+
+    public Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<byte[]?> UnlockFlow(FlowInstanceDetails instance)
+    {
+        return [];
+    }
+
+    public Task<FlowExtendedSearchResult> ExtendedSearch(FlowExtendedSearchQuery query)
+    {
+        throw new NotImplementedException();
+    }
+ 
+    public async Task<byte[]?> LockFlow(FlowInstanceDetails instance, int timeLock)
+    {
+        return [];
+    }
+
+    public async Task<byte[]?> AcquireFlowExclusiveLock(FlowInstanceDetails instance, int timeLock)
+    {
+        return [];
     }
 }

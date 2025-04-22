@@ -60,7 +60,7 @@ internal partial class FlowEngine
         string taskName = GenerateTaskName(method, arguments);
 
         var model = _context.Model;
-        var executionParams = _context.Params;
+        var executionParams = _flowParams;
         _targetFlow.SetModel(model);
 
         // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
@@ -87,7 +87,11 @@ internal partial class FlowEngine
 
         if (arguments != null && arguments.Any())
         {
-            if (arguments[0] is Func<Task>)
+            if (taskName == "WaitForSignalTimeoutAsync" || taskName == "WaitForSignalAsync")
+            {
+                taskName += $"_{arguments[0].ToString()}";
+            }    
+            else if (arguments[0] is Func<Task>)
             {
                 var parameterMethodName = ((Func<Task>)arguments[0]).Method.Name;
 

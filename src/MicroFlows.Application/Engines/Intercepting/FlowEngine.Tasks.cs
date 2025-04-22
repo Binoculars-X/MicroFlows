@@ -62,6 +62,7 @@ internal partial class FlowEngine
         {
             // execute skip task - supply model that was on this step
             _flowProxy.SetModel(historicTaskContext.Model);
+            _flowProxy._environment.TimeoutOccurred = _context.ExecutionResult.TimeoutOccurred;
 
             // ToDo: I guess it is enough to set parameters only once at the moment where we start flow
             //_flowProxy.SetParams(currentTaskContext.Params);
@@ -75,6 +76,8 @@ internal partial class FlowEngine
             // if flow changed model we should inherit this change
             // we make sure that model is a new instance
             _context.Model.ImportFrom(_flowProxy, _importOptions);
+            _flowProxy.ExecutedOn = _context.CreatedOn;
+            _targetFlow.ExecutedOn = _context.CreatedOn;
             var result = await ExecuteTask(action);
 
             if (result.ResultState != ResultStateEnum.Fail)
@@ -124,15 +127,27 @@ internal partial class FlowEngine
         try
         {
             await action();
+            result.TimeoutOccurred = _targetFlow._environment.TimeoutOccurred;
+            _flowProxy._environment.TimeoutOccurred = result.TimeoutOccurred;
         }
         catch (AggregateException exc)
         {
             LogException(exc);
             var innerExc = exc.InnerException;
 
-            if (innerExc != null)
+            if (innerExc is FlowStopException)
+            {
+                // FlowStopException
+                result.ResultState = ResultStateEnum.Success;
+                result.FlowState = FlowStateEnum.Waiting;
+                result.ExceptionMessage = innerExc.Message;
+                result.ExceptionStackTrace = innerExc.StackTrace;
+                result.ExceptionType = innerExc.GetType().Name;
+            }
+            else if (innerExc != null)
             {
                 result.ResultState = ResultStateEnum.Fail;
+                result.FlowState = FlowStateEnum.Failed;
                 result.ExceptionMessage = exc.Message;
                 result.ExceptionStackTrace = exc.StackTrace;
                 result.ExceptionType = exc.GetType().Name;
@@ -145,8 +160,9 @@ internal partial class FlowEngine
 
             if (innerExc != null)
             {
+                // FlowStopException
                 result.ResultState = ResultStateEnum.Success;
-                result.FlowState = FlowStateEnum.Stop;
+                result.FlowState = FlowStateEnum.Waiting;
                 result.ExceptionMessage = innerExc.Message;
                 result.ExceptionStackTrace = innerExc.StackTrace;
                 result.ExceptionType = innerExc.GetType().Name;
@@ -159,7 +175,7 @@ internal partial class FlowEngine
         catch (FlowStopException exc)
         {
             result.ResultState = ResultStateEnum.Success;
-            result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Waiting;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;
@@ -169,7 +185,8 @@ internal partial class FlowEngine
         {
             LogException(exc);
             result.ResultState = ResultStateEnum.Fail;
-            result.FlowState = FlowStateEnum.Stop;
+            //result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Failed;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;
@@ -178,7 +195,8 @@ internal partial class FlowEngine
         {
             LogException(exc);
             result.ResultState = ResultStateEnum.Fail;
-            result.FlowState = FlowStateEnum.Stop;
+            //result.FlowState = FlowStateEnum.Stop;
+            result.FlowState = FlowStateEnum.Failed;
             result.ExceptionMessage = exc.Message;
             result.ExceptionStackTrace = exc.StackTrace;
             result.ExceptionType = exc.GetType().Name;

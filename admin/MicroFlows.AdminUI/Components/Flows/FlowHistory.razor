@@ -1,0 +1,268 @@
+﻿@using MicroFlows.Domain.Models
+@using Domain.Enums;
+@inject FlowHistoryViewModel _vm
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<style>
+    td {
+    padding-right: 4px;
+    }
+</style>
+
+<script>
+    window.clipboardCopy = {
+    copyText: function(text) {
+    navigator.clipboard.writeText(text).then(function () {
+    //alert("Copied to clipboard!");
+    })
+    .catch(function (error) {
+    alert(error);
+    });
+    }
+    };
+</script>
+
+@if (_vm.Model == null)
+{
+    <div style="line-height: 600px; text-align: center;">Select a flow</div>
+}
+else
+{
+    <table>
+        <tr>
+            <td>
+                <h5 style="padding-top:20px; width: 200px;">Flow Instance History</h5>
+            </td>
+            <td style="width: 100%; text-align: right;">
+                <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
+                title="Run from the last step" Disabled=@_vm.RunDisabled 
+                OnClick="@RestartFlow"/>
+
+                <MudIconButton Icon="@Icons.Material.Filled.Stop" Color="Color.Secondary"
+                title="Halt" Disabled=@_vm.StopDisabled
+                OnClick="@StopFlow" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.ForwardToInbox" Color="Color.Success"
+                @onclick="SendSignal" title="Send signal" />
+
+                <MudIconButton Icon="@Icons.Material.Filled.Subject" Color="Color.Primary"
+                @onclick="ChangeSignals" title="Change Signal Journal" />
+            </td>
+        </tr>
+    </table>
+
+    <div id="unique_id_scroll_section" class="ma-0" style="height:800px;overflow: auto;">
+        <table>
+            <tr>
+                <td>FlowTypeName:</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.FlowTypeName 
+                    ReadOnly=true/>
+                </td>
+            </tr>
+            <tr>
+                <td>Status:</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.State.ToString()
+                    ReadOnly=true />
+                </td>
+            </tr>
+            <tr>
+                <td>RefId:</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.RefId
+                    ReadOnly=true />
+                </td>
+            </tr>
+            <tr>
+                <td>ExternalId:</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.ExternalId
+                    ReadOnly=true />
+                </td>
+            </tr>
+            <tr>
+                <td>CorrelationId:</td>
+                <td>
+                    <MudTextField T="string" Variant="Variant.Text" Text=@_vm.Model.CorrelationId
+                    ReadOnly=true />
+                </td>
+            </tr>
+        </table>
+
+
+
+
+        @* RefId: @Model.RefId
+<br/>
+ExternalId: @Model.ExternalId
+<br /> *@
+
+        <CascadingValue Value="_vm">
+            <MudExpansionPanels @ref=_panel MultiExpansion="true">
+                <MudExpansionPanel Text=Data>
+                    <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
+                    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                    OnAdornmentClick=@ParametersClick />
+
+                    @if (_vm.GetFlowParametersPayload() != null)
+                    {
+                        <MudTextField T="string" Label="Parameters Payload" Lines="5" Variant="Variant.Outlined"
+                        Text=@_vm.GetFlowParametersPayload()
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                        OnAdornmentClick=@ParametersPayloadClick />
+                    }
+
+                    @if (_vm.GetSignals() != null)
+                    {
+                        <MudTextField T="string" Label="Signal Journal" Lines="5" Variant="Variant.Outlined" 
+                        Text=@_vm.GetSignals()
+                        Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+                        OnAdornmentClick=@CopySignalsClick />
+                    }
+                </MudExpansionPanel>
+
+                @{
+                    var lines = _vm.GetLines();
+                }
+                @for (int i = 1; i < lines.Count(); i++)
+                {
+                    var index = i;
+                    var line = lines[index];
+
+                    <MudExpansionPanel Text=@line.Header>
+                        <FlowHistoryItem Model="@line.Context" Index="@index" Panel="@_panel"></FlowHistoryItem>
+                    </MudExpansionPanel>
+                }
+                @*    @foreach (var line in _vm.GetLines())
+         {
+            <MudExpansionPanel Text=@line.Header>
+                <FlowHistoryItem Model="@line.Context"></FlowHistoryItem>
+            </MudExpansionPanel>
+        } *@
+            </MudExpansionPanels>
+        </CascadingValue>
+    </div>
+}
+@code {
+    MudExpansionPanels _panel;
+
+    [Parameter]
+    public string? RefId{ get; set; }
+
+    //public FlowStoreModel Model { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+
+        if (_panel != null && _vm.Model?.RefId != RefId)
+        {
+            await _panel.CollapseAllAsync();
+        }
+
+        await _vm.ReloadModel(RefId);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // if (_panel != null)
+            // {
+            //     await _panel.CollapseAllAsync();
+            // }
+        }
+    }
+
+    private async Task RestartFlow()
+    {
+        await _vm.RestartFlow();
+        Snackbar.Add("Flow has been sent restarted", Severity.Success);
+        //await _vm.ReloadModel(RefId);
+    }
+
+    private async Task StopFlow()
+    {
+        await _vm.StopFlow();
+        Snackbar.Add("Flow has been stopped", Severity.Success);
+        //await _vm.ReloadModel(RefId);
+    }
+
+    private async Task ChangeSignals()
+    {
+        var parameters = new DialogParameters<UpdateJournalDialog>
+        {
+            { x => x.Model, _vm.Model.SignalJournal.Select(x => new SignalJournalEntryDetails(x)).ToList() },
+        };
+
+        var options = new DialogOptions()
+            {
+                CloseButton = true,
+                CloseOnEscapeKey = true,
+                BackdropClick = false,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true
+            };
+
+        var dialog = await DialogService.ShowAsync<UpdateJournalDialog>("Signals", parameters, options);
+        var result = await dialog.Result;
+
+        if (result?.Canceled != true)
+        {
+            var data = (List<SignalJournalEntryDetails>)result.Data!;
+            await _vm.SaveSignalChanges(data);
+            Snackbar.Add("Signal journal has been updated", Severity.Success);
+        }
+    }
+
+    private async Task SendSignal()
+    {
+        var parameters = new DialogParameters<SendSignalDialog>
+        {
+            { x => x.RefId, RefId },
+        };
+
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, BackdropClick = false,
+            MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<SendSignalDialog>("Send", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            //_vm.DeleteSteps();
+            var data = (SignalDetails)result.Data;
+            Snackbar.Add("Signal has been sent", Severity.Success);
+        }
+    }
+
+    async Task ParametersClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParameters());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+
+        try
+        {
+            // https://learn.microsoft.com/en-us/answers/questions/217767/blazor-open-a-page-in-a-new-browser-tab-using-navi
+            // how to open in a new tab
+            //await JS.InvokeAsync<object>("open", "/", "_blank");
+        }
+        catch(Exception exc)
+        {
+        }
+    }
+
+    async Task ParametersPayloadClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetFlowParametersPayload());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+    }
+
+    async Task CopySignalsClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetSignals());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+    }
+}

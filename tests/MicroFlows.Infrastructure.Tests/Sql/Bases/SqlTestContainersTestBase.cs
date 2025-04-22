@@ -10,6 +10,11 @@ using Testcontainers.MsSql;
 using MicroFlows;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows.Fluent;
 using MicroFlows.Infrastructure.Tests.TestSampleFlows;
+using Castle.DynamicProxy;
+using MicroFlows.Application.Engines.Interceptors;
+using Microsoft.Extensions.Logging.Abstractions;
+using MicroFlows.Domain.Interfaces;
+using MicroFlows.Infrastructure.Tests.MsSql;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -19,6 +24,27 @@ public class SqlTestContainersTestBase : IAsyncLifetime
         .WithImage("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
 
     protected IServiceProvider _services;
+
+    public virtual void ConfigureSqlServices(IConfiguration configuration, IServiceCollection services)
+    {
+        services.AddMicroFlowsMsSqlRepo(configuration,
+                    new MsSqlFlowRepositorySettings
+                    {
+                        ConnectionString = _msSqlContainer.GetConnectionString()
+                    });
+    }
+
+    protected IFlowRepository _repo;
+    protected IFlowAdminProvider _admin;
+
+    protected IFlowEngine NewEngine()
+    {
+        return new FlowEngine(new NullLogger<FlowEngine>(),
+            _services,
+            new ProxyGenerator(),
+            _repo,
+            new IntegrationFlowTestEnvironment());
+    }
 
     public async Task InitializeAsync()
     {
@@ -38,14 +64,12 @@ public class SqlTestContainersTestBase : IAsyncLifetime
             {
                 services.AddMicroFlows(configuration)
                     .RegisterFlow<LinearInlineFlow>()
+                    .RegisterFlow<LinearInlineFlow2>()
                     .RegisterFlow<SampleFlow>()
+                    .RegisterFlow<FlowAdminProviderTests.WithExceptionStepFlow>()
                     ;
 
-                services.AddMicroFlowsMsSqlRepo(configuration,
-                    new MsSqlFlowRepositorySettings
-                    {
-                        ConnectionString = _msSqlContainer.GetConnectionString()
-                    });
+                services.AddMicroFlowsAdmin();
 
                 //services.TryAddScoped<IRepository, Repository>();
 
@@ -55,10 +79,13 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                 //    options.UseSqlServer(_msSqlContainer.GetConnectionString());
                 //});
 
+                ConfigureSqlServices(configuration, services);
             })
             .Build();
 
         _services = host.Services;
+        _repo = _services.GetService<IFlowRepository>()!;
+        _admin = _services.GetService<IFlowAdminProvider>()!;
         //_context = _services.GetService<MyDbContext>()!;
         //_repo = _services.GetService<IRepository>()!;
     }

@@ -26,3 +26,15 @@ public class LinearInlineFlow : FlowBase<LinearModel>
             .End(() => { Model.FlowEndExecuted = true; });
     }
 }
+
+public class LinearInlineFlow2 : FlowBase<LinearModel>
+{
+    public override void Define(IFlowBuilder builder)
+    {
+        builder
+            .Begin(() => { Model.FlowStartExecuted = true; })
+            .Next(() => { Model.NextExecuted = true; })
+            .Next(() => { Model.Next2Executed = true; })
+            .End(() => { Model.FlowEndExecuted = true; });
+    }
+}

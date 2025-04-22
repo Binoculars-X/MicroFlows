@@ -12,6 +12,8 @@ public class MsSqlFlowRepositorySettings
     public string? TableName { get; set; } = null;
     public string? ConnectionString { get; set; } = null;
     public string? ConnectionStringKey { get; set; } = null;
+    public string? DatabaseName { get; set; } = null;
+    public bool? CreateDatabase { get; set; } = null;
 }
 
 public enum IdGenerationType

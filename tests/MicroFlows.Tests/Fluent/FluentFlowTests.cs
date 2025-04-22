@@ -21,13 +21,13 @@ public class FluentFlowTests : TestBase
         _repo = new MemoryFlowRepository();
     }
 
-    private FlowEngine GetEngine()
-    {
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //private FlowEngine GetEngine()
+    //{
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     [Fact]
     public void FluentFlow_Should_Be_Detected_WhenDefineOverriden()
@@ -44,7 +44,7 @@ public class FluentFlowTests : TestBase
     [Fact]
     public async Task GetFlowDefinitionDetails_Returns_States_and_Transitions()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {
@@ -59,7 +59,7 @@ public class FluentFlowTests : TestBase
     [Fact]
     public async Task FluentFlow_Executed_Successfully()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {

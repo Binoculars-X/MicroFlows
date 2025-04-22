@@ -16,17 +16,27 @@ using MicroFlows.Domain.Enums;
 
 namespace MicroFlows.MsSqlRepo;
 
-public class MsSqlFlowRepository : IFlowRepository
+public partial class MsSqlFlowRepository : IFlowRepository
 {
+    public const int DEFAULT_TIME_LOCK_MILLISECONDS = 1000;
+    public const int TIME_LOCK_ATTEMPTS = 3;
+
     public const string CONNECTION_STRING_KEY = "MsSqlFlowRepositoryConnectionString";
     public const string TABLE_NAME = "flow_run";
 
     private readonly string _connectionString;
     private readonly string _tableName;
+    private readonly MsSqlFlowRepositorySettings _settings;
 
     public MsSqlFlowRepository(IConfiguration configuration, MsSqlFlowRepositorySettings? settings = null)
     {
-        _tableName = settings?.TableName ?? TABLE_NAME;
+        _settings = settings ?? new MsSqlFlowRepositorySettings();
+        _tableName = GetTableNameOnly();
+
+        if (_settings?.DatabaseName != null)
+        {
+            _tableName = $"{_settings.DatabaseName}..{_tableName}";
+        }
 
         if (string.IsNullOrEmpty(_tableName))
         {
@@ -48,28 +58,94 @@ public class MsSqlFlowRepository : IFlowRepository
             throw new ArgumentOutOfRangeException(nameof(_connectionString));
         }
 
-        CheckTablesExist();
+        CheckDbTablesExist();
     }
 
-    private void CheckTablesExist()
+    public record FlowRecord(string RefId, string? ExternalId, string? CorrelationId, string FlowName, 
+        string Status, FlowStateEnum? StatusEnum, string? LastTask);
+
+    private FlowRecord GetFlowRecord(FlowStoreModel m)
     {
+        //var statusEnum = m.ContextHistory.Last().ExecutionResult.FlowState;
+        var statusEnum = m.State;
+        var status = statusEnum.ToString();
+        var task = m.ContextHistory.Last().CurrentTask;
+        var correlationId = m.Params.CorrelationId;
+        return new FlowRecord(m.RefId, m.ExternalId, correlationId, m.FlowTypeName, status, statusEnum, task);
+    }
+
+    private string GetTableNameOnly()
+    {
+        return _settings?.TableName ?? TABLE_NAME;
+    }
+
+    private void CheckDbTablesExist()
+    {
+        if (_settings.CreateDatabase == true)
+        {
+            var dbQuery = @$"
+IF NOT EXISTS(SELECT * FROM sys.databases WHERE name = '{_settings.DatabaseName}')
+BEGIN
+    CREATE DATABASE [{_settings.DatabaseName}]
+END
+";
+            using (SqlConnection connection = new SqlConnection(_connectionString))
+            {
+                SqlCommand command = new SqlCommand(dbQuery, connection);
+                command.Connection.Open();
+                command.ExecuteNonQuery();
+            }
+        }
+
+        var use = _settings?.DatabaseName == null ? "" : $"use [{_settings?.DatabaseName}];";
+
         var q = @$"
-if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
+{use}
+if not exists (select * from sysobjects where name='{GetTableNameOnly()}' and xtype='U')
+begin
     create table {_tableName} (
+        row_id int not null identity(1, 1),
         id uniqueidentifier not null,
+        external_id varchar(64) null,
+        correlation_id varchar(64) null,
+        exec_status varchar(10) not null,
+        exec_task varchar(64) null,
         flow_json varchar(max) not null,
+        flow_name varchar(256) not null,
+        tag varchar(256) null,
         created_on datetimeoffset(7) null,
         modified_on datetimeoffset(7) null,
         time_lock datetimeoffset(7) null,
         ver timestamp not null,
-        CONSTRAINT [PK_{_tableName}] PRIMARY KEY CLUSTERED 
+        CONSTRAINT [PK_{GetTableNameOnly()}] PRIMARY KEY CLUSTERED 
         (
-	        [id] ASC
+	        [row_id] ASC
         )
-    )";
+    );
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_id] ON {_tableName}
+    (
+	    [external_id] ASC
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_external_id] ON {_tableName}
+    (
+	    [external_id] ASC
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_exec_status] ON {_tableName}
+    (
+	    [exec_status] ASC
+    );
+
+    CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_time_lock] ON {_tableName}
+    (
+	    [time_lock] ASC
+    );
+end
+";
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             SqlCommand command = new SqlCommand(q, connection);
             command.Connection.Open();
@@ -81,10 +157,12 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
     {
         var ctx = new FlowContext();
         ctx.Model.ImportFrom(flow, new ImportOptions { ExcludeStartsWith = "__" });
-        ctx.Params = flowParams;
+        //ctx.Params = flowParams;
         ctx.RefId = Guid.NewGuid().ToString();
         ctx.ExecutionResult.FlowState = Domain.Enums.FlowStateEnum.Start;
         ctx.ExecutionResult.ResultState = Domain.Enums.ResultStateEnum.Success;
+        ctx.CreatedOn = DateTimeOffset.UtcNow;
+        ctx.CurrentTask = "Begin:0";
 
         var flowModel = new FlowStoreModel()
         {
@@ -93,6 +171,7 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
             FlowTypeName = flow.GetType().FullName!,
             ContextHistory = [ctx],
             SignalJournal = flow.SignalJournal!,
+            Params = flowParams
         };
 
         RefreshFlowStoreModelRoot(flowModel);
@@ -100,19 +179,25 @@ if not exists (select * from sysobjects where name='{_tableName}' and xtype='U')
         if (!flowParams.FlowOptions.NoStorage)
         {
             var json = JsonSerializer.Serialize(flowModel);
+            var rec = GetFlowRecord(flowModel);
 
             var q = $@"
-INSERT INTO {_tableName}(id, flow_json)
-SELECT @p1, @p2;
+INSERT INTO {_tableName}(id, flow_json, external_id, exec_status, created_on, flow_name, exec_task, correlation_id)
+SELECT @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8;
 ";
 
-            using (SqlConnection connection = new SqlConnection(
-                           _connectionString))
+            using (SqlConnection connection = new SqlConnection(_connectionString))
             {
                 SqlCommand cmd = new SqlCommand(q, connection);
                 cmd.CommandType = System.Data.CommandType.Text;
                 cmd.Parameters.AddWithValue("p1", ctx.RefId);
                 cmd.Parameters.AddWithValue("p2", json);
+                cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("p4", rec.Status);
+                cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
+                cmd.Parameters.AddWithValue("p6", rec.FlowName);
+                cmd.Parameters.AddWithValue("p7", ((object)rec.LastTask) ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("p8", ((object)rec.CorrelationId) ?? DBNull.Value);
                 await connection.OpenAsync();
                 var result = await cmd.ExecuteNonQueryAsync();
             }
@@ -134,10 +219,18 @@ SELECT @p1, @p2;
         if (ctx != null)
         {
             flowModel.Result = ctx.ExecutionResult.ResultState;
-            flowModel.State = ctx.ExecutionResult.FlowState;
+
+            // Rerun status should be transformed to Continue, Halt to Stop
+            flowModel.State = flowModel.State switch
+            {
+                FlowStateEnum.Rerun => FlowStateEnum.Continue,
+                FlowStateEnum.Halt => FlowStateEnum.Stop,
+                _ => ctx.ExecutionResult.FlowState
+            };
+
             flowModel.ExceptionMessage = ctx.ExecutionResult.ExceptionMessage;
-            flowModel.Tag = ctx.Params.Tag;
-            flowModel.ExternalId = ctx.Params.ExternalId;
+            flowModel.Tag = flowModel.Params.Tag;
+            flowModel.ExternalId = flowModel.Params.ExternalId;
         }
     }
 
@@ -145,22 +238,41 @@ SELECT @p1, @p2;
     {
         RefreshFlowStoreModelRoot(flowModel);
         var json = JsonSerializer.Serialize(flowModel);
+        var rec = GetFlowRecord(flowModel);
 
         var q = $@"
 UPDATE {_tableName}
-SET flow_json = @p1
-WHERE id = @p2;
+SET flow_json = @p1, external_id = @p3, exec_status = @p4, exec_task = @p7, modified_on = @p5
+WHERE id = @p2 AND ver = @p6;
 ";
 
-        using (SqlConnection connection = new SqlConnection(
-                       _connectionString))
+        using (SqlConnection connection = new SqlConnection(_connectionString))
         {
             SqlCommand cmd = new SqlCommand(q, connection);
             cmd.CommandType = System.Data.CommandType.Text;
             cmd.Parameters.AddWithValue("p1", json);
             cmd.Parameters.AddWithValue("p2", flowModel.RefId);
+            cmd.Parameters.AddWithValue("p3", ((object)rec.ExternalId) ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("p4", rec.Status);
+            cmd.Parameters.AddWithValue("p5", DateTimeOffset.UtcNow);
+            cmd.Parameters.AddWithValue("p6", flowModel.Timestamp);
+            cmd.Parameters.AddWithValue("p7", ((object)rec.LastTask) ?? DBNull.Value);
             await connection.OpenAsync();
             var result = await cmd.ExecuteNonQueryAsync();
+
+            if (result != 1)
+            {
+                throw new OptimisticLockMsSqlFlowRepositoryException($"Flow {flowModel.FlowTypeName} with RefId {flowModel.RefId} update returned not single row count: {result}");
+            }
+        }
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            SqlCommand cmd = new SqlCommand($"select ver from {_tableName} where id=@p1", connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", flowModel.RefId);
+            await connection.OpenAsync();
+            flowModel.Timestamp = (await cmd.ExecuteScalarAsync()) as byte[]; 
         }
     }
 
@@ -184,7 +296,7 @@ WHERE id = @p2;
 
     public async Task<FlowStoreModel?> GetFlowModel(string refId)
     {
-        var q = $"select id, flow_json from {_tableName} where id = @p1";
+        var q = $"select id, flow_json, ver from {_tableName} where id = @p1";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -198,6 +310,7 @@ WHERE id = @p2;
             {
                 var json = reader.GetString(1);
                 var model = JsonSerializer.Deserialize<FlowStoreModel>(json);
+                model.Timestamp = reader.GetValue(2) as byte[];
                 return model!;
             }
 
@@ -210,11 +323,13 @@ WHERE id = @p2;
     {
         var list = new List<SearchFlowDetails>();
         
+        // ToDo: refactor to use sql columns here
         var q = @$"
 select id
 , JSON_VALUE(flow_json, '$.ExternalId') externalId
 , JSON_VALUE(flow_json, '$.Tag') tag
-, JSON_VALUE(flow_json, '$.State') state
+--, JSON_VALUE(flow_json, '$.State') state
+, exec_status
 , JSON_VALUE(flow_json, '$.Result') result
 from {_tableName}
 ";
@@ -247,10 +362,12 @@ from {_tableName}
                 cmd.Parameters.AddWithValue("p3", query.Tag);
             }
 
-            if (query.State != null)
+            if (query.Status != null)
             {
-                q += " and JSON_VALUE(flow_json, '$.State') = @p4";
-                cmd.Parameters.AddWithValue("p4", query.State);
+                //q += " and JSON_VALUE(flow_json, '$.State') = @p4";
+                //cmd.Parameters.AddWithValue("p4", query.Status);
+                q += " and exec_status = @p4";
+                cmd.Parameters.AddWithValue("p4", query.Status.ToString());
             }
 
             if (query.Result != null)
@@ -269,7 +386,7 @@ from {_tableName}
                     reader.GetGuid(0).ToString(),
                     GetNullableString(reader, 1),
                     GetNullableString(reader, 2),
-                    GetNullableEnum<FlowStateEnum>(reader, 3),
+                    ParseNullableEnum<FlowStateEnum>(reader, 3),
                     GetNullableEnum<ResultStateEnum>(reader, 4));
 
                 list.Add(model!);
@@ -296,15 +413,37 @@ from {_tableName}
             return (T?)(object?)null;
         }
 
-        int v = Convert.ToInt32(reader.GetString(i));
+        int v = Convert.ToInt32(reader.GetValue(i));
         var result = (T)(object)v;
         return result;
+    }
+
+    private T? ParseNullableEnum<T>(SqlDataReader reader, int i) where T : struct, Enum 
+    {
+        if (reader.IsDBNull(i))
+        {
+            return (T?)(object?)null;
+        }
+
+        var s = reader.GetString(i);
+        var result = Enum.Parse<T>(s);
+        return result;
+    }
+
+    private DateTimeOffset? GetNullableDateTimeOffset(SqlDataReader reader, int i)
+    {
+        if (reader.IsDBNull(i))
+        {
+            return null;
+        }
+
+        return reader.GetDateTimeOffset(i);
     }
 
     public async Task<List<FlowStoreModel>> SearchFlowModel(FlowSearchQuery query)
     {
         var list = new List<FlowStoreModel>();
-        var q = $"select id, flow_json from {_tableName}";
+        var q = $"select id, flow_json, ver from {_tableName}";
 
         using (SqlConnection connection = new SqlConnection(_connectionString))
         {
@@ -336,6 +475,7 @@ from {_tableName}
             {
                 var json = reader.GetString(1);
                 var model = JsonSerializer.Deserialize<FlowStoreModel>(json);
+                model.Timestamp = reader.GetValue(2) as byte[];
                 list.Add(model!);
             }
         }
@@ -354,5 +494,147 @@ from {_tableName}
     {
         var list = await SearchFlowModel(query);
         return list.FirstOrDefault()?.ContextHistory;
+    }
+
+    public async Task<List<FlowInstanceDetails>> GetUnprocessedFlowsWithTimeLock(int batchSize, int timeLock)
+    {
+        var list = new List<FlowInstanceDetails>();
+        var resultList = new List<FlowInstanceDetails>();
+        
+        var q = $@"
+select top {batchSize} id, flow_name, ver 
+from {_tableName} 
+where (exec_status = '{FlowStateEnum.Start}' or exec_status = '{FlowStateEnum.Continue}' 
+or exec_status = '{FlowStateEnum.Waiting}') 
+and (time_lock is null or time_lock < @p1)
+order by ver, exec_status ";
+
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            SqlCommand cmd = new SqlCommand(q, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow);
+            await connection.OpenAsync();
+            var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                list.Add(new FlowInstanceDetails(
+                    reader.GetGuid(0).ToString(), 
+                    reader.GetString(1), 
+                    reader.GetValue(2) as byte[]));
+            }
+        }
+
+        foreach (var record in list)
+        {
+            var ver = await LockFlow(record, timeLock);
+
+            if (ver != null)
+            {
+                var r2 = record with { Version = ver };
+                resultList.Add(record);
+            }
+        }
+
+        return resultList;
+    }
+
+    public async Task<byte[]?> LockFlow(FlowInstanceDetails instance, int timeLock)
+    {
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            var uq = $@"
+update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3 and (time_lock is null or time_lock < @p4);
+declare @count int = @@ROWCOUNT;
+select @count, ver from {_tableName} where id=@p2;
+";
+            SqlCommand cmd = new SqlCommand(uq, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow.AddMicroseconds(timeLock));
+            cmd.Parameters.AddWithValue("p2", instance.RefId);
+            cmd.Parameters.AddWithValue("p3", instance.Version);
+            cmd.Parameters.AddWithValue("p4", DateTimeOffset.UtcNow);
+            await connection.OpenAsync();
+            var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) != 1)
+                {
+                    return null;
+                }
+
+                return reader.GetValue(1) as byte[];
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    public async Task<byte[]?> UnlockFlow(FlowInstanceDetails instance)
+    {
+        using (SqlConnection connection = new SqlConnection(_connectionString))
+        {
+            var uq = @$"
+update {_tableName} set time_lock=@p1 where id=@p2 and ver=@p3;
+declare @count int = @@ROWCOUNT;
+select @count, ver from {_tableName} where id=@p2;
+";
+            SqlCommand cmd = new SqlCommand(uq, connection);
+            cmd.CommandType = System.Data.CommandType.Text;
+            cmd.Parameters.AddWithValue("p1", DateTimeOffset.UtcNow);
+            cmd.Parameters.AddWithValue("p2", instance.RefId);
+            cmd.Parameters.AddWithValue("p3", instance.Version);
+            await connection.OpenAsync();
+            var reader = await cmd.ExecuteReaderAsync();
+
+            if (await reader.ReadAsync())
+            {
+                if (reader.GetInt32(0) != 1)
+                {
+                    return null;
+                }
+
+                return reader.GetValue(1) as byte[];
+            }
+            else
+            {
+                return null;
+            }
+        }
+    }
+
+    public async Task<byte[]?> AcquireFlowExclusiveLock(FlowInstanceDetails instance, int timeLock = 0)
+    {
+        if (timeLock == 0)
+        {
+            timeLock = DEFAULT_TIME_LOCK_MILLISECONDS;
+        }
+
+        var i = 0;
+        byte[]? ver;
+
+        do
+        {
+            i++;
+
+            if (i > TIME_LOCK_ATTEMPTS)
+            {
+                throw new FlowLockException(
+                    $"Cannot acquire an exclusive lock on flow {instance.FlowName} with RefId {instance.RefId}");
+            }
+
+            ver = await LockFlow(instance, timeLock);
+
+            if (ver == null)
+            {
+                await Task.Delay(timeLock);
+            }
+        } while (ver == null);
+
+        return ver;
     }
 }

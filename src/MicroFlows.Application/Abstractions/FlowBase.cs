@@ -11,6 +11,10 @@ using JsonPathToModel;
 using System.Linq;
 using MicroFlows.Application;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
+using System.Text.Json;
+using Castle.Components.DictionaryAdapter.Xml;
+using MicroFlows.Application.Abstractions;
 
 namespace MicroFlows;
 
@@ -21,6 +25,17 @@ namespace MicroFlows;
 public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, new()
 {
     public TModel Model { get; set; } = new();
+
+    public new void LoadModelFromParams()
+    {
+        if (Params?.Payload == null)
+        {
+            throw new FlowExecutionException("Params.Payload cannot be null");
+        }
+
+        var modelSnapshot = JsonSerializer.Deserialize<ModelSnapshot>(Params.Payload);
+        modelSnapshot.ExportTo(Model);
+    }
 }
 
 /// <summary>
@@ -29,8 +44,28 @@ public abstract partial class FlowBase<TModel> : FlowBase where TModel : class, 
 /// </summary>
 public abstract partial class FlowBase : IFlow
 {
+    public const string TIMEOUT_HANDLER = "TIMEOUT_HANDLER";
+    //public static string Name() 
+    //{
+    //    var method = MethodBase.GetCurrentMethod();
+    //    return method.DeclaringType.FullName; 
+    //}
+
     [JsonIgnore]
     public string RefId { get; set; }
+
+    [JsonIgnore]
+    public DateTimeOffset? ExecutedOn { get; set; }
+
+    //[JsonIgnore]
+    //public bool TimeoutOccurred { get; set; }
+
+    [JsonIgnore]
+    public IFlowEnvironment Environment => _environment;
+
+    [JsonIgnore]
+    internal FlowEnvironment _environment = new();
+
     //[JsonIgnore]
     //public string ExternalId { get; set; }
 
@@ -160,6 +195,17 @@ public abstract partial class FlowBase : IFlow
     }
 
     /// <summary>
+    /// Override to set all signal handlers
+    /// </summary>
+    public virtual void SetSignalHandlers()
+    {
+        // Example:
+        //AddSignalHandler(signal1, handler1);
+        //AddSignalHandler(signal2, handler2);
+        //AddSignalTimeoutHandler(timeoutHandler);
+    }
+
+    /// <summary>
     /// Saves SignalHandler delegate for trigerring when a signal comes
     /// </summary>
     /// <param name="signal"></param>
@@ -167,6 +213,11 @@ public abstract partial class FlowBase : IFlow
     public virtual void AddSignalHandler(string signal, Func<SignalPayload, Task> handler)
     {
         _signalHandlers[signal] = handler;
+    }
+
+    public virtual void AddSignalTimeoutHandler(Func<SignalPayload, Task> handler)
+    {
+        AddSignalHandler(FlowBase.TIMEOUT_HANDLER, handler);
     }
 
     public virtual void Call(Action action)
@@ -199,7 +250,8 @@ public abstract partial class FlowBase : IFlow
         {
             if (_signalHandlers.ContainsKey(signalName))
             {
-                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                //var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                var payload = new SignalPayload() { Record = entry.Record };
                 await _signalHandlers[signalName](payload);
             }
 
@@ -222,7 +274,8 @@ public abstract partial class FlowBase : IFlow
         {
             if (_signalHandlers.ContainsKey(signalName))
             {
-                var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                //var payload = new SignalPayload() { Value = entry.Record?.Deserialize() };
+                var payload = new SignalPayload() { Record = entry.Record };
                 await _signalHandlers[signalName](payload);
             }
 
@@ -230,6 +283,39 @@ public abstract partial class FlowBase : IFlow
         }
 
         throw new FlowStopException("WaitForSignal");
+    }
+
+    /// <summary>
+    /// Stops flow until signal with signalName received
+    /// If signal received then registered signal handler will be triggered to read the payload
+    /// If timeoutDate reached before signal received, it passes through
+    /// </summary>
+    /// <param name="signalName"></param>
+    /// <param name="timeout"></param>
+    /// <returns>false if timeout reached</returns>
+    public virtual async Task WaitForSignalTimeoutAsync(string signalName, TimeSpan timeout)
+    {
+        _environment.TimeoutOccurred = false;
+
+        // If timeout reached
+        if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
+        {
+            if (_signalHandlers.ContainsKey(TIMEOUT_HANDLER))
+            {
+                var payload = new SignalPayload() 
+                { 
+                    TimeoutReachedOn = DateTimeOffset.UtcNow,
+                    Signal = signalName,
+                };
+
+                await _signalHandlers[TIMEOUT_HANDLER](payload);
+            }
+
+            _environment.TimeoutOccurred = true;
+            return;
+        }
+
+        await WaitForSignalAsync(signalName);
     }
 
     public virtual void WaitForCondition(Func<bool> action)
@@ -256,5 +342,16 @@ public abstract partial class FlowBase : IFlow
     public void SetParams(FlowParams flowParams)
     {
         Params = flowParams;
+    }
+
+    public void LoadModelFromParams()
+    {
+        if (Params?.Payload == null)
+        {
+            throw new FlowExecutionException("Params.Payload cannot be null");
+        }
+
+        var modelSnapshot = JsonSerializer.Deserialize<ModelSnapshot>(Params.Payload);
+        modelSnapshot.ExportTo(this);
     }
 }

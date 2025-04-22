@@ -1,0 +1,262 @@
+﻿@page "/"
+
+@using MicroFlows.Application.Helpers
+@using MicroFlows.Domain.Models
+@using System.Timers
+
+@inject IJSRuntime JSRuntime
+@inject LocalSettings LocalSettings
+@inject MicroFlows.IFlowRepository _repo
+
+@implements IDisposable
+
+<style>
+    form {
+    display: flex; /* 2. display flex to the rescue */
+    flex-direction: row;
+    }
+
+    label, input {
+    display: block; /* 1. oh noes, my inputs are styled as block... */
+    }
+</style>
+
+<PageTitle>Flows</PageTitle>
+
+<MudGrid>
+    <MudItem xs="9">
+        <form>
+            <MudToggleIconButton @bind-Toggled="LiveOn"
+                                 Icon="@Icons.Material.Filled.PlayCircleOutline"
+                                 Color="@Color.Dark"
+            ToggledIcon="@Icons.Material.Filled.RadioButtonChecked"
+            ToggledColor="@Color.Success"
+            title="@(LiveOn ? "Live update" : "Live update Off")">
+            </MudToggleIconButton>
+            @* <span>@(LiveOn ? "Live" : "Off")</span> *@
+
+            @if (!LiveOn)
+            {
+                @* <MudButton Variant="Variant.Text" EndIcon="@Icons.Material.Filled.Refresh"
+                           Color="Color.Primary"></MudButton> *@
+
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" Color="Color.Success" 
+                title="Refresh" OnClick="@Refresh"/>
+            }
+
+
+            <MudTextField Value="Query.RefId" Label="RefId" ValueChanged="@RefIdChanged"
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudTextField Value="Query.ExternalId" Label="ExternalId" ValueChanged="@ExternalIdChanged"
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudTextField Value="Query.CorrelationId" Label="CorrelationId" ValueChanged="@CorrelationIdChanged"
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+
+            @*     <MudTextField @bind-Value="Status" Label="Status" Variant="Variant.Text" Margin="Margin.Dense"></MudTextField>
+ *@
+
+            <MudSelect T="string" Label="Status" MultiSelection="true" Style="width: 200px;"
+            SelectedValuesChanged="@StatusChanged" SelectAll="true" Variant="Variant.Text">
+                @foreach (var status in Enum.GetValues<MicroFlows.Domain.Enums.FlowStateEnum>())
+                {
+                    <MudSelectItem T="string" Value="@status.ToString()">@status.ToString()</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField Value="Query.Name" Label="Flow Name" ValueChanged="@NameChanged"
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudTextField Value="Query.Tag" Label="Tag" ValueChanged="@TagChanged"
+            Variant="Variant.Text" Margin="Margin.Dense" T="string" />
+
+            <MudDatePicker Editable=true Date="@Created" DateChanged="@CreatedChanged" Label="Created after"
+            DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+
+            <MudDatePicker Editable=true Date="@Modified" DateChanged="@ModifiedChanged" Label="Updated after"
+            DateFormat="@DateFormat" Variant="Variant.Text" Margin="Margin.Dense" Style="width: 100%;" />
+
+        </form>
+
+        <FlowListForm @ref=ListForm FlowType="@typeof(FlowInstanceListFlow).FullName" PK=pk FlowParams="@Params"
+        Options="GlobalSettings.ClickableLargeListFormOptions" EditFormOptions="GlobalSettings.EditFormOptions"
+        FormDataChanged="ListFormDataChanged" RowClick="ListFormRowClick" />
+
+
+    </MudItem>
+    <MudItem xs="3">
+        <FlowHistory RefId=@SelectedRefId />
+
+    </MudItem>
+</MudGrid>
+
+
+
+@code {
+    FlowListForm ListForm;
+    FlowParamsGeneric Params = new();
+    FlowParamsGeneric SearchParams = new FlowParamsGeneric();
+
+    FlowExtendedSearchQuery Query = new();
+
+    string DateFormat = GlobalSettings.EditFormOptions.DateFormat;
+
+    DateTime? Created;
+    DateTime? Modified;
+
+    string? SelectedRefId { get; set; }
+
+    bool _liveOn;
+
+    bool LiveOn
+    {
+        get { return _liveOn; }
+        set 
+        { 
+            _liveOn = value; 
+            _timer.Enabled = _liveOn; 
+        }
+    }
+
+    private System.Timers.Timer _timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _timer = new();
+        _timer.Interval = GlobalSettings.TIMER_REFRESH_SEC * 1000;
+
+        _timer.Elapsed += async (object? sender, ElapsedEventArgs e) => await OnTimerCallback();
+    }
+
+    private async Task OnTimerCallback()
+    {
+        try
+        {
+            await InvokeAsync(ListForm.ReloadServerData);
+        }
+        catch (Exception exc)
+        {
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+        _timer.Enabled = false;
+        _timer.Dispose();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await using var module = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./timezone2.js");
+                var timeZone = await module.InvokeAsync<string>("getBrowserTimeZone");
+                LocalSettings.TimeZone = timeZone;
+                await UpdateSearchQuery();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+
+    async Task Refresh()
+    {
+        await UpdateSearchQuery();        
+    }
+
+    async Task RefIdChanged(string? val)
+    {
+        Query.RefId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task ExternalIdChanged(string? val)
+    {
+        Query.ExternalId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task CorrelationIdChanged(string? val)
+    {
+        Query.CorrelationId = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task NameChanged(string? val)
+    {
+        Query.Name = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task StatusChanged(IEnumerable<string?> values)
+    {
+        if (values.Any())
+        {
+            Query.Status = string.Join(' ', values);
+        }
+        else
+        {
+            Query.Status = null;
+        }
+        await UpdateSearchQuery();
+    }
+
+    async Task TagChanged(string? val)
+    {
+        Query.Tag = val;
+        await UpdateSearchQuery();
+    }
+
+    async Task CreatedChanged(DateTime? val)
+    {
+        Created = val;
+
+        Query.CreatedFrom = val == null ? null 
+            : TimeZoneHelper.ConvertDateTimeToUtc(val.Value, LocalSettings.TimeZone);
+
+        await UpdateSearchQuery();
+    }
+
+    async Task ModifiedChanged(DateTime? val)
+    {
+        Modified = val;
+
+        Query.ModifiedFrom = val == null ? null 
+            : TimeZoneHelper.ConvertDateTimeToUtc(val.Value, LocalSettings.TimeZone);
+
+        await UpdateSearchQuery();
+    }
+
+    async Task UpdateSearchQuery()
+    {
+        var json = JsonSerializer.Serialize(Query);
+        Params = new();
+        Params[FlowInstanceListFlow.SEARCH] = json;
+        Params["LastSecond"] = DateTimeOffset.UtcNow.Second.ToString();
+        StateHasChanged();
+    }
+
+    private async Task ListFormDataChanged(FormSubmittedArgs args)
+    {
+        var model = args.Model as FlowListModel;
+
+        if (model?.Data?.Any(m => m.RefId == SelectedRefId) != true)
+        {
+            SelectedRefId = null;
+        }
+    }
+
+    private async Task ListFormRowClick(FormRowClickArgs args)
+    {
+        //var model = await _repo.GetFlowModel(args.Pk);
+        SelectedRefId = args.Pk;
+
+        // var ctx = new FlowContext { CurrentTask = "Created:0", CreatedOn = DateTimeOffset.UtcNow };
+        // SelectedModel.ContextHistory.Add(ctx);
+    }
+}

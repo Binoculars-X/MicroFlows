@@ -8,9 +8,16 @@ namespace MicroFlows.Domain.Enums;
 public enum FlowStateEnum
 {
     Stop = 0,
+    Start,
     Continue,
+    Waiting,
     Finished,
-    Start
+    // exception
+    Failed,
+    //
+    Rerun,
+    // stopped manually
+    Halt
 }
 
 public enum ResultStateEnum

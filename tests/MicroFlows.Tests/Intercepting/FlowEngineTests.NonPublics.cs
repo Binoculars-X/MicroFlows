@@ -27,7 +27,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task FlowEngine_Should_Support_NonPublics_InModel()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
         var ctx = await engine.ExecuteFlow(typeof(SampleNonPublicFieldsFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
 
@@ -48,7 +48,7 @@ public partial class FlowEngineTests : TestBase
         //    _services,
         //    new ProxyGenerator(),
         //    _repo);
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ctx = await engine.ExecuteFlow(typeof(SampleWithDependenciesFlow), null);
         var flow = await _repo.GetFlowModel(ctx.RefId);
@@ -57,9 +57,9 @@ public partial class FlowEngineTests : TestBase
         Assert.Equal("Begin:0", flow.ContextHistory[0].CurrentTask);
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_Update:2", flow.ContextHistory[2].CurrentTask);
-        Assert.Equal("WaitForSignalAsync:3", flow.ContextHistory[3].CurrentTask);
+        Assert.Equal("WaitForSignalAsync_xxx:3", flow.ContextHistory[3].CurrentTask);
         Assert.Equal(ResultStateEnum.Success, ctx.ExecutionResult.ResultState);
-        Assert.Equal(FlowStateEnum.Stop, ctx.ExecutionResult.FlowState);
+        Assert.Equal(FlowStateEnum.Waiting, ctx.ExecutionResult.FlowState);
 
         var last = flow.ContextHistory.Last();
         Assert.Equal(4, last.Model.Records.Count());
@@ -68,7 +68,7 @@ public partial class FlowEngineTests : TestBase
     [Fact]
     public async Task FlowEngine_Should_NotSupport_FlowsWith_NonReadonly_Dependencies()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var exc = await Assert.ThrowsAsync<TargetInvocationException>(async() => 
             await engine.ExecuteFlow(typeof(SampleWithNonReadonlyDependenciesFlow)));

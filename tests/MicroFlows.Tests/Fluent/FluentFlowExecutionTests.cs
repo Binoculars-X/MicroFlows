@@ -18,13 +18,13 @@ public class FluentFlowExecutionTests : TestBase
 {
     readonly MemoryFlowRepository _repo;
 
-    private FlowEngine GetEngine()
-    {
-        return new FlowEngine(new NullLogger<FlowEngine>(),
-            _services,
-            new ProxyGenerator(),
-            _repo);
-    }
+    //private FlowEngine GetEngine()
+    //{
+    //    return new FlowEngine(new NullLogger<FlowEngine>(),
+    //        _services,
+    //        new ProxyGenerator(),
+    //        _repo);
+    //}
 
     public FluentFlowExecutionTests()
     {
@@ -34,7 +34,7 @@ public class FluentFlowExecutionTests : TestBase
     [Fact]
     public async Task LinearFlow_Executed_Setting_Model()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {
@@ -68,7 +68,7 @@ public class FluentFlowExecutionTests : TestBase
     [Fact]
     public async Task LinearInlineFlow_Executed_Setting_Model()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {
@@ -91,7 +91,7 @@ public class FluentFlowExecutionTests : TestBase
     [Fact]
     public async Task ConditionalFlow_Executed_If_Condition()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {
@@ -115,7 +115,7 @@ public class FluentFlowExecutionTests : TestBase
     [Fact]
     public async Task ConditionFlow_with_Params_Executed_If_Condition()
     {
-        var engine = GetEngine();
+        var engine = NewEngine();
 
         var ps = new FlowParams
         {

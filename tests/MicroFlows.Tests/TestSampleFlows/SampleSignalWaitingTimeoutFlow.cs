@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace MicroFlows.Tests.TestSampleFlows;
+
+public class SampleSignalWaitingTimeoutFlow : FlowBase
+{
+    // signals
+    public const string Signal1 = "Signal1";
+    public const string Signal2 = "Signal2";
+
+    // model consists of all public serializable properties
+    public DateTime? Signal1PayloadDate { get; set; }
+    public DateTime? ModelDate { get; set; }
+    public int? ModelInt { get; set; }
+    public bool? Timeout1 { get; set; }
+    public bool? Timeout2 { get; set; }
+
+    public async Task Flow()
+    {
+        AddSignalHandler(Signal1, Signal1Handler);
+
+        //await CallAsync(Init);
+
+        // pass first time out
+        await WaitForSignalTimeoutAsync(Signal1, TimeSpan.FromSeconds(0));
+        Timeout1 = Environment.TimeoutOccurred;
+
+        // stop here
+        await WaitForSignalTimeoutAsync(Signal2, TimeSpan.FromSeconds(1));
+        Timeout2 = Environment.TimeoutOccurred;
+
+        await CallAsync(async () => await Update(DateTime.Now));
+    }
+
+    private Task Signal1Handler(SignalPayload payload)
+    {
+        Signal1PayloadDate = payload.GetValue<DateTime?>();
+        return Task.CompletedTask;
+    }
+
+    private async Task Update(DateTime? date)
+    {
+        ModelDate = date;
+    }
+
+    private async Task Init()
+    {
+        ModelInt = 33;
+    }
+}

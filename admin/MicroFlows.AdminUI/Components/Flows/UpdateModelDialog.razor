@@ -1,0 +1,63 @@
+﻿@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            Update model
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" >
+            @for (int i = 0; i < Model.Count(); i++)
+            {
+                var index = i;
+                var m = Model[i];
+
+                if (m.Name == "Model")
+                {
+                    <MudTextField T="string" Label="@m.Name" Variant="Variant.Outlined" HelperText=@m.Type ShrinkLabel 
+                    Lines="10" @bind-Value="m.Value" @bind-Value:after="() => Changed(index)" />
+                }
+                else
+                {
+                    <MudTextField T="string" Label="@m.Name" Variant="Variant.Outlined" HelperText=@m.Type ShrinkLabel
+                                  @bind-Value="m.Value" @bind-Value:after="() => Changed(index)" />
+                }
+            }
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Ok">Yes</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+
+    [Parameter]
+    public List<EditModelDetails> Model { get; set; }
+
+    MudForm form;
+
+    public string Signal { get; set; }
+    public string Payload { get; set; }
+
+    private void Changed(int index)
+    {
+        Model[index].Changed = true;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private void Ok()
+    {
+        form.Validate();
+
+        if (form.IsValid)
+        {
+            MudDialog.Close(DialogResult.Ok(Model));
+        }
+    }
+}

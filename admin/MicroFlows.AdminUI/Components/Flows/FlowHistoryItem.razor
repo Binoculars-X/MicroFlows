@@ -1,0 +1,119 @@
+﻿@using MicroFlows.Domain.Models
+@inject FlowHistoryItemViewModel _vm
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<script>
+    window.clipboardCopy = {
+    copyText: function(text) {
+    navigator.clipboard.writeText(text).then(function () {
+    //alert("Copied to clipboard!");
+    })
+    .catch(function (error) {
+    alert(error);
+    });
+    }
+    };
+</script>
+
+<table>
+    <tr>
+        <td>Status:</td>
+        <td>@Model.ExecutionResult.FlowState.ToString()
+        </td>
+        <td style="width: 100%; text-align: right;">
+            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Primary" title="View" />
+
+            <MudIconButton Icon="@Icons.Material.Filled.EditNote" Color="Color.Success"
+            @onclick="EditModel" title="Edit model" />
+
+            <MudIconButton Icon="@Icons.Material.Filled.RestoreFromTrash" Color="Color.Error" 
+            @onclick="Delete" title="Delete history from here" />
+        </td>
+    </tr>
+</table>
+
+<MudTextField T="string" Label="Model" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetModel()
+Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+OnAdornmentClick=@CopyClick />
+
+@if (Model.ExecutionResult.ExceptionMessage != null)
+{
+    <MudTextField T="string" Label="Exception" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetException()
+    Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true
+    OnAdornmentClick=@CopyExceptionClick />
+}
+
+@code {
+    [Parameter]
+    public FlowContext Model { get; set; }
+
+    [Parameter]
+    public MudExpansionPanels Panel { get; set; }
+
+    [Parameter]
+    public int Index { get; set; }
+
+    [CascadingParameter]
+    protected FlowHistoryViewModel _historyVm { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        _vm.Model = Model;
+        _vm.Index = Index;
+        _vm.Parent = _historyVm;
+    }
+
+    async Task CopyClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetModel());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+    }
+
+    async Task CopyExceptionClick()
+    {
+        await JS.InvokeVoidAsync("clipboardCopy.copyText", _vm.GetException());
+        Snackbar.Add("Copied to clipboard", Severity.Success);
+    }
+
+    private async Task EditModel()
+    {
+        var parameters = new DialogParameters<UpdateModelDialog>
+        {
+            { x => x.Model, _vm.GetModelDetails() },
+        };
+
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true,  BackdropClick = false,
+            MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+        var dialog = await DialogService.ShowAsync<UpdateModelDialog>("Edit", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await _vm.UpdateModel((List<EditModelDetails>)result.Data);
+            Snackbar.Add("Model has been updated", Severity.Success);
+        }
+    }
+
+    private async Task Delete()
+    {
+        var parameters = new DialogParameters<ConfirmationDialog>
+        {
+            { x => x.Message, _vm.GetDeleteMessage() },
+        };
+
+        var options = new DialogOptions() { CloseButton = true, CloseOnEscapeKey = true, MaxWidth = MaxWidth.Medium };
+        var dialog = await DialogService.ShowAsync<ConfirmationDialog>("Delete", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            await _vm.DeleteSteps();
+            Snackbar.Add("Execution history step(s) deleted", Severity.Success);
+            await Panel.UpdateAllAsync();
+            StateHasChanged();
+        }
+    }
+}

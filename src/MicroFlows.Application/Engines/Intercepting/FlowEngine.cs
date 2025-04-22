@@ -23,10 +23,14 @@ namespace MicroFlows.Application.Engines.Interceptors;
 /// </summary>
 internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 {
+    public const int TIME_LOCK_MILLISECONDS = 1000;
+    public const int TIME_LOCK_ATTEMPTS = 3;
+
     private readonly ILogger<FlowEngine> _logger;
     private readonly IServiceProvider _services;
     private readonly IProxyGenerator _proxyGenerator;
     private readonly IFlowRepository _flowRepository;
+    private readonly IFlowTestEnvironment _flowTestEnvironment;
 
     // running flow state
     private FlowBase? _targetFlow;
@@ -46,12 +50,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     public FlowEngine(ILogger<FlowEngine> logger, 
         IServiceProvider serviceProvider,
         IProxyGenerator proxyGenerator,
-        IFlowRepository flowRepository)
+        IFlowRepository flowRepository,
+        IFlowTestEnvironment flowTestEnvironment)
     {
         _logger = logger;
         _services = serviceProvider;
         _proxyGenerator = proxyGenerator;
         _flowRepository = flowRepository;
+        _flowTestEnvironment = flowTestEnvironment;
     }
 
     public async Task<FlowContext> SendSignal(Type flowType, string signal, FlowParams? flowParams = null, object? payload = null)
@@ -65,6 +71,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
     {
         _signals = new Dictionary<string, object?>(signals);
         return await ExecuteFlow(flowType, flowParams);
+    }
+
+    public async Task EnsureFlowExists(FlowParams flowParams)
+    {
+        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(flowParams.RefId, flowParams.ExternalId));
+
+        if (model == null)
+        {
+            throw new FlowExecutionException($"Cannot find flow '{flowParams.FlowName}' with RefId: {flowParams.RefId} and ExternalId: {flowParams.ExternalId}");
+        }
     }
 
     /// <summary>
@@ -115,6 +131,14 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             throw;
         }
 
+        // check that flow instance doesn't exist
+        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+
+        if (model != null)
+        {
+            throw new FlowExecutionException($"Cannot create new instance of flow '{_flowParams.FlowName}' with RefId: {_flowParams.RefId} and ExternalId: {_flowParams.ExternalId} because such instance already exists");
+        }
+        
         await FindOrCreateContext();
         return _context;
     }
@@ -203,6 +227,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _flowProxy.SetServiceProvider(_services);
 
         // signals
+        _targetFlow.SetSignalHandlers();
         await UpdateSignalJournal();
 
         if (_flowParams.FlowOptions.NoStorage)
@@ -238,8 +263,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
             if (innerExc != null)
             {
+                // FlowStopException
                 _context.ExecutionResult.ResultState = ResultStateEnum.Success;
-                _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+                _context.ExecutionResult.FlowState = FlowStateEnum.Waiting;
                 _context.ExecutionResult.ExceptionMessage = innerExc.Message;
                 _context.ExecutionResult.ExceptionStackTrace = innerExc.StackTrace;
                 _context.ExecutionResult.ExceptionType = innerExc.GetType().Name;
@@ -252,16 +278,17 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (FlowStopException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Success;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Waiting;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
+            CleanContextHistoryFromWaitingDubs();
             LogException(exc);
         }
         catch (FlowTaskFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             // preserve original exception details
             //_context.ExecutionResult.ExceptionMessage = exc.Message;
             //_context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
@@ -274,7 +301,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (FlowFailedException exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Finished;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
@@ -293,7 +320,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         catch (Exception exc)
         {
             _context.ExecutionResult.ResultState = ResultStateEnum.Fail;
-            _context.ExecutionResult.FlowState = FlowStateEnum.Stop;
+            _context.ExecutionResult.FlowState = FlowStateEnum.Failed;
             _context.ExecutionResult.ExceptionMessage = exc.Message;
             _context.ExecutionResult.ExceptionStackTrace = exc.StackTrace;
             _context.ExecutionResult.ExceptionType = exc.GetType().Name;
@@ -312,6 +339,9 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
             if (_flowParams.FlowOptions.NoStorage == false)
             {
                 await _flowRepository.SaveContextHistory(_contextHistory);
+                var model = await _flowRepository.GetFlowModel(_context.RefId);
+                var instance = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
+                await _flowRepository.UnlockFlow(instance);
             }
 
             // it should be refreshed from database next time
@@ -321,11 +351,39 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         return _context;
     }
 
+    private void CleanContextHistoryFromWaitingDubs()
+    {
+        if (_contextHistory.Count > 2)
+        {
+            var last = _contextHistory.Last();
+            var prev = _contextHistory[_contextHistory.Count - 2];
+
+            // if the last execution is identical
+            if (last.CurrentTask == prev.CurrentTask
+                && last.CallStack.Count == prev.CallStack.Count)
+            {
+                _contextHistory.Remove(last);
+            }
+        }
+    }
+
+    private void MergeContextFlowParams(FlowParams modelParams)
+    {
+        // ToDo: do we need that?
+        var inputParams = _flowParams;
+        _flowParams = modelParams;
+        _flowParams.FlowType = _flowParams.FlowType ?? inputParams?.FlowType;
+        _flowParams.RefId = _flowParams.RefId ?? inputParams?.RefId!;
+        _flowParams.ExternalId = _flowParams.ExternalId ?? inputParams?.ExternalId!;
+        _flowParams.CorrelationId = _flowParams.CorrelationId ?? inputParams?.CorrelationId!;
+    }
+
     private async Task UpdateSignalJournal()
     {
         foreach (var signal in _signals)
         {
-            _flowProxy!.SignalJournal.Add(new SignalJournalEntry(signal.Key, signal.Value));
+            _flowProxy!.SignalJournal.Add(
+                new SignalJournalEntry(signal.Key, signal.Value) { Received = DateTimeOffset.UtcNow });
         }
 
         var flowStoreModel = await _flowRepository.UpdateFlow(_flowProxy!);
@@ -335,9 +393,11 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
 
     private async Task<string> FindOrCreateContext()
     {
-        var model = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        //var history = await _flowRepository.FindFlowHistory(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        var models = await _flowRepository.SearchFlowModel(new FlowSearchQuery(_flowParams.RefId, _flowParams.ExternalId));
+        var history = models.FirstOrDefault()?.ContextHistory;
 
-        if (model == null)
+        if (history == null)
         {
             _context = await _flowRepository.CreateFlowContext(_targetFlow, _flowParams);
 
@@ -346,7 +406,16 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         }
         else
         {
-            _context = model.First();
+            _context = history.First();
+
+            if (!_flowParams.FlowOptions.NoStorage)
+            {
+                var model = models.First();
+                var flow = new FlowInstanceDetails(model.RefId, model.FlowTypeName, model.Timestamp);
+                await _flowRepository.AcquireFlowExclusiveLock(flow, TIME_LOCK_MILLISECONDS);
+            }
+
+            MergeContextFlowParams(models.First().Params);
         }
 
         return _context.RefId;
