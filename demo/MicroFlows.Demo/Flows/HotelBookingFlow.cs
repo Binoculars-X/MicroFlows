@@ -4,21 +4,17 @@ namespace MicroFlows.Demo.Flows;
 
 public class HotelBookingFlow: FlowBase<HotelBookingModel>
 {
-    // Model
-    public string StringModel { get; set; }
-    public int IntModel { get; set; }
-    public bool? BoolModel { get; set; } = true;
-    public DateTime? DateTimeModel { get; set; } = DateTime.Now;
-    //public DateTimeOffset DateTimeOffsetModel { get; set; }
-
     // signals
     public const string PaymentReceivedSignal = "PaymentReceived";
     public const string ReservationConfirmedSignal = "ReservationConfirmed";
 
-    public async Task Flow()
+    public override void SetSignalHandlers()
     {
         AddSignalHandler(ReservationConfirmedSignal, ReservationReceivedHandler);
+    }
 
+    public async Task Flow()
+    {
         // use Call or CallAsync to avoid extra execution when replaying
         Call(Init);
         await CallAsync(NotifyBookingReceived);
@@ -72,11 +68,6 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     private void Init()
     {
         LoadModelFromParams();
-        Model.Status = HotelBookingStatus.Created;
-
-        StringModel = "started";
-        IntModel = 17;
-        //DateTimeOffsetModel = DateTimeOffset.Now;
     }
     private async Task NotifyBookingReceived()
     {
@@ -89,11 +80,9 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     }
     private async Task ProcessCardPayment()
     {
-        Model.PaymentFailed = false;
     }
     private async Task RevertPayment()
     {
-        Model.PaymentFailed = true;
     }
     private async Task FinalizeBooking()
     {

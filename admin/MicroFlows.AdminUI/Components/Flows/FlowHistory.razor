@@ -33,9 +33,9 @@ else
     <table>
         <tr>
             <td>
-                <h5 style="padding-top:20px; width: 200px;">Flow Instance History</h5>
+                <h5 style="padding-top:20px; width: 200px;">Flow State</h5>
             </td>
-            <td style="width: 100%; text-align: right;">
+            <td style="width: 100%; text-align: right;max-width: 200px;">
                 <MudIconButton Icon="@Icons.Material.Filled.PlayArrow" Color="Color.Success" 
                 title="Run from the last step" Disabled=@_vm.RunDisabled 
                 OnClick="@RestartFlow"/>
@@ -101,7 +101,7 @@ ExternalId: @Model.ExternalId
 <br /> *@
 
         <CascadingValue Value="_vm">
-            <MudExpansionPanels @ref=_panel MultiExpansion="true">
+            <MudExpansionPanels @ref=_panel MultiExpansion="true" style="max-width: 400px;">
                 <MudExpansionPanel Text=Data>
                     <MudTextField T="string" Label="Parameters" Lines="5" Variant="Variant.Outlined" Text=@_vm.GetFlowParameters()
                     Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.CopyAll" ReadOnly=true

@@ -8,11 +8,6 @@ namespace MicroFlows.Demo.Controllers
     [Route("api/v1/hotelbooking")]
     public class HotelBookingController : ControllerBase
     {
-        //private static readonly string[] Summaries = new[]
-        //{
-        //    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        //};
-
         private readonly ILogger<HotelBookingController> _logger;
         private readonly IFlowProvider _flowProvider;
 
@@ -22,18 +17,6 @@ namespace MicroFlows.Demo.Controllers
             _flowProvider = flowProvider;
         }
 
-        //[HttpGet(Name = "GetWeatherForecast")]
-        //public IEnumerable<WeatherForecast> Get()
-        //{
-        //    return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-        //    {
-        //        Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-        //        TemperatureC = Random.Shared.Next(-20, 55),
-        //        Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-        //    })
-        //    .ToArray();
-        //}
-
         [HttpPost()]
         public async Task<ActionResult<string>> PostAsync([FromBody] CreateHotelBookingRequest req, 
             CancellationToken cancellationToken)
@@ -42,11 +25,6 @@ namespace MicroFlows.Demo.Controllers
             ps.FlowName = typeof(HotelBookingFlow).FullName!;
             ps.ExternalId = req.BookingId;
             var ctx = await _flowProvider.CreateFlow(ps, cancellationToken);
-
-            // ToDo: remove when Server start processing in background
-            //var ps2 = new FlowParams { RefId = ctx.RefId, FlowName = typeof(HotelBookingFlow).FullName! };
-            //await _flowProvider.ExecuteFlow(ps2, cancellationToken);
-
             return Ok(ctx.RefId);
         }
 
@@ -60,7 +38,7 @@ namespace MicroFlows.Demo.Controllers
 } 
         */
         [HttpPost("send-signal")]
-        public async Task<ActionResult> PostPaymentReceivedAsync([FromBody] SendSignalRequest req,
+        public async Task<ActionResult> PostSendSignalAsync([FromBody] SendSignalRequest req,
             CancellationToken cancellationToken)
         {
             await _flowProvider.SendSignalJson(req.RefId, req.Signal, req.Json);

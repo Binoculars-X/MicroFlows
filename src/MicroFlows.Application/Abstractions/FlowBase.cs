@@ -298,7 +298,10 @@ public abstract partial class FlowBase : IFlow
         _environment.TimeoutOccurred = false;
 
         // If timeout reached
-        if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow)
+        var reg = _flowProvider.GetRegisteredFlowTestEnvironment();
+        var env = reg.GetFlowTestEnvironment(GetType().FullName, RefId, null);
+
+        if (ExecutedOn != null && ExecutedOn.Value + timeout < DateTimeOffset.UtcNow + env.CurrentDateTimeCorrection)
         {
             if (_signalHandlers.ContainsKey(TIMEOUT_HANDLER))
             {

@@ -1,4 +1,5 @@
-﻿using MicroFlows.Domain.Models;
+﻿using MicroFlows.Domain.Interfaces;
+using MicroFlows.Domain.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,4 +25,6 @@ public interface IFlowProvider
     /// <param name="payloadJson"></param>
     /// <returns></returns>
     Task SendSignalJson(string refId, string signal, string? payloadJson = null);
+
+    IFlowTestEnvironment GetRegisteredFlowTestEnvironment();
 }

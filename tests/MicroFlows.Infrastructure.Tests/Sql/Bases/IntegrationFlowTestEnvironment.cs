@@ -13,4 +13,9 @@ public class IntegrationFlowTestEnvironment : IFlowTestEnvironment
     {
         return new FlowTestEnvironmentDetails();
     }
+
+    public void MoveTimeForward(TimeSpan timeSpan)
+    {
+        throw new NotImplementedException();
+    }
 }

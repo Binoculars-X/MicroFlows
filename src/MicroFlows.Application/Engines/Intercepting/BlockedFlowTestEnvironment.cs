@@ -13,4 +13,9 @@ public class BlockedFlowTestEnvironment : IFlowTestEnvironment
     {
         return FlowTestEnvironmentDetails.EmptyProd();
     }
+
+    public void MoveTimeForward(TimeSpan timeSpan)
+    {
+        throw new NotImplementedException();
+    }
 }
