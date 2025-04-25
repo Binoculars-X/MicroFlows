@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MicroFlows.Demo.Flows;
 using Microsoft.Extensions.DependencyInjection;
+using Testcontainers.MsSql;
 
 namespace MicroFlows.Demo.Tests.Helpers;
 
@@ -19,6 +20,20 @@ public class TestServices
         return Create((services, configuration) =>
         {
             services.AddSingleton<IFlowRepository, MemoryFlowRepository>();
+            services.AddSingleton<IFlowTestEnvironment, IntegrationFlowTestEnvironment>();
+        });
+    }
+
+    public static IServiceProvider CreateSql(string connectionStraing)
+    {
+        return Create((services, configuration) =>
+        {
+            services.AddMicroFlowsMsSqlRepo(configuration,
+                    new MsSqlFlowRepositorySettings
+                    {
+                        ConnectionString = connectionStraing
+                    });
+
             services.AddSingleton<IFlowTestEnvironment, IntegrationFlowTestEnvironment>();
         });
     }

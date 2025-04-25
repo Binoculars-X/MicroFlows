@@ -58,7 +58,7 @@ public class FlowHistoryViewModel
     {
         return Model?.ContextHistory.Select(c => new FlowHistoryLine(
             $"{_localSettings.ToLocalDateTime(c.CreatedOn)
-                ?.ToString(GlobalSettings.DateTimeFormat)} {c.CurrentTask.CompactMiddle(40) ?? "<Start>"}",
+                ?.ToString(GlobalSettings.DateTimeFormat)} {c.CurrentTask.CompactMiddle(40) ?? "<Unknown>"}",
             c
             )).ToList();
     }

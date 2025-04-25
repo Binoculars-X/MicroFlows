@@ -37,4 +37,27 @@ public class HotelBookingFlowTests
         flow = await repo.GetFlowModel(ctx.RefId);
         Assert.Equal(FlowStateEnum.Finished, flow.State);
     }
+
+    [Fact]
+    public async Task HotelBookingFlow_Model_Populated_from_Parameters()
+    {
+        // create app 
+        var servivces = TestServices.CreateInMemory();
+        var provider = servivces.GetService<IFlowProvider>()!;
+        var repo = servivces.GetService<IFlowRepository>()!;
+
+        // run flow
+        var req = new CreateHotelBookingRequest { BookingId = "BK0001", Amount = 100, RoomId = "#123" };
+        var ps = FlowParams.CreateWithPayload(req);
+        ps.FlowName = typeof(HotelBookingFlow).FullName!;
+        ps.ExternalId = req.BookingId;
+        var ctx = await provider.ExecuteFlow(ps);
+
+        // check flow model
+        var flow = await repo.GetFlowModel(ctx.RefId);
+        var flowModel = flow.ContextHistory.ElementAt(1).Model.Deserialize<HotelBookingModel>();
+        Assert.Equal(req.BookingId, flowModel.BookingId);
+        Assert.Equal(req.Amount, flowModel.Amount);
+        Assert.Equal(req.RoomId, flowModel.RoomId);
+    }
 }
