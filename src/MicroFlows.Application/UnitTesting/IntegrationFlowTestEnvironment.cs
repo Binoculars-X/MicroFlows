@@ -9,7 +9,7 @@ namespace MicroFlows.UnitTesting;
 
 public class IntegrationFlowTestEnvironment : IFlowTestEnvironment
 {
-    private static FlowTestEnvironmentDetails _details = new();
+    private FlowTestEnvironmentDetails _details = new();
 
     public FlowTestEnvironmentDetails GetFlowTestEnvironment(string flow, string refId, string externalId)
     {

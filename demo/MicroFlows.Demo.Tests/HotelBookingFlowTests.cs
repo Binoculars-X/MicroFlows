@@ -47,7 +47,7 @@ public class HotelBookingFlowTests
         var repo = servivces.GetService<IFlowRepository>()!;
 
         // run flow
-        var req = new CreateHotelBookingRequest { BookingId = "BK0001", Amount = 100, RoomId = "#123" };
+        var req = new CreateHotelBookingRequest { BookingId = "BK0002", Amount = 100, RoomId = "#123" };
         var ps = FlowParams.CreateWithPayload(req);
         ps.FlowName = typeof(HotelBookingFlow).FullName!;
         ps.ExternalId = req.BookingId;

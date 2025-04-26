@@ -2,8 +2,6 @@
 using MicroFlows.Demo.Models;
 using MicroFlows.Demo.Tests.Helpers;
 using MicroFlows.Domain.Enums;
-using MicroFlows.Domain.Interfaces;
-using MicroFlows.Domain.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.MsSql;
 
