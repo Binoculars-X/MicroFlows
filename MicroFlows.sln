@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorForms.Rendering", "ad
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorForms.Rendering.MudBlazorUI", "admin\fwk\BlazorForms.Rendering.MudBlazorUI\BlazorForms.Rendering.MudBlazorUI.csproj", "{BD32F7B4-A19B-BB51-8484-381898F8913D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MicroFlows.Demo.Tests", "demo\MicroFlows.Demo.Tests\MicroFlows.Demo.Tests.csproj", "{C1FFA484-888A-4B75-9DA2-D4626DE64051}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +103,10 @@ Global
 		{BD32F7B4-A19B-BB51-8484-381898F8913D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD32F7B4-A19B-BB51-8484-381898F8913D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD32F7B4-A19B-BB51-8484-381898F8913D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1FFA484-888A-4B75-9DA2-D4626DE64051}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1FFA484-888A-4B75-9DA2-D4626DE64051}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1FFA484-888A-4B75-9DA2-D4626DE64051}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1FFA484-888A-4B75-9DA2-D4626DE64051}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -119,6 +125,7 @@ Global
 		{CB80B54B-366A-136C-6ABD-9803B0B5DF05} = {86CE4A10-B3A5-4C29-844A-7507FF4EF2F2}
 		{5E9EFE8D-BF9A-E009-4A34-9DFED59F53B7} = {86CE4A10-B3A5-4C29-844A-7507FF4EF2F2}
 		{BD32F7B4-A19B-BB51-8484-381898F8913D} = {86CE4A10-B3A5-4C29-844A-7507FF4EF2F2}
+		{C1FFA484-888A-4B75-9DA2-D4626DE64051} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2B78B207-E55F-4F38-A130-92F4A5F4928C}

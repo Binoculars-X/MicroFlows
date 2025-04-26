@@ -28,6 +28,11 @@ public class FlowProvider : IFlowProvider
         _flowRepository = _services.GetService<IFlowRepository>()!;
     }
 
+    public IFlowTestEnvironment GetRegisteredFlowTestEnvironment()
+    {
+        return _services.GetService<IFlowTestEnvironment>();
+    }
+
     public async Task<FlowContext> SendSignal(FlowParams flowParams, string signal, object? payload = null)
     {
         var interceptEngine = PrepareFlowEngine(flowParams);

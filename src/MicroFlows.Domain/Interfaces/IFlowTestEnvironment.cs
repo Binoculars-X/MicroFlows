@@ -12,11 +12,12 @@ namespace MicroFlows.Domain.Interfaces;
 public interface IFlowTestEnvironment
 {
     FlowTestEnvironmentDetails GetFlowTestEnvironment(string flow, string refId, string externalId);
+    void MoveTimeForward(TimeSpan timeSpan);
 }
 
 public record FlowTestEnvironmentDetails()
 {
-    public TimeSpan? CurrentDateTimeCorrection { get; set; }
+    public TimeSpan CurrentDateTimeCorrection { get; set; }
 
     public static FlowTestEnvironmentDetails EmptyProd()
     {
