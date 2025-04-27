@@ -159,9 +159,11 @@ internal partial class FlowEngine
                 new SignalJournalEntry(signal.Key, signal.Value) { Received = DateTimeOffset.UtcNow });
         }
 
-        var flowStoreModel = await _flowRepository.UpdateFlow(flow);
-        flow.SignalJournal = flowStoreModel.SignalJournal;
-
+        if (!flow.Params.FlowOptions.NoStorage)
+        {
+            var flowStoreModel = await _flowRepository.UpdateFlow(flow);
+            flow.SignalJournal = flowStoreModel.SignalJournal;
+        }
 
         await RunFlowTasks(index, flow, context, flowBuilder);
         return context;
