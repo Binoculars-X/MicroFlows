@@ -68,6 +68,7 @@ public class OrderFlow : FlowBase
 
 **1.1.0+**
 - Demo and adminUI server
+- Fixed indexes in MsSqlFlowRepository
 
 **1.0.0+**
 - Added MsSqlFlowRepository

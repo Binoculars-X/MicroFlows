@@ -5,6 +5,7 @@ using MicroFlows.Domain.Interfaces;
 using MicroFlows.Tests.Helpers;
 using MicroFlows.Tests.Intercepting;
 using MicroFlows.Tests.TestSampleFlows;
+using MicroFlows.UnitTesting;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using System;

@@ -44,14 +44,27 @@ public static class FluentFlowDefinition
     public static F Call<F>(this F flow, Action action) where F : class, IFlowBuilder { RegisterTask(flow.Tasks, action.Method.Name, action); return flow; }
 
     public static F WaitForSignal<F>(this F flow, string signal) where F : class, IFlowBuilder 
-    { 
-        // ToDo: implement
+    {
+        flow.Tasks.Add(new TaskDetails 
+        { 
+            Name = "WaitSignal", 
+            Type = TaskDefTypes.WaitSignal, 
+            Signal = signal 
+        });
+
         return flow; 
     }
 
     public static F WaitForSignalTimeout<F>(this F flow, string signal, TimeSpan timeSpan) where F : class, IFlowBuilder
     {
-        // ToDo: implement
+        flow.Tasks.Add(new TaskDetails
+        {
+            Name = "WaitSignalTimeout",
+            Type = TaskDefTypes.WaitSignalTimeout,
+            Signal = signal,
+            Timeout = timeSpan
+        });
+
         return flow;
     }
 

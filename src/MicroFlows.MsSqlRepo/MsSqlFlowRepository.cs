@@ -125,7 +125,7 @@ begin
 
     CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_id] ON {_tableName}
     (
-	    [external_id] ASC
+	    [id] ASC
     );
 
     CREATE NONCLUSTERED INDEX [{GetTableNameOnly()}_external_id] ON {_tableName}
