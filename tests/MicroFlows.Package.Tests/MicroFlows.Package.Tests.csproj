@@ -10,13 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\MicroFlows.Tests\Intercepting\MemoryFlowRepository.cs" Link="Bases\MemoryFlowRepository.cs" />
     <Compile Include="..\MicroFlows.Tests\TestSampleFlows\SampleLoggingFlow.cs" Link="TestSampleFlows\SampleLoggingFlow.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
-    <PackageReference Include="MicroFlows" Version="1.1.2" />
+    <PackageReference Include="MicroFlows" Version="1.2.0" />
     <!--<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />-->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />

@@ -5,6 +5,7 @@ using MicroFlows.Domain.Enums;
 using MicroFlows.Tests.Intercepting;
 using MicroFlows.Tests.TestSampleFlows;
 using MicroFlows.Tests.TestSampleFlows.Fluent;
+using MicroFlows.UnitTesting;
 using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
