@@ -66,6 +66,10 @@ public class OrderFlow : FlowBase
 
 **Release Notes**
 
+**1.2.0+**
+- Fixed indexes in MsSqlFlowRepository
+- Fixed fluent flow wait for signal
+
 **1.1.0+**
 - Demo and adminUI server
 - Fixed indexes in MsSqlFlowRepository

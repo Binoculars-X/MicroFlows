@@ -41,4 +41,26 @@ public class RefundRequestFluentFlowTests : TestBase
         flow = await repo.GetFlowModel(ctx.RefId);
         Assert.Equal(FlowStateEnum.Finished, flow.State);
     }
+
+    [Fact]
+    public async Task RefundRequestFluentFlow_Stopped_and_Resumed_after_Signal()
+    {
+        var provider = _services.GetService<IFlowProvider>()!;
+        var repo = _services.GetService<IFlowRepository>()!;
+
+        // run flow
+        var ps = new FlowParams { FlowName = typeof(RefundRequestFluentFlow).FullName! };
+        var ctx = await provider.ExecuteFlow(ps);
+
+        // check flow status
+        var flow = await repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(FlowStateEnum.Waiting, flow.State);
+
+        // send signal
+        var ps2 = new FlowParams { RefId = ctx.RefId, FlowName = typeof(RefundRequestFluentFlow).FullName! };
+        await provider.SendSignal(ps2, RefundRequestFluentFlow.ApprovalReceivedSignal);
+
+        flow = await repo.GetFlowModel(ctx.RefId);
+        Assert.Equal(FlowStateEnum.Finished, flow.State);
+    }
 }

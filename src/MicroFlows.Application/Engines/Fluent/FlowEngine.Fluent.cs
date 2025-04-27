@@ -148,7 +148,20 @@ internal partial class FlowEngine
         flow.ExecutedOn = context.CreatedOn;
         flow.SetParams(_flowParams);
         flow.SetModel(context.Model);
+        flow.RefId = context.RefId;
+
+        // update signals
         flow.SetSignalHandlers();
+
+        foreach (var signal in _signals)
+        {
+            flow.SignalJournal.Add(
+                new SignalJournalEntry(signal.Key, signal.Value) { Received = DateTimeOffset.UtcNow });
+        }
+
+        var flowStoreModel = await _flowRepository.UpdateFlow(flow);
+        flow.SignalJournal = flowStoreModel.SignalJournal;
+
 
         await RunFlowTasks(index, flow, context, flowBuilder);
         return context;
