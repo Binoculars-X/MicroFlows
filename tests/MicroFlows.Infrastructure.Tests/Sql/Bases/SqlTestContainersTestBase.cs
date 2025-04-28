@@ -15,6 +15,7 @@ using MicroFlows.Application.Engines.Interceptors;
 using Microsoft.Extensions.Logging.Abstractions;
 using MicroFlows.Domain.Interfaces;
 using MicroFlows.Infrastructure.Tests.MsSql;
+using MicroFlows.UnitTesting;
 
 namespace MicroFlows.Infrastructure.Tests.Sql.Bases;
 
@@ -70,15 +71,6 @@ public class SqlTestContainersTestBase : IAsyncLifetime
                     ;
 
                 services.AddMicroFlowsAdmin();
-
-                //services.TryAddScoped<IRepository, Repository>();
-
-                //services.AddEntityFrameworkInMemoryDatabase();
-                //services.AddDbContext<MyDbContext>((sp, options) =>
-                //{
-                //    options.UseSqlServer(_msSqlContainer.GetConnectionString());
-                //});
-
                 ConfigureSqlServices(configuration, services);
             })
             .Build();
@@ -86,8 +78,6 @@ public class SqlTestContainersTestBase : IAsyncLifetime
         _services = host.Services;
         _repo = _services.GetService<IFlowRepository>()!;
         _admin = _services.GetService<IFlowAdminProvider>()!;
-        //_context = _services.GetService<MyDbContext>()!;
-        //_repo = _services.GetService<IRepository>()!;
     }
 
     public Task DisposeAsync()

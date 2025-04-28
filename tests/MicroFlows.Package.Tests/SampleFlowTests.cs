@@ -2,8 +2,8 @@ using Castle.DynamicProxy;
 using MicroFlows.Application.Engines.Interceptors;
 using MicroFlows.Application.Exceptions;
 using MicroFlows.Domain.Enums;
-using MicroFlows.Tests.Intercepting;
 using MicroFlows.Tests.TestSampleFlows;
+using MicroFlows.UnitTesting;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MicroFlows.Package.Tests;

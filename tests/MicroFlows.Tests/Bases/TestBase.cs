@@ -19,7 +19,8 @@ using MicroFlows.Domain.Interfaces;
 using Microsoft.Extensions.Logging.Abstractions;
 using MicroFlows.Tests.Intercepting;
 using static MicroFlows.Tests.Intercepting.FlowSignalsTests;
-using MicroFlows.Tests.Bases;
+using MicroFlows.Tests.UseCases.Examples;
+using MicroFlows.UnitTesting;
 
 namespace MicroFlows.Tests;
 
@@ -95,12 +96,15 @@ public abstract class TestBase
                     .RegisterFlow<FluentFlowExecutionTests.LinearInlineFlow>()
                     .RegisterFlow<FluentFlowExecutionTests.ConditionalInlineFlow>()
                     .RegisterFlow<FluentFlowExecutionTests.ConditionalParametrizedFlow>()
+                    .RegisterFlow<RefundRequestFluentFlow>()
                     ;
-                
+
+                services.AddSingleton<IFlowRepository, MemoryFlowRepository>();
+                services.AddSingleton<IFlowTestEnvironment, IntegrationFlowTestEnvironment>();
             })
             .Build();
 
         _services = app.Services;
-        _repo = new MemoryFlowRepository();
+        _repo = _services.GetService<IFlowRepository>() as MemoryFlowRepository;
     }
 }
