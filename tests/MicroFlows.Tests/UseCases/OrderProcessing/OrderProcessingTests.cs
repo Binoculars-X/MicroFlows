@@ -64,6 +64,8 @@ public class OrderProcessingTests
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync_InvoiceCreatedSignal:3", flow.ContextHistory[3].CurrentTask);
 
+        await Task.Delay(1000);
+
         // on the second pass the signal should be received
         var ctx2 = await _flowProvider.ExecuteFlow(ps);
         Assert.Equal(ctx.RefId, ctx2.RefId);
@@ -99,6 +101,8 @@ public class OrderProcessingTests
         Assert.Equal("CallAsync_Init:1", flow.ContextHistory[1].CurrentTask);
         Assert.Equal("CallAsync_StartInvoiceFlow:2", flow.ContextHistory[2].CurrentTask);
         Assert.Equal("WaitForSignalAsync_InvoiceCreatedSignal:3", flow.ContextHistory[3].CurrentTask);
+
+        await Task.Delay(1000);
 
         var ctx2 = await _flowProvider.ExecuteFlow(ps);
         Assert.Equal(ctx.RefId, ctx2.RefId);
