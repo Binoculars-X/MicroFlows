@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>MicroFlows</id>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
     <authors>Binoculars X</authors>
     <owners>Binoculars X</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -16,11 +16,12 @@
 		<group targetFramework="net9.0">
           <dependency id="Castle.Core" version="5.1.1" />
           <dependency id="Castle.Core.AsyncInterceptor" version="2.1.0" />
-          <dependency id="JsonPathToModel" version="1.6.1" />
-          <dependency id="Microsoft.Extensions.Configuration" version="8.0.0" />
+          <dependency id="JsonPathToModel" version="2.0.0" />
+          <dependency id="NodaTime" version="3.2.2" />
+          <dependency id="Microsoft.Extensions.Configuration" version="9.0.0" />
           <dependency id="Microsoft.Extensions.Logging.Abstractions" version="9.0.0" />
           <dependency id="System.Net.Http" version="4.3.4" />
-          <dependency id="System.Text.Json" version="8.0.5" />
+          <dependency id="System.Text.Json" version="9.0.4" />
           <dependency id="System.Text.RegularExpressions" version="4.3.1" />
           <dependency id="Microsoft.Data.SqlClient" version="6.0.1" />
 		</group>
