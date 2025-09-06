@@ -101,6 +101,7 @@ public abstract class TestBase
                     .RegisterFlow<RefundRequestFluentFlow>()
 
                     .RegisterFlow<SampleCheckSignalActivityFlow>()
+                    .RegisterFlow<SimpleActivityFlow>()
                     ;
 
                 services.AddSingleton<IFlowRepository, MemoryFlowRepository>();
