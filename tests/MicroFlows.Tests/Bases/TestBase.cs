@@ -22,6 +22,7 @@ using static MicroFlows.Tests.Intercepting.FlowSignalsTests;
 using MicroFlows.Tests.UseCases.Examples;
 using MicroFlows.UnitTesting;
 using MicroFlows.Tests.Activities;
+using static MicroFlows.Tests.Activities.FlowEngineActivitiesTests;
 
 namespace MicroFlows.Tests;
 
