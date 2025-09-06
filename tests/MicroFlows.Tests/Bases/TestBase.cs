@@ -102,6 +102,7 @@ public abstract class TestBase
 
                     .RegisterFlow<SampleCheckSignalActivityFlow>()
                     .RegisterFlow<SimpleActivityFlow>()
+                    .RegisterFlow<TwoPhaseActivityFlow>()
                     ;
 
                 services.AddSingleton<IFlowRepository, MemoryFlowRepository>();
