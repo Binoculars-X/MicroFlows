@@ -151,7 +151,7 @@ internal partial class FlowEngine
         flow.RefId = context.RefId;
 
         // update signals
-        flow.SetSignalHandlers();
+        flow.RegisterSignals();
 
         foreach (var signal in _signals)
         {

@@ -21,6 +21,7 @@ using MicroFlows.Tests.Intercepting;
 using static MicroFlows.Tests.Intercepting.FlowSignalsTests;
 using MicroFlows.Tests.UseCases.Examples;
 using MicroFlows.UnitTesting;
+using MicroFlows.Tests.Activities;
 
 namespace MicroFlows.Tests;
 
@@ -97,6 +98,8 @@ public abstract class TestBase
                     .RegisterFlow<FluentFlowExecutionTests.ConditionalInlineFlow>()
                     .RegisterFlow<FluentFlowExecutionTests.ConditionalParametrizedFlow>()
                     .RegisterFlow<RefundRequestFluentFlow>()
+
+                    .RegisterFlow<SampleCheckSignalActivityFlow>()
                     ;
 
                 services.AddSingleton<IFlowRepository, MemoryFlowRepository>();

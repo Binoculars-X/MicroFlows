@@ -197,7 +197,7 @@ public abstract partial class FlowBase : IFlow
     /// <summary>
     /// Override to set all signal handlers
     /// </summary>
-    public virtual void SetSignalHandlers()
+    public virtual void RegisterSignals()
     {
         // Example:
         //AddSignalHandler(signal1, handler1);
@@ -218,6 +218,10 @@ public abstract partial class FlowBase : IFlow
     public virtual void AddSignalTimeoutHandler(Func<SignalPayload, Task> handler)
     {
         AddSignalHandler(FlowBase.TIMEOUT_HANDLER, handler);
+    }
+
+    public virtual void AddSignalActivity(string signal, Type activity)
+    {
     }
 
     public virtual void Call(Action action)
