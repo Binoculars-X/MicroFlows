@@ -12,6 +12,7 @@ public class FreezableProxyGenerationHook : IProxyGenerationHook
     private readonly string[] _systemMethods = [
         "Call", 
         "CallAsync", 
+        "CallActivity",
         "ExecuteActivity",
         "ExecuteActivityAsync",
         "WaitForCondition",

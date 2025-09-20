@@ -227,7 +227,7 @@ internal partial class FlowEngine : IAsyncInterceptor, IFlowEngine
         _flowProxy.SetServiceProvider(_services);
 
         // signals
-        _targetFlow.SetSignalHandlers();
+        _targetFlow.RegisterSignals();
         await UpdateSignalJournal();
 
         if (_flowParams.FlowOptions.NoStorage)

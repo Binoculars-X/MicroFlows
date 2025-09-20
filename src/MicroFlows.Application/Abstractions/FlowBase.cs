@@ -7,6 +7,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MicroFlows.Application.Exceptions;
+using MicroFlows.Application.Abstractions;
 using JsonPathToModel;
 using System.Linq;
 using MicroFlows.Application;
@@ -14,7 +15,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Text.Json;
 using Castle.Components.DictionaryAdapter.Xml;
-using MicroFlows.Application.Abstractions;
 
 namespace MicroFlows;
 
@@ -92,6 +92,7 @@ public abstract partial class FlowBase : IFlow
 
     [JsonIgnore]
     private IFlowProvider _flowProvider = null!;
+    private IServiceProvider _serviceProvider = null!;
 
     /// <summary>
     /// returns version number using naming convention SampleFlowV2 => V2
@@ -163,6 +164,7 @@ public abstract partial class FlowBase : IFlow
     /// <param name="services"></param>
     internal void SetServiceProvider(IServiceProvider services)
     {
+        _serviceProvider = services;
         _flowProvider = services.GetService<IFlowProvider>()!;
     }
 
@@ -197,7 +199,7 @@ public abstract partial class FlowBase : IFlow
     /// <summary>
     /// Override to set all signal handlers
     /// </summary>
-    public virtual void SetSignalHandlers()
+    public virtual void RegisterSignals()
     {
         // Example:
         //AddSignalHandler(signal1, handler1);
@@ -220,6 +222,10 @@ public abstract partial class FlowBase : IFlow
         AddSignalHandler(FlowBase.TIMEOUT_HANDLER, handler);
     }
 
+    public virtual void AddSignalActivity(string signal, Type activity)
+    {
+    }
+
     public virtual void Call(Action action)
     {
         action();
@@ -228,6 +234,170 @@ public abstract partial class FlowBase : IFlow
     public virtual async Task CallAsync(Func<Task> action)
     {
         await action();
+    }
+
+    // TODO: Activity execution methods - stub implementation
+    /// <summary>
+    /// Executes an activity with typed method selector (void return)
+    /// </summary>
+    /// <typeparam name="TActivity">The activity class type</typeparam>
+    /// <param name="methodSelector">Expression pointing to the activity method</param>
+    /// <param name="options">Activity execution options</param>
+    /// <returns>Task representing the activity execution</returns>
+    public virtual async Task CallActivity<TActivity>(
+        Expression<Func<TActivity, Task>> methodSelector,
+        ActivityOptions? options = null)
+        where TActivity : class
+    {
+        // Parse the expression to extract method and parameters
+        if (methodSelector.Body is not MethodCallExpression methodCall)
+        {
+            throw new ArgumentException("Expression must be a method call", nameof(methodSelector));
+        }
+
+        // Create activity instance using service provider
+        var activityInstance = CreateActivityInstance<TActivity>();
+
+        // Extract parameter values from the expression
+        var parameterValues = ExtractParameterValues(methodCall.Arguments);
+
+        // Invoke the method
+        var method = methodCall.Method;
+        var result = method.Invoke(activityInstance, parameterValues);
+
+        // Handle Task return type
+        if (result is Task task)
+        {
+            await task;
+        }
+        else
+        {
+            throw new InvalidOperationException("Activity method must return Task");
+        }
+    }
+
+    /// <summary>
+    /// Executes an activity with typed method selector (with return value)
+    /// </summary>
+    /// <typeparam name="TActivity">The activity class type</typeparam>
+    /// <typeparam name="TResult">The return type</typeparam>
+    /// <param name="methodSelector">Expression pointing to the activity method</param>
+    /// <param name="options">Activity execution options</param>
+    /// <returns>Task representing the activity execution with result</returns>
+    public virtual async Task<TResult> CallActivity<TActivity, TResult>(
+        Expression<Func<TActivity, Task<TResult>>> methodSelector,
+        ActivityOptions? options = null)
+        where TActivity : class
+    {
+        // Parse the expression to extract method and parameters
+        if (methodSelector.Body is not MethodCallExpression methodCall)
+        {
+            throw new ArgumentException("Expression must be a method call", nameof(methodSelector));
+        }
+
+        // Create activity instance using service provider
+        var activityInstance = CreateActivityInstance<TActivity>();
+
+        // Extract parameter values from the expression
+        var parameterValues = ExtractParameterValues(methodCall.Arguments);
+
+        // Invoke the method
+        var method = methodCall.Method;
+        var result = method.Invoke(activityInstance, parameterValues);
+
+        // Handle Task<TResult> return type
+        if (result is Task<TResult> taskWithResult)
+        {
+            return await taskWithResult;
+        }
+        else
+        {
+            throw new InvalidOperationException("Activity method must return Task<TResult>");
+        }
+    }
+
+    /// <summary>
+    /// Creates an instance of the activity using dependency injection
+    /// </summary>
+    /// <typeparam name="TActivity">The activity type</typeparam>
+    /// <returns>Activity instance</returns>
+    private TActivity CreateActivityInstance<TActivity>() where TActivity : class
+    {
+        if (_serviceProvider == null)
+        {
+            throw new InvalidOperationException("Service provider not set. Make sure the flow is executed through the FlowEngine.");
+        }
+
+        // Try to get from service provider first
+        var activityInstance = _serviceProvider.GetService<TActivity>();
+        if (activityInstance != null)
+        {
+            return activityInstance;
+        }
+
+        // If not registered in DI, create manually with constructor injection
+        try
+        {
+            var constructorParams = TypeHelper.GetConstructorParameters(_serviceProvider, typeof(TActivity));
+            return (TActivity)Activator.CreateInstance(typeof(TActivity), constructorParams)!;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException($"Failed to create activity instance of type {typeof(TActivity).Name}. Make sure it's registered in DI or has a parameterless constructor.", ex);
+        }
+    }
+
+    /// <summary>
+    /// Extracts parameter values from method call expression arguments
+    /// </summary>
+    /// <param name="arguments">Method call arguments</param>
+    /// <returns>Array of parameter values</returns>
+    private object?[] ExtractParameterValues(IReadOnlyCollection<Expression> arguments)
+    {
+        var parameterValues = new object?[arguments.Count];
+        var i = 0;
+
+        foreach (var argument in arguments)
+        {
+            parameterValues[i] = ExtractValueFromExpression(argument);
+            i++;
+        }
+
+        return parameterValues;
+    }
+
+    /// <summary>
+    /// Extracts a value from an expression (handles constants, member access, etc.)
+    /// </summary>
+    /// <param name="expression">Expression to extract value from</param>
+    /// <returns>The extracted value</returns>
+    private object? ExtractValueFromExpression(Expression expression)
+    {
+        return expression switch
+        {
+            ConstantExpression constant => constant.Value,
+            MemberExpression member when member.Expression is ConstantExpression memberConstant =>
+                GetMemberValue(member, memberConstant.Value),
+            MemberExpression member when member.Expression == null => // Static member
+                GetMemberValue(member, null),
+            _ => throw new NotSupportedException($"Expression type {expression.GetType().Name} is not supported for activity parameters. Use constants or simple member access.")
+        };
+    }
+
+    /// <summary>
+    /// Gets the value of a member (field or property)
+    /// </summary>
+    /// <param name="member">Member expression</param>
+    /// <param name="instance">Instance to get the member from (null for static)</param>
+    /// <returns>Member value</returns>
+    private object? GetMemberValue(MemberExpression member, object? instance)
+    {
+        return member.Member switch
+        {
+            FieldInfo field => field.GetValue(instance),
+            PropertyInfo property => property.GetValue(instance),
+            _ => throw new NotSupportedException($"Member type {member.Member.GetType().Name} is not supported")
+        };
     }
 
     // ToDo: will not work until InterceptAsynchronous<TResult> is not implemented

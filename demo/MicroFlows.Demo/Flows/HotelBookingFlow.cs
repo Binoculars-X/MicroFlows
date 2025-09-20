@@ -8,7 +8,7 @@ public class HotelBookingFlow: FlowBase<HotelBookingModel>
     public const string PaymentReceivedSignal = "PaymentReceived";
     public const string ReservationConfirmedSignal = "ReservationConfirmed";
 
-    public override void SetSignalHandlers()
+    public override void RegisterSignals()
     {
         AddSignalHandler(ReservationConfirmedSignal, ReservationReceivedHandler);
     }
